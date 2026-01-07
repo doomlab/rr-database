@@ -1,0 +1,46 @@
+
+
+name: Update RR Database
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 3 * * 1"  # weekly on Mondays at 03:00 UTC
+
+jobs:
+  update-database:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
+
+      - name: Pull Zotero source of truth
+        env:
+          ZOTERO_API_KEY: ${{ secrets.ZOTERO_API_KEY }}
+          ZOTERO_LIBRARY_TYPE: ${{ secrets.ZOTERO_LIBRARY_TYPE }}
+          ZOTERO_LIBRARY_ID: ${{ secrets.ZOTERO_LIBRARY_ID }}
+        run: |
+          python scripts/pull_zotero_library.py
+
+      - name: Build Zotero dedup index
+        run: |
+          python scripts/build_zotero_index.py
+
+      - name: Upload Zotero artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: zotero-data
+          path: |
+            data/zotero_raw.json
+            data/source_of_truth.json
+            data/zotero_index.json
