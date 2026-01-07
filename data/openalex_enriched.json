@@ -1,5 +1,9 @@
 {
-  "new_candidates": [
+  "metadata": {
+    "source": "OpenAlex + Crossref",
+    "count": 60
+  },
+  "works": [
     {
       "openalex_id": "https://openalex.org/W7118172782",
       "doi": "https://doi.org/10.1038/s41558-025-02536-2",
@@ -160,8 +164,7 @@
           "first": "Robb",
           "last": "Willer"
         }
-      ],
-      "dedup_reason": "no_match"
+      ]
     },
     {
       "openalex_id": "https://openalex.org/W7117343317",
@@ -194,8 +197,7 @@
       "crossref": {
         "queried": false,
         "found": false
-      },
-      "dedup_reason": "no_match"
+      }
     },
     {
       "openalex_id": "https://openalex.org/W4417264416",
@@ -242,8 +244,7 @@
           "first": "William J.",
           "last": "Therrien"
         }
-      ],
-      "dedup_reason": "no_match"
+      ]
     },
     {
       "openalex_id": "https://openalex.org/W4417263117",
@@ -295,8 +296,7 @@
           "first": "Benjamin S.",
           "last": "Riden"
         }
-      ],
-      "dedup_reason": "no_match"
+      ]
     },
     {
       "openalex_id": "https://openalex.org/W7114995823",
@@ -348,8 +348,7 @@
           "first": "Abby",
           "last": "Person"
         }
-      ],
-      "dedup_reason": "no_match"
+      ]
     },
     {
       "openalex_id": "https://openalex.org/W4417099959",
@@ -494,8 +493,7 @@
           "first": "Robb",
           "last": "Willer"
         }
-      ],
-      "dedup_reason": "no_match"
+      ]
     },
     {
       "openalex_id": "https://openalex.org/W7115243045",
@@ -519,8 +517,7 @@
       "crossref": {
         "queried": false,
         "found": false
-      },
-      "dedup_reason": "no_match"
+      }
     },
     {
       "openalex_id": "https://openalex.org/W4417416166",
@@ -576,8 +573,7 @@
           "first": "Tanja C.",
           "last": "Roembke"
         }
-      ],
-      "dedup_reason": "no_match"
+      ]
     },
     {
       "openalex_id": "https://openalex.org/W4417327011",
@@ -629,8 +625,7 @@
           "first": "Gilad",
           "last": "Feldman"
         }
-      ],
-      "dedup_reason": "no_match"
+      ]
     },
     {
       "openalex_id": "https://openalex.org/W4417174963",
@@ -667,8 +662,7 @@
           "first": "Sonja P.",
           "last": "Brubacher"
         }
-      ],
-      "dedup_reason": "no_match"
+      ]
     },
     {
       "openalex_id": "https://openalex.org/W7110978197",
@@ -709,8 +703,7 @@
           "first": "Sonja P.",
           "last": "Brubacher"
         }
-      ],
-      "dedup_reason": "no_match"
+      ]
     },
     {
       "openalex_id": "https://openalex.org/W7118179479",
@@ -751,8 +744,7 @@
           "first": "Ulrike",
           "last": "Rimmele"
         }
-      ],
-      "dedup_reason": "no_match"
+      ]
     },
     {
       "openalex_id": "https://openalex.org/W7112719095",
@@ -782,8 +774,7 @@
       "crossref": {
         "queried": false,
         "found": false
-      },
-      "dedup_reason": "no_match"
+      }
     },
     {
       "openalex_id": "https://openalex.org/W4417123771",
@@ -851,8 +842,7 @@
           "first": "Jay Joseph",
           "last": "Van Bavel"
         }
-      ],
-      "dedup_reason": "no_match"
+      ]
     },
     {
       "openalex_id": "https://openalex.org/W4417220832",
@@ -893,8 +883,7 @@
           "first": "Patrick E.",
           "last": "Savage"
         }
-      ],
-      "dedup_reason": "no_match"
+      ]
     },
     {
       "openalex_id": "https://openalex.org/W7110975898",
@@ -941,8 +930,7 @@
           "first": "Patrick E.",
           "last": "Savage"
         }
-      ],
-      "dedup_reason": "no_match"
+      ]
     },
     {
       "openalex_id": "https://openalex.org/W7117432514",
@@ -1009,8 +997,7 @@
           "first": "Katrine Mari",
           "last": "Owe"
         }
-      ],
-      "dedup_reason": "no_match"
+      ]
     },
     {
       "openalex_id": "https://openalex.org/W4417122126",
@@ -1045,8 +1032,7 @@
           ]
         ]
       },
-      "authors_structured": [],
-      "dedup_reason": "no_match"
+      "authors_structured": []
     },
     {
       "openalex_id": "https://openalex.org/W4417179003",
@@ -1207,8 +1193,7 @@
           "first": "Minh",
           "last": "Tran"
         }
-      ],
-      "dedup_reason": "no_match"
+      ]
     },
     {
       "openalex_id": "https://openalex.org/W7115035357",
@@ -1233,8 +1218,7 @@
       "crossref": {
         "queried": false,
         "found": false
-      },
-      "dedup_reason": "no_match"
+      }
     },
     {
       "openalex_id": "https://openalex.org/W7117856080",
@@ -1260,8 +1244,7 @@
       "crossref": {
         "queried": false,
         "found": false
-      },
-      "dedup_reason": "no_match"
+      }
     },
     {
       "openalex_id": "https://openalex.org/W7114986280",
@@ -1289,8 +1272,7 @@
       "crossref": {
         "queried": true,
         "found": false
-      },
-      "dedup_reason": "no_match"
+      }
     },
     {
       "openalex_id": "https://openalex.org/W7115000992",
@@ -1318,8 +1300,7 @@
       "crossref": {
         "queried": true,
         "found": false
-      },
-      "dedup_reason": "no_match"
+      }
     },
     {
       "openalex_id": "https://openalex.org/W7114993643",
@@ -1347,8 +1328,7 @@
       "crossref": {
         "queried": true,
         "found": false
-      },
-      "dedup_reason": "no_match"
+      }
     },
     {
       "openalex_id": "https://openalex.org/W7118190959",
@@ -1366,8 +1346,7 @@
       "crossref": {
         "queried": true,
         "found": false
-      },
-      "dedup_reason": "no_match"
+      }
     },
     {
       "openalex_id": "https://openalex.org/W7118182891",
@@ -1385,8 +1364,7 @@
       "crossref": {
         "queried": true,
         "found": false
-      },
-      "dedup_reason": "no_match"
+      }
     },
     {
       "openalex_id": "https://openalex.org/W4417222058",
@@ -1425,8 +1403,7 @@
           "first": "Nathaniel M.",
           "last": "Schuster"
         }
-      ],
-      "dedup_reason": "no_match"
+      ]
     },
     {
       "openalex_id": "https://openalex.org/W4417178996",
@@ -1482,8 +1459,7 @@
           "first": "Nathalie",
           "last": "Tasler"
         }
-      ],
-      "dedup_reason": "no_match"
+      ]
     },
     {
       "openalex_id": "https://openalex.org/W4417529944",
@@ -1579,8 +1555,7 @@
           "first": "Julia",
           "last": "Hippisley-Cox"
         }
-      ],
-      "dedup_reason": "no_match"
+      ]
     },
     {
       "openalex_id": "https://openalex.org/W4417137439",
@@ -1611,8 +1586,7 @@
           "first": "Maxwel Adriano",
           "last": "Abegg"
         }
-      ],
-      "dedup_reason": "no_match"
+      ]
     },
     {
       "openalex_id": "https://openalex.org/W4417196134",
@@ -1663,8 +1637,7 @@
           "first": "Folco",
           "last": "Panizza"
         }
-      ],
-      "dedup_reason": "no_match"
+      ]
     },
     {
       "openalex_id": "https://openalex.org/W7118120906",
@@ -1688,8 +1661,7 @@
       "crossref": {
         "queried": true,
         "found": false
-      },
-      "dedup_reason": "no_match"
+      }
     },
     {
       "openalex_id": "https://openalex.org/W7118145672",
@@ -1713,8 +1685,7 @@
       "crossref": {
         "queried": true,
         "found": false
-      },
-      "dedup_reason": "no_match"
+      }
     },
     {
       "openalex_id": "https://openalex.org/W7116121982",
@@ -1740,8 +1711,7 @@
       "crossref": {
         "queried": true,
         "found": false
-      },
-      "dedup_reason": "no_match"
+      }
     },
     {
       "openalex_id": "https://openalex.org/W7115782922",
@@ -1768,8 +1738,7 @@
       "crossref": {
         "queried": true,
         "found": false
-      },
-      "dedup_reason": "no_match"
+      }
     },
     {
       "openalex_id": "https://openalex.org/W7115717717",
@@ -1796,8 +1765,7 @@
       "crossref": {
         "queried": true,
         "found": false
-      },
-      "dedup_reason": "no_match"
+      }
     },
     {
       "openalex_id": "https://openalex.org/W7117556542",
@@ -1854,8 +1822,7 @@
           "first": "Nicole M",
           "last": "Holbrook"
         }
-      ],
-      "dedup_reason": "no_match"
+      ]
     },
     {
       "openalex_id": "https://openalex.org/W7118133013",
@@ -1912,8 +1879,7 @@
           "first": "Joon",
           "last": "Lee"
         }
-      ],
-      "dedup_reason": "no_match"
+      ]
     },
     {
       "openalex_id": "https://openalex.org/W7116769628",
@@ -1980,8 +1946,7 @@
           "first": "Gilles",
           "last": "Dolivet"
         }
-      ],
-      "dedup_reason": "no_match"
+      ]
     },
     {
       "openalex_id": "https://openalex.org/W7114780268",
@@ -2048,8 +2013,7 @@
           "first": "Jia",
           "last": "Han"
         }
-      ],
-      "dedup_reason": "no_match"
+      ]
     },
     {
       "openalex_id": "https://openalex.org/W7110781689",
@@ -2136,8 +2100,7 @@
           "first": "Laura E",
           "last": "Simons"
         }
-      ],
-      "dedup_reason": "no_match"
+      ]
     },
     {
       "openalex_id": "https://openalex.org/W4417276519",
@@ -2213,8 +2176,7 @@
           "first": "Mehreen",
           "last": "Aslam"
         }
-      ],
-      "dedup_reason": "no_match"
+      ]
     },
     {
       "openalex_id": "https://openalex.org/W4417283579",
@@ -2280,8 +2242,7 @@
           "first": "NamKwen",
           "last": "Kim"
         }
-      ],
-      "dedup_reason": "no_match"
+      ]
     },
     {
       "openalex_id": "https://openalex.org/W7117447382",
@@ -2348,8 +2309,7 @@
           "first": "Asad",
           "last": "Latif"
         }
-      ],
-      "dedup_reason": "no_match"
+      ]
     },
     {
       "openalex_id": "https://openalex.org/W4417261285",
@@ -2395,8 +2355,7 @@
           "first": "Andrea D",
           "last": "Smith"
         }
-      ],
-      "dedup_reason": "no_match"
+      ]
     },
     {
       "openalex_id": "https://openalex.org/W7116793236",
@@ -2488,8 +2447,7 @@
           "first": "Rebecca",
           "last": "Wyse"
         }
-      ],
-      "dedup_reason": "no_match"
+      ]
     },
     {
       "openalex_id": "https://openalex.org/W7111333004",
@@ -2518,8 +2476,7 @@
       "crossref": {
         "queried": true,
         "found": false
-      },
-      "dedup_reason": "no_match"
+      }
     },
     {
       "openalex_id": "https://openalex.org/W7116955964",
@@ -2631,8 +2588,7 @@
           "first": "Rafael",
           "last": "Tabar\u00e9s-Seisdedos"
         }
-      ],
-      "dedup_reason": "no_match"
+      ]
     },
     {
       "openalex_id": "https://openalex.org/W7111070354",
@@ -2661,8 +2617,7 @@
       "crossref": {
         "queried": true,
         "found": false
-      },
-      "dedup_reason": "no_match"
+      }
     },
     {
       "openalex_id": "https://openalex.org/W7117131881",
@@ -2724,8 +2679,7 @@
           "first": "Christina Mary",
           "last": "Pollard"
         }
-      ],
-      "dedup_reason": "no_match"
+      ]
     },
     {
       "openalex_id": "https://openalex.org/W4417199878",
@@ -2821,8 +2775,7 @@
           "first": "Lauren M",
           "last": "Osborne"
         }
-      ],
-      "dedup_reason": "no_match"
+      ]
     },
     {
       "openalex_id": "https://openalex.org/W4417366491",
@@ -2883,8 +2836,7 @@
           "first": "Anna",
           "last": "Axelin"
         }
-      ],
-      "dedup_reason": "no_match"
+      ]
     },
     {
       "openalex_id": "https://openalex.org/W4417440817",
@@ -2965,8 +2917,7 @@
           "first": "Hongxia",
           "last": "Liu"
         }
-      ],
-      "dedup_reason": "no_match"
+      ]
     },
     {
       "openalex_id": "https://openalex.org/W7116649421",
@@ -3028,8 +2979,7 @@
           "first": "Marcia V",
           "last": "Rojas-Ramirez"
         }
-      ],
-      "dedup_reason": "no_match"
+      ]
     },
     {
       "openalex_id": "https://openalex.org/W7116763097",
@@ -3091,8 +3041,7 @@
           "first": "Vikram",
           "last": "Belkhode"
         }
-      ],
-      "dedup_reason": "no_match"
+      ]
     },
     {
       "openalex_id": "https://openalex.org/W4417441845",
@@ -3183,8 +3132,7 @@
           "first": "Amanda",
           "last": "Wurz"
         }
-      ],
-      "dedup_reason": "no_match"
+      ]
     },
     {
       "openalex_id": "https://openalex.org/W7113897858",
@@ -3331,8 +3279,7 @@
           "first": "Kelly K.",
           "last": "O'Brien"
         }
-      ],
-      "dedup_reason": "no_match"
+      ]
     },
     {
       "openalex_id": "https://openalex.org/W7116987180",
@@ -3419,8 +3366,7 @@
           "first": "John A",
           "last": "Dodson"
         }
-      ],
-      "dedup_reason": "no_match"
+      ]
     },
     {
       "openalex_id": "https://openalex.org/W3084075679",
@@ -3444,8 +3390,7 @@
       "crossref": {
         "queried": true,
         "found": false
-      },
-      "dedup_reason": "no_match"
+      }
     },
     {
       "openalex_id": "https://openalex.org/W3134434737",
@@ -3513,10 +3458,7 @@
           "first": "Sonya R.",
           "last": "Porter"
         }
-      ],
-      "dedup_reason": "no_match"
+      ]
     }
-  ],
-  "already_in_zotero": [],
-  "ambiguous": []
+  ]
 }

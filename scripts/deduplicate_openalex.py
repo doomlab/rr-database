@@ -4,7 +4,7 @@ from pathlib import Path
 from normalize import normalize_doi, normalize_title
 
 DATA_DIR = Path("data")
-OPENALEX_PATH = DATA_DIR / "openalex_index.json"
+OPENALEX_PATH = DATA_DIR / "openalex_enriched.json"
 ZOTERO_INDEX_PATH = DATA_DIR / "zotero_index.json"
 OUTPUT_PATH = DATA_DIR / "deduplicated_candidates.json"
 
@@ -27,12 +27,14 @@ def main():
 
     for work in openalex_data.get("works", []):
         doi = normalize_doi(work.get("doi"))
-        title = normalize_title(work.get("title"))
+        title = normalize_title(
+            work.get("title") or work.get("journal")
+        )
 
         if doi and doi in zotero_dois:
             results["already_in_zotero"].append({
                 **work,
-                "dedup_reason": "doi_match"
+                "dedup_reason": "doi_match (crossref/enriched)"
             })
 
         elif title and title in zotero_titles:
