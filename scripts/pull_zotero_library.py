@@ -2,6 +2,8 @@ import json
 import os
 import time
 import requests
+from dotenv import load_dotenv
+load_dotenv()
 
 # --- Environment variables (from GitHub Secrets) ---
 API_KEY = os.environ["ZOTERO_API_KEY"]
