@@ -36,6 +36,14 @@ jobs:
         run: |
           python scripts/build_zotero_index.py
 
+      - name: Query OpenAlex for new Registered Reports
+        run: |
+          python scripts/query_openalex.py
+
+      - name: Deduplicate OpenAlex results against Zotero
+        run: |
+          python scripts/deduplicate_openalex.py
+
       - name: Upload Zotero artifacts
         uses: actions/upload-artifact@v4
         with:
@@ -44,3 +52,5 @@ jobs:
             data/zotero_raw.json
             data/source_of_truth.json
             data/zotero_index.json
+            data/openalex_index.json
+            data/deduplicated_candidates.json
