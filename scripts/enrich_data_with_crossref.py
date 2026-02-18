@@ -4,8 +4,8 @@ import requests
 from pathlib import Path
 
 DATA_DIR = Path("data")
-INPUT_PATH = DATA_DIR / "openalex_index.json"
-OUTPUT_PATH = DATA_DIR / "openalex_enriched.json"
+INPUT_PATH = DATA_DIR / "merged_index.json"
+OUTPUT_PATH = DATA_DIR / "enriched_index.json"
 
 CROSSREF_BASE = "https://api.crossref.org/works"
 
@@ -70,8 +70,10 @@ def main():
     with open(INPUT_PATH) as f:
         data = json.load(f)
 
-    works = data.get("works", [])
-    print(f"Enriching {len(works)} OpenAlex works with Crossref metadata")
+    works = data.get("records", [])
+    unmatched = data.get("unmatched_external_records", [])
+
+    print(f"Enriching {len(works)} resolved OpenAlex records with Crossref metadata")
 
     enriched_works = []
 
@@ -82,10 +84,12 @@ def main():
 
     output = {
         "metadata": {
-            "source": "OpenAlex + Crossref",
-            "count": len(enriched_works)
+            "source": "Resolved OpenAlex + Crossref",
+            "matched_count": len(enriched_works),
+            "unmatched_count": len(unmatched)
         },
-        "works": enriched_works
+        "records": enriched_works,
+        "unmatched_external_records": unmatched
     }
 
     DATA_DIR.mkdir(exist_ok=True)
