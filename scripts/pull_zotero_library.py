@@ -3,75 +3,102 @@ import os
 import time
 import requests
 from dotenv import load_dotenv
+
 load_dotenv()
 
-# --- Environment variables (from GitHub Secrets) ---
+# --- Environment variables ---
 API_KEY = os.environ["ZOTERO_API_KEY"]
 LIB_TYPE = os.environ["ZOTERO_LIBRARY_TYPE"]  # "user" or "group"
 LIB_ID = os.environ["ZOTERO_LIBRARY_ID"]
 
-# --- Zotero API setup ---
-BASE_URL = f"https://api.zotero.org/{LIB_TYPE}s/{LIB_ID}/items"
-HEADERS = {
-    "Zotero-API-Key": API_KEY
-}
+TEST_API_KEY = os.environ["ZOTERO_TEST_API_KEY"]
+TEST_LIB_TYPE = os.environ["ZOTERO_TEST_LIBRARY_TYPE"]  # "user" or "group"
+TEST_LIB_ID = os.environ["ZOTERO_TEST_LIBRARY_ID"]
 
-PARAMS = {
-    "format": "json",
-    "limit": 100
-}
 
-# --- Pull all items with pagination ---
-all_items = []
-start = 0
+def pull_library(api_key, lib_type, lib_id):
+    base_url = f"https://api.zotero.org/{lib_type}s/{lib_id}/items"
 
-while True:
-    PARAMS["start"] = start
-    response = requests.get(BASE_URL, headers=HEADERS, params=PARAMS)
-    response.raise_for_status()
+    headers = {
+        "Zotero-API-Key": api_key
+    }
 
-    items = response.json()
-    if not items:
-        break
+    params = {
+        "format": "json",
+        "limit": 100
+    }
 
-    all_items.extend(items)
-    start += len(items)
+    all_items = []
+    start = 0
 
-    # Be polite to Zotero API
-    time.sleep(0.1)
+    while True:
+        params["start"] = start
+        response = requests.get(base_url, headers=headers, params=params)
+        response.raise_for_status()
 
-print(f"Pulled {len(all_items)} Zotero items")
+        items = response.json()
+        if not items:
+            break
+
+        all_items.extend(items)
+        start += len(items)
+
+        # Be polite to Zotero API
+        time.sleep(0.1)
+
+    return all_items
+
+
+def normalize_items(items):
+    normalized = []
+
+    for item in items:
+        data = item.get("data", {})
+
+        normalized.append({
+            "zotero_key": item.get("key"),
+            "item_type": data.get("itemType"),
+            "title": data.get("title"),
+            "creators": data.get("creators"),
+            "year": data.get("date"),
+            "doi": data.get("DOI"),
+            "url": data.get("url"),
+            "publication": data.get("publicationTitle"),
+            "abstract": data.get("abstractNote"),
+            "tags": [t["tag"] for t in data.get("tags", [])],
+            "collections": data.get("collections"),
+            "date_added": data.get("dateAdded"),
+            "date_modified": data.get("dateModified"),
+        })
+
+    return normalized
+
 
 # --- Ensure data directory exists ---
 os.makedirs("data", exist_ok=True)
 
-# --- Save raw Zotero snapshot (lossless) ---
-with open("data/zotero_raw.json", "w") as f:
-    json.dump(all_items, f, indent=2)
+# --- Pull Production Library ---
+print("Pulling PRODUCTION Zotero library...")
+prod_items = pull_library(API_KEY, LIB_TYPE, LIB_ID)
+print(f"Pulled {len(prod_items)} production items")
 
-# --- Normalize into source-of-truth format ---
-normalized = []
+with open("data/zotero_raw_production.json", "w") as f:
+    json.dump(prod_items, f, indent=2)
 
-for item in all_items:
-    data = item.get("data", {})
+prod_normalized = normalize_items(prod_items)
+with open("data/source_of_truth_production.json", "w") as f:
+    json.dump(prod_normalized, f, indent=2)
 
-    normalized.append({
-        "zotero_key": item.get("key"),
-        "item_type": data.get("itemType"),
-        "title": data.get("title"),
-        "creators": data.get("creators"),
-        "year": data.get("date"),
-        "doi": data.get("DOI"),
-        "url": data.get("url"),
-        "publication": data.get("publicationTitle"),
-        "abstract": data.get("abstractNote"),
-        "tags": [t["tag"] for t in data.get("tags", [])],
-        "collections": data.get("collections"),
-        "date_added": data.get("dateAdded"),
-        "date_modified": data.get("dateModified"),
-    })
+# --- Pull Test / Staging Library ---
+print("Pulling STAGING Zotero library...")
+stage_items = pull_library(TEST_API_KEY, TEST_LIB_TYPE, TEST_LIB_ID)
+print(f"Pulled {len(stage_items)} staging items")
 
-with open("data/source_of_truth.json", "w") as f:
-    json.dump(normalized, f, indent=2)
+with open("data/zotero_raw_staging.json", "w") as f:
+    json.dump(stage_items, f, indent=2)
 
-print("Saved zotero_raw.json and source_of_truth.json")
+stage_normalized = normalize_items(stage_items)
+with open("data/source_of_truth_staging.json", "w") as f:
+    json.dump(stage_normalized, f, indent=2)
+
+print("Saved production and staging Zotero snapshots + normalized files")
