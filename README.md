@@ -31,6 +31,8 @@ Get a zotero API key by following this guide: https://forums.zotero.org/discussi
     * Pulls new articles from open alex to review
 * /scripts/query_google_scholar.py
     * Pulls new articles from google scholar to review 
+* /scripts/query_pcirr.py
+    * Pulls new articles from PCIRR
 * /scripts/enrich_results_with_crossref.py
     * Adds more metadata and helps with deduplication from open alex search
 * /scripts/deduplicate_results.py
