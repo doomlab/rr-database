@@ -53,27 +53,67 @@ def create_collection(name):
 
 
 def create_item(work, collection_key):
+    # --- Prefer enriched fields when available ---
+    title = work.get("title")
+    doi = work.get("doi")
+
+    publication_title = (
+        work.get("journal")
+        or work.get("venue")
+    )
+
+    date = (
+        work.get("published", {}).get("date-parts", [[None]])[0][0]
+        if isinstance(work.get("published"), dict)
+        else work.get("publication_date")
+    )
+
+    creators = []
+
+    # Prefer structured authors from Crossref enrichment
+    if work.get("authors_structured"):
+        for a in work.get("authors_structured", []):
+            if a.get("last"):
+                creators.append({
+                    "creatorType": "author",
+                    "firstName": a.get("first"),
+                    "lastName": a.get("last")
+                })
+    else:
+        # Fallback to unstructured OpenAlex authors
+        for author in work.get("authors", []):
+            if author:
+                creators.append({
+                    "creatorType": "author",
+                    "name": author
+                })
+
     item = {
         "itemType": "journalArticle",
-        "title": work.get("title"),
-        "DOI": work.get("doi"),
-        "date": work.get("publication_date"),
-        "publicationTitle": work.get("venue"),
+        "title": title,
+        "DOI": doi,
+        "date": date,
+        "publicationTitle": publication_title,
+        "volume": work.get("volume"),
+        "issue": work.get("issue"),
+        "pages": work.get("pages"),
+        "ISSN": (
+            work.get("issn")[0]
+            if isinstance(work.get("issn"), list) and work.get("issn")
+            else work.get("issn")
+        ),
         "tags": [
             {"tag": "auto-added"},
             {"tag": "openalex"},
-            {"tag": "needs-review"}
+            {"tag": "needs-review"},
+            {"tag": "crossref-enriched"} if work.get("crossref", {}).get("found") else None
         ],
         "collections": [collection_key],
-        "creators": [
-            {
-                "creatorType": "author",
-                "name": author
-            }
-            for author in work.get("authors", [])
-            if author
-        ],
+        "creators": creators
     }
+
+    # Remove null tag entries
+    item["tags"] = [t for t in item["tags"] if t]
 
     r = requests.post(
         f"{BASE_URL}/items",
