@@ -36,12 +36,17 @@ def main():
     one_month_ago = (datetime.utcnow() - timedelta(days=30)).strftime("%Y-%m-%d")
 
     params = {
-        "search": '"registered report"',
+        "search": (
+            '"registered report" OR '
+            '"preregistered report" OR '
+            '"pre-registered report" OR '
+            '"preregistered research"'
+        ),
         "filter": f"from_publication_date:{one_month_ago}",
         "per-page": 200
     }
 
-    print("Querying OpenAlex for Registered Reports from the last month")
+    print("Querying OpenAlex for registered / preregistered reports from the last month")
 
     r = requests.get(f"{OPENALEX_BASE}/works", params=params, timeout=60)
     r.raise_for_status()
@@ -50,7 +55,12 @@ def main():
 
     results = {
         "query_metadata": {
-            "query": "registered report",
+            "query": [
+                "registered report",
+                "preregistered report",
+                "pre-registered report",
+                "preregistered research"
+            ],
             "from_publication_date": one_month_ago,
             "retrieved_at": datetime.utcnow().isoformat(),
             "count": len(works)
