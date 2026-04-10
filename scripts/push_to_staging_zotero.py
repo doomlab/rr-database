@@ -199,11 +199,21 @@ def create_item(work, collection_key):
         for a in work["authors_structured"]:
             first = a.get("first")
             last = a.get("last")
-            if first or last:
+            if first and last:
                 creators.append({
                     "creatorType": "author",
                     "firstName": first,
                     "lastName": last
+                })
+            elif first:
+                creators.append({
+                    "creatorType": "author",
+                    "name": first,
+                })
+            elif last:
+                creators.append({
+                    "creatorType": "author",
+                    "name": last,
                 })
     else:
         for author in author_list:
@@ -231,11 +241,21 @@ def create_item(work, collection_key):
                 first = author.get("first") or author.get("firstName")
                 last = author.get("last") or author.get("lastName")
 
-                if first or last:
+                if first and last:
                     creators.append({
                         "creatorType": "author",
                         "firstName": first,
                         "lastName": last
+                    })
+                elif first:
+                    creators.append({
+                        "creatorType": "author",
+                        "name": first,
+                    })
+                elif last:
+                    creators.append({
+                        "creatorType": "author",
+                        "name": last,
                     })
                 elif author.get("display_name"):
                     creators.append({
