@@ -2,7 +2,7 @@ import json
 from scholarly import scholarly
 import re
 from pathlib import Path
-from datetime import datetime
+from datetime import datetime, timezone
 
 DATA_DIR = Path("data")
 DATA_DIR.mkdir(exist_ok=True)
@@ -51,7 +51,7 @@ def query_google_scholar(search_term, max_results=500):
         })
 
     # Filter to last year (year-level precision only)
-    current_year = datetime.utcnow().year
+    current_year = datetime.now(timezone.utc).year
     cutoff_year = current_year - 1
 
     filtered_results = []
@@ -84,7 +84,7 @@ def main():
                 "pre-registered report",
                 "preregistered research"
             ],
-            "retrieved_at": datetime.utcnow().isoformat(),
+            "retrieved_at": datetime.now(timezone.utc).isoformat(),
             "count": len(scholar_results),
             "results": scholar_results
         }, f, indent=2)
