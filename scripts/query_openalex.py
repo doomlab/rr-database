@@ -1,7 +1,7 @@
 import json
 import requests
 from pathlib import Path
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 OPENALEX_BASE = "https://api.openalex.org"
 
@@ -33,7 +33,7 @@ def query_openalex_by_title(title):
 def main():
     DATA_DIR.mkdir(exist_ok=True)
 
-    one_month_ago = (datetime.utcnow() - timedelta(days=30)).strftime("%Y-%m-%d")
+    one_year_ago = (datetime.now(timezone.utc) - timedelta(days=365)).strftime("%Y-%m-%d")
 
     params = {
         "search": (
@@ -42,11 +42,11 @@ def main():
             '"pre-registered report" OR '
             '"preregistered research"'
         ),
-        "filter": f"from_publication_date:{one_month_ago}",
+        "filter": f"from_publication_date:{one_year_ago}",
         "per-page": 200
     }
 
-    print("Querying OpenAlex for registered / preregistered reports from the last month")
+    print("Querying OpenAlex for registered / preregistered reports from the last year")
 
     r = requests.get(f"{OPENALEX_BASE}/works", params=params, timeout=60)
     r.raise_for_status()
@@ -61,8 +61,8 @@ def main():
                 "pre-registered report",
                 "preregistered research"
             ],
-            "from_publication_date": one_month_ago,
-            "retrieved_at": datetime.utcnow().isoformat(),
+            "from_publication_date": one_year_ago,
+            "retrieved_at": datetime.now(timezone.utc).isoformat(),
             "count": len(works)
         },
         "works": []
@@ -93,7 +93,7 @@ def main():
 
     print(
         f"Saved {len(results['works'])} Registered Reports "
-        f"published since {one_month_ago}"
+        f"published since {one_year_ago}"
     )
 
 
