@@ -8,6 +8,8 @@ DATA_DIR = Path("data")
 DATA_DIR.mkdir(exist_ok=True)
 OUTPUT_PATH = DATA_DIR / "google_scholar_index.json"
 
+MIN_YEAR = 2013  # Registered Reports as a format launched in 2013
+
 
 REQUIRED_PHRASES = [
     "registered report",
@@ -77,7 +79,8 @@ def query_google_scholar(search_term, max_results=500):
     for r in results:
         year = r.get("year")
         try:
-            if year and int(year) < cutoff_year:
+            year_int = int(year) if year else None
+            if not year_int or year_int < MIN_YEAR or year_int < cutoff_year:
                 continue
         except ValueError:
             continue
