@@ -1,4 +1,5 @@
 import json
+import time
 import requests
 from pathlib import Path
 from datetime import datetime, timedelta, timezone
@@ -43,15 +44,27 @@ def main():
             '"preregistered research"'
         ),
         "filter": f"from_publication_date:{one_year_ago}",
-        "per-page": 200
+        "per-page": 200,
+        "cursor": "*"
     }
 
     print("Querying OpenAlex for registered / preregistered reports from the last year")
 
-    r = requests.get(f"{OPENALEX_BASE}/works", params=params, timeout=60)
-    r.raise_for_status()
-
-    works = r.json().get("results", [])
+    works = []
+    page = 1
+    while True:
+        print(f"  Fetching page {page}...")
+        r = requests.get(f"{OPENALEX_BASE}/works", params=params, timeout=60)
+        r.raise_for_status()
+        data = r.json()
+        batch = data.get("results", [])
+        works.extend(batch)
+        next_cursor = data.get("meta", {}).get("next_cursor")
+        if not next_cursor or not batch:
+            break
+        params["cursor"] = next_cursor
+        page += 1
+        time.sleep(0.5)
 
     results = {
         "query_metadata": {
