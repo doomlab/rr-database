@@ -7,7 +7,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 DATA_DIR = Path("data")
-INPUT_PATH = DATA_DIR / "deduplicated_candidates.json"
+INPUT_PATH = DATA_DIR / "enriched_candidates.json"
 
 # --- Test / staging Zotero credentials ---
 ZOTERO_API_KEY = os.environ["ZOTERO_TEST_API_KEY"]
@@ -81,7 +81,18 @@ def create_item(work, collection_key):
     openalex = _source_record(sources.get("openalex"))
     scholar = _source_record(sources.get("google_scholar")) or _source_record(sources.get("scholar"))
     pcirr_records = _source_record(sources.get("pcirr"))
-    pcirr = work.get("pcirr_metadata") or pcirr_records
+    raw_pcirr_meta = work.get("pcirr_metadata")
+    # pcirr_metadata is stored as a list; normalise so pcirr_list is always a list
+    if isinstance(raw_pcirr_meta, list):
+        pcirr_list = raw_pcirr_meta
+    elif isinstance(raw_pcirr_meta, dict):
+        pcirr_list = [raw_pcirr_meta]
+    elif pcirr_records:
+        pcirr_list = pcirr_records if isinstance(pcirr_records, list) else [pcirr_records]
+    else:
+        pcirr_list = []
+    # Single representative record for WAVE 3 bibliographic fallback
+    pcirr = pcirr_list[0] if pcirr_list else None
 
     # -----------------------------
     # WAVE 1: OpenAlex
@@ -296,8 +307,11 @@ def create_item(work, collection_key):
     if work.get("dedup_reason"):
         dynamic_tags.append({"tag": f"dedup:{work.get('dedup_reason')}"})
 
-    if pcirr and pcirr.get("stage"):
-        dynamic_tags.append({"tag": f"pcirr:{pcirr.get('stage')}"})
+    for p in pcirr_list:
+        if p.get("stage"):
+            tag = {"tag": f"pcirr:{p.get('stage')}"}
+            if tag not in dynamic_tags:
+                dynamic_tags.append(tag)
 
     # -----------------------------
     # Build Zotero item
@@ -339,14 +353,19 @@ def create_item(work, collection_key):
     if "successful" in resp and resp["successful"]:
         parent_key = list(resp["successful"].values())[0]["key"]
 
-        # Attach PCI metadata note if available
-        if pcirr:
-            note_text = f"""
-<b>PCI Registered Report Metadata</b><br>
-Stage: {pcirr.get('stage')}<br>
-PCI Article URL: {pcirr.get('article_url')}<br>
-Stage 1 Protocol: {pcirr.get('stage1_protocol_url')}<br>
-"""
+        # Attach PCI metadata note if available — one block per pcirr record
+        if pcirr_list:
+            blocks = []
+            for p in pcirr_list:
+                lines = [
+                    "<b>PCI Registered Report Metadata</b>",
+                    f"Stage: {p.get('stage') or 'N/A'}",
+                    f"PCI Article URL: {p.get('article_url') or 'N/A'}",
+                    f"Stage 1 Protocol: {p.get('stage1_protocol_url') or 'N/A'}",
+                    f"Bias Level: {p.get('bias_level') or 'N/A'}",
+                ]
+                blocks.append("<br>".join(lines))
+            note_text = "<br><br>".join(blocks)
 
             note_item = {
                 "itemType": "note",
