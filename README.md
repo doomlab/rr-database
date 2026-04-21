@@ -4,16 +4,38 @@ Registered Report Database
 To be able to run this repo on your local machine, please create a `.env` file with the following variables:
 
 ```
-ZOTERO_API_KEY=YOURAPI
+# Production library (public)
+ZOTERO_API_KEY=YOUR_API_KEY
 ZOTERO_LIBRARY_TYPE=group
 ZOTERO_LIBRARY_ID=5937153
 
-ZOTERO_TEST_LIBRARY_TYPE = group
-ZOTERO_TEST_LIBRARY_ID   = 6373812
-ZOTERO_TEST_API_KEY      = YOURAPI
+# Staging library (private, shared — where HitL review happens)
+ZOTERO_STAGING_API_KEY=YOUR_API_KEY
+ZOTERO_STAGING_LIBRARY_TYPE=group
+ZOTERO_STAGING_LIBRARY_ID=6373812
+
+# Personal test library (private, your own — for testing the workflow safely)
+ZOTERO_TEST_API_KEY=YOUR_API_KEY
+ZOTERO_TEST_LIBRARY_TYPE=group
+ZOTERO_TEST_LIBRARY_ID=YOUR_TEST_LIBRARY_ID
 ```
 
-Get a zotero API key by following this guide: https://forums.zotero.org/discussion/119548/generate-api-key-from-zotero-account
+Get a Zotero API key by following this guide: https://forums.zotero.org/discussion/119548/generate-api-key-from-zotero-account
+
+### Setting up your personal test library
+
+To test the workflow without touching the shared staging library, create your own Zotero group library:
+
+1. Go to https://www.zotero.org/groups/new and create a new group (any name, e.g. `rr_database_test`). Private visibility is fine.
+2. Note the group ID from the URL (e.g. `https://www.zotero.org/groups/XXXXXXX/...`).
+3. Add that ID as `ZOTERO_TEST_LIBRARY_ID` in your `.env`.
+4. Use your own API key for `ZOTERO_TEST_API_KEY` (same key as the others, or a separate one scoped to this group).
+
+To run `push_to_staging_zotero.py` against your test library instead of staging, pass the `--test` flag:
+
+```bash
+python scripts/push_to_staging_zotero.py --test
+```
 
 ## Current Workflow
 
@@ -23,7 +45,7 @@ Get a zotero API key by following this guide: https://forums.zotero.org/discussi
     * Pulls data from the current hand built library: 
     * Production: https://www.zotero.org/groups/5937153/registered_reports/library
     * Staging: https://www.zotero.org/groups/6373812/rr_database_staging/ 
-    * Inputs/outputs: reads `.env` and writes Zotero snapshots to `data/zotero_raw_production.json`/`data/zotero_raw_staging.json`, plus normalized copies in `data/source_of_truth_production.json` and `data/source_of_truth_staging.json`.
+    * Inputs/outputs: reads `ZOTERO_*` and `ZOTERO_STAGING_*` env vars, writes Zotero snapshots to `data/zotero_raw_production.json`/`data/zotero_raw_staging.json`, plus normalized copies in `data/source_of_truth_production.json` and `data/source_of_truth_staging.json`.
 * /scripts/build_zotero_index.py
     * Puts together a dictionary of the DOIs in the library with their zotero key 
     * Keeps these separate for duplicate tags

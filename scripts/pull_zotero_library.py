@@ -11,9 +11,9 @@ API_KEY = os.environ["ZOTERO_API_KEY"]
 LIB_TYPE = os.environ["ZOTERO_LIBRARY_TYPE"]  # "user" or "group"
 LIB_ID = os.environ["ZOTERO_LIBRARY_ID"]
 
-TEST_API_KEY = os.environ["ZOTERO_TEST_API_KEY"]
-TEST_LIB_TYPE = os.environ["ZOTERO_TEST_LIBRARY_TYPE"]  # "user" or "group"
-TEST_LIB_ID = os.environ["ZOTERO_TEST_LIBRARY_ID"]
+STAGING_API_KEY = os.environ["ZOTERO_STAGING_API_KEY"]
+STAGING_LIB_TYPE = os.environ["ZOTERO_STAGING_LIBRARY_TYPE"]  # "user" or "group"
+STAGING_LIB_ID = os.environ["ZOTERO_STAGING_LIBRARY_ID"]
 
 
 def pull_library(api_key, lib_type, lib_id):
@@ -89,9 +89,9 @@ prod_normalized = normalize_items(prod_items)
 with open("data/source_of_truth_production.json", "w") as f:
     json.dump(prod_normalized, f, indent=2)
 
-# --- Pull Test / Staging Library ---
+# --- Pull Staging Library ---
 print("Pulling STAGING Zotero library...")
-stage_items = pull_library(TEST_API_KEY, TEST_LIB_TYPE, TEST_LIB_ID)
+stage_items = pull_library(STAGING_API_KEY, STAGING_LIB_TYPE, STAGING_LIB_ID)
 print(f"Pulled {len(stage_items)} staging items")
 
 with open("data/zotero_raw_staging.json", "w") as f:
