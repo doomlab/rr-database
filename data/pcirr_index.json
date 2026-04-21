@@ -2,34 +2,9 @@
   "source": "PCI Registered Reports",
   "base_url": "https://rr.peercommunityin.org/PCIRegisteredReports",
   "pages_scraped": 5,
-  "retrieved_at": "2026-04-21T16:48:09.789739",
+  "retrieved_at": "2026-04-21T16:56:16.315358+00:00",
   "count": 12,
   "records": [
-    {
-      "stage": "Stage 2",
-      "title": "Language control by bilingual speakers for sentence production",
-      "authors": [
-        "Anna Dalakoura",
-        "Neil W. Kirk",
-        "Mathieu Declerck"
-      ],
-      "article_url": "https://rr.peercommunityin.org/PCIRegisteredReports/articles/rec?id=1768",
-      "doi": "https://osf.io/c2rua/files/sbcy4",
-      "stage1_protocol_url": "https://osf.io/z5uty"
-    },
-    {
-      "stage": "Stage 1",
-      "title": "Are individual difference in inattentional blindness related to cognitive abilities or personality traits?",
-      "authors": [
-        "Daniel J. Simons",
-        "Yifan Ding",
-        "Connor M. Hults",
-        "Brent W. Roberts"
-      ],
-      "article_url": "https://rr.peercommunityin.org/PCIRegisteredReports/articles/rec?id=753",
-      "doi": "https://osf.io/xtwfs",
-      "stage1_protocol_url": " https://osf.io/zsqyj"
-    },
     {
       "stage": "Stage 1",
       "title": "Could the COM-B model help us understand the open research practices of nutrition researchers?",
@@ -42,20 +17,21 @@
       ],
       "article_url": "https://rr.peercommunityin.org/PCIRegisteredReports/articles/rec?id=1264",
       "doi": "https://osf.io/j6npd/files/eb56w?view_only=95b39f669d1e44b5b6818fcf1be0792c",
-      "stage1_protocol_url": "https://osf.io/5d8cz"
+      "stage1_protocol_url": "https://osf.io/5d8cz",
+      "bias_level": "Level 6"
     },
     {
-      "stage": "Stage 1",
-      "title": "Do children and adults value different rewards equally?",
+      "stage": "Stage 2",
+      "title": "Language control by bilingual speakers for sentence production",
       "authors": [
-        "Nozomi Yamamoto",
-        "Miharu Kajita",
-        "Hoshinori Kanazawa",
-        "Yusuke Moriguchi"
+        "Anna Dalakoura",
+        "Neil W. Kirk",
+        "Mathieu Declerck"
       ],
-      "article_url": "https://rr.peercommunityin.org/PCIRegisteredReports/articles/rec?id=958",
-      "doi": "https://osf.io/yrn83?view_only=3d2ec9ba23d548ca9c0563980355b9d9",
-      "stage1_protocol_url": "https://osf.io/uq379"
+      "article_url": "https://rr.peercommunityin.org/PCIRegisteredReports/articles/rec?id=1768",
+      "doi": "https://osf.io/c2rua/files/sbcy4",
+      "stage1_protocol_url": "https://osf.io/z5uty",
+      "bias_level": "Level 6"
     },
     {
       "stage": "Stage 2",
@@ -68,72 +44,22 @@
       ],
       "article_url": "https://rr.peercommunityin.org/PCIRegisteredReports/articles/rec?id=1144",
       "doi": "https://osf.io/r9kj4/files/zbn5v",
-      "stage1_protocol_url": "https://osf.io/3phzr"
+      "stage1_protocol_url": "https://osf.io/3phzr",
+      "bias_level": "Level 6"
     },
     {
       "stage": "Stage 1",
-      "title": "Is borderline personality disorder linked to impairment of the tactile mirror system?",
-      "authors": [
-        "Agnese Zazio",
-        "Giacomo Guidali",
-        "Roberta Rossi",
-        "Nadia Bolognini",
-        "Marta Bortoletto"
-      ],
-      "article_url": "https://rr.peercommunityin.org/PCIRegisteredReports/articles/rec?id=367",
-      "doi": "https://osf.io/ujkxb?view_only=c0d7ffddc6d647949099e9b6e26f6f49",
-      "stage1_protocol_url": "https://osf.io/sqnwd"
-    },
-    {
-      "stage": "Stage 2",
       "title": "Do children and adults value different rewards equally?",
       "authors": [
         "Nozomi Yamamoto",
         "Miharu Kajita",
         "Hoshinori Kanazawa",
-        "and Yusuke Moriguchi"
+        "Yusuke Moriguchi"
       ],
-      "article_url": "https://rr.peercommunityin.org/PCIRegisteredReports/articles/rec?id=1380",
-      "doi": "https://osf.io/zneqc/files/5pjrb",
-      "stage1_protocol_url": "https://osf.io/uq379"
-    },
-    {
-      "stage": "Stage 2",
-      "title": "Neither cognitive ability nor personality reliably predict who notices unexpected objects",
-      "authors": [
-        "Daniel J. Simons",
-        "Yifan Ding",
-        "Connor M. Hults",
-        "Brent W. Roberts"
-      ],
-      "article_url": "https://rr.peercommunityin.org/PCIRegisteredReports/articles/rec?id=1192",
-      "doi": "https://osf.io/z2fdu/files/f8eds",
-      "stage1_protocol_url": "https://osf.io/zsqyj"
-    },
-    {
-      "stage": "Stage 1",
-      "title": "Language control by bilingual speakers for sentence production",
-      "authors": [
-        "Anna Dalakoura",
-        "Neil W. Kirk",
-        "Mathieu Declerck"
-      ],
-      "article_url": "https://rr.peercommunityin.org/PCIRegisteredReports/articles/rec?id=955",
-      "doi": "https://osf.io/qp9km?view_only=782100d6a97c4646947e5a0b0dc37c87",
-      "stage1_protocol_url": "https://osf.io/z5uty"
-    },
-    {
-      "stage": "Stage 1",
-      "title": "Comparing the effects of conventional vs. high-definition tDCS on response inhibition",
-      "authors": [
-        "Giulia Mattavelli",
-        "Riccardo Pirone",
-        "Claudia Gianelli",
-        "Nicola Canessa"
-      ],
-      "article_url": "https://rr.peercommunityin.org/PCIRegisteredReports/articles/rec?id=433",
-      "doi": "https://osf.io/x8z4d",
-      "stage1_protocol_url": "https://osf.io/3phzr"
+      "article_url": "https://rr.peercommunityin.org/PCIRegisteredReports/articles/rec?id=958",
+      "doi": "https://osf.io/yrn83?view_only=3d2ec9ba23d548ca9c0563980355b9d9",
+      "stage1_protocol_url": "https://osf.io/uq379",
+      "bias_level": "Level 6"
     },
     {
       "stage": "Stage 1",
@@ -154,7 +80,64 @@
       ],
       "article_url": "https://rr.peercommunityin.org/PCIRegisteredReports/articles/rec?id=1095",
       "doi": "https://osf.io/gfnqd",
-      "stage1_protocol_url": "https://osf.io/gfnqd"
+      "stage1_protocol_url": "https://osf.io/gfnqd",
+      "bias_level": "Level 6"
+    },
+    {
+      "stage": "Stage 1",
+      "title": "Comparing the effects of conventional vs. high-definition tDCS on response inhibition",
+      "authors": [
+        "Giulia Mattavelli",
+        "Riccardo Pirone",
+        "Claudia Gianelli",
+        "Nicola Canessa"
+      ],
+      "article_url": "https://rr.peercommunityin.org/PCIRegisteredReports/articles/rec?id=433",
+      "doi": "https://osf.io/x8z4d",
+      "stage1_protocol_url": "https://osf.io/3phzr",
+      "bias_level": "Level 6"
+    },
+    {
+      "stage": "Stage 2",
+      "title": "Neither cognitive ability nor personality reliably predict who notices unexpected objects",
+      "authors": [
+        "Daniel J. Simons",
+        "Yifan Ding",
+        "Connor M. Hults",
+        "Brent W. Roberts"
+      ],
+      "article_url": "https://rr.peercommunityin.org/PCIRegisteredReports/articles/rec?id=1192",
+      "doi": "https://osf.io/z2fdu/files/f8eds",
+      "stage1_protocol_url": "https://osf.io/zsqyj",
+      "bias_level": "Level 6"
+    },
+    {
+      "stage": "Stage 1",
+      "title": "Are individual difference in inattentional blindness related to cognitive abilities or personality traits?",
+      "authors": [
+        "Daniel J. Simons",
+        "Yifan Ding",
+        "Connor M. Hults",
+        "Brent W. Roberts"
+      ],
+      "article_url": "https://rr.peercommunityin.org/PCIRegisteredReports/articles/rec?id=753",
+      "doi": "https://osf.io/xtwfs",
+      "stage1_protocol_url": " https://osf.io/zsqyj",
+      "bias_level": "Level 6"
+    },
+    {
+      "stage": "Stage 2",
+      "title": "Do children and adults value different rewards equally?",
+      "authors": [
+        "Nozomi Yamamoto",
+        "Miharu Kajita",
+        "Hoshinori Kanazawa",
+        "and Yusuke Moriguchi"
+      ],
+      "article_url": "https://rr.peercommunityin.org/PCIRegisteredReports/articles/rec?id=1380",
+      "doi": "https://osf.io/zneqc/files/5pjrb",
+      "stage1_protocol_url": "https://osf.io/uq379",
+      "bias_level": "Level 6"
     },
     {
       "stage": "Stage 2",
@@ -173,7 +156,36 @@
       ],
       "article_url": "https://rr.peercommunityin.org/PCIRegisteredReports/articles/rec?id=1454",
       "doi": "https://doi.org/10.64898/2026.01.16.699954",
-      "stage1_protocol_url": "https://osf.io/sqnwd"
+      "stage1_protocol_url": "https://osf.io/sqnwd",
+      "bias_level": "Level 6"
+    },
+    {
+      "stage": "Stage 1",
+      "title": "Is borderline personality disorder linked to impairment of the tactile mirror system?",
+      "authors": [
+        "Agnese Zazio",
+        "Giacomo Guidali",
+        "Roberta Rossi",
+        "Nadia Bolognini",
+        "Marta Bortoletto"
+      ],
+      "article_url": "https://rr.peercommunityin.org/PCIRegisteredReports/articles/rec?id=367",
+      "doi": "https://osf.io/ujkxb?view_only=c0d7ffddc6d647949099e9b6e26f6f49",
+      "stage1_protocol_url": "https://osf.io/sqnwd",
+      "bias_level": "Level 6"
+    },
+    {
+      "stage": "Stage 1",
+      "title": "Language control by bilingual speakers for sentence production",
+      "authors": [
+        "Anna Dalakoura",
+        "Neil W. Kirk",
+        "Mathieu Declerck"
+      ],
+      "article_url": "https://rr.peercommunityin.org/PCIRegisteredReports/articles/rec?id=955",
+      "doi": "https://osf.io/qp9km?view_only=782100d6a97c4646947e5a0b0dc37c87",
+      "stage1_protocol_url": "https://osf.io/z5uty",
+      "bias_level": "Level 6"
     }
   ]
 }
