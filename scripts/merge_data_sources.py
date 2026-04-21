@@ -3,7 +3,7 @@ import os
 from collections import defaultdict
 
 import requests
-from datetime import datetime
+from datetime import datetime, timezone
 
 BASE_DIR = os.path.dirname(os.path.dirname(__file__))
 DATA_DIR = os.path.join(BASE_DIR, "data")
@@ -91,11 +91,12 @@ def resolve_record(record, source_name):
 
     # Preserve PCI Stage info for Zotero notes
     if source_name == "pcirr":
-        resolved["pcirr_metadata"] = {
+        resolved["pcirr_metadata"] = [{
             "stage": record.get("stage"),
             "article_url": record.get("article_url"),
-            "stage1_protocol_url": record.get("stage1_protocol_url")
-        }
+            "stage1_protocol_url": record.get("stage1_protocol_url"),
+            "bias_level": record.get("bias_level")
+        }]
 
     resolved["openalex_match"] = True
     return resolved
@@ -118,7 +119,8 @@ def merge_and_resolve():
 
     # --- Seed with existing OpenAlex data ---
     for work in existing_openalex_records:
-        openalex_id = work.get("id")
+        # stored format uses "openalex_id"; live API response uses "id"
+        openalex_id = work.get("openalex_id") or work.get("id")
         if not openalex_id:
             continue
 
@@ -126,7 +128,8 @@ def merge_and_resolve():
             "openalex_id": openalex_id,
             "doi": work.get("doi"),
             "title": work.get("title"),
-            "publication_year": work.get("publication_year"),
+            # stored format uses "year"; live API response uses "publication_year"
+            "publication_year": work.get("publication_year") or work.get("year"),
             "type": work.get("type"),
             "sources": {
                 "openalex": work
@@ -203,9 +206,16 @@ def merge_and_resolve():
 
             merge_sources(existing_sources, new_sources)
 
-            # Preserve PCI metadata if present
+            # Accumulate PCI metadata as a list — don't overwrite, each pcirr
+            # record (Stage 1 / Stage 2) may resolve to the same OpenAlex ID
             if "pcirr_metadata" in resolved:
-                existing["pcirr_metadata"] = resolved["pcirr_metadata"]
+                current = existing.get("pcirr_metadata")
+                if current is None:
+                    existing["pcirr_metadata"] = [resolved["pcirr_metadata"]]
+                elif isinstance(current, list):
+                    current.append(resolved["pcirr_metadata"])
+                else:
+                    existing["pcirr_metadata"] = [current, resolved["pcirr_metadata"]]
         else:
             resolved_index[openalex_id] = resolved
 
@@ -251,7 +261,7 @@ def merge_and_resolve():
 
     with open(OUTPUT_PATH, "w", encoding="utf-8") as f:
         json.dump({
-            "generated_at": datetime.utcnow().isoformat(),
+            "generated_at": datetime.now(timezone.utc).isoformat(),
             "matched_count": len(final_records),
             "unmatched_count": len(unmatched_records),
             "processed_count": total_processed,
