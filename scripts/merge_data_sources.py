@@ -1,5 +1,6 @@
 import json
 import os
+import re
 from collections import defaultdict
 
 import requests
@@ -20,6 +21,20 @@ OUTPUT_PATH = os.path.join(DATA_DIR, "merged_index.json")
 def load_json(path):
     with open(path, "r", encoding="utf-8") as f:
         return json.load(f)
+
+
+# Matches clinical trial abstracts that include the IRRID boilerplate field
+# e.g. "International Registered Report Identifier (IRRID): Not applicable"
+_IRRID_NOT_APPLICABLE = re.compile(
+    r"(registered report identifier|irrid)\s*[:\)]\s*not applicable",
+    re.IGNORECASE,
+)
+
+
+def is_false_positive(record):
+    """Return True if the record is a clinical-trial abstract with IRRID: Not applicable."""
+    abstract = record.get("abstract") or ""
+    return bool(_IRRID_NOT_APPLICABLE.search(abstract))
 
 
 def normalize_doi(doi):
@@ -221,6 +236,9 @@ def merge_and_resolve():
 
     def process_records(records, source_name):
         for record in records:
+            if is_false_positive(record):
+                print(f"Skipping false positive [{source_name}]: {record.get('title')}")
+                continue
             source_stats[source_name]["processed"] += 1
             resolved = resolve_record(record, source_name)
             if resolved:
