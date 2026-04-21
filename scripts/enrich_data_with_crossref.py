@@ -4,10 +4,28 @@ import requests
 from pathlib import Path
 
 DATA_DIR = Path("data")
-INPUT_PATH = DATA_DIR / "merged_index.json"
-OUTPUT_PATH = DATA_DIR / "enriched_index.json"
+INPUT_PATH = DATA_DIR / "deduplicated_candidates.json"
+OUTPUT_PATH = DATA_DIR / "enriched_candidates.json"
 
 CROSSREF_BASE = "https://api.crossref.org/works"
+
+
+def normalize_doi(doi):
+    if not doi:
+        return None
+    doi = doi.strip()
+    doi = doi.replace("https://doi.org/", "")
+    doi = doi.replace("http://doi.org/", "")
+    return doi
+
+
+def parse_crossref_date(date_obj):
+    if not date_obj:
+        return None
+    parts = date_obj.get("date-parts", [[]])[0]
+    if not parts:
+        return None
+    return "-".join(str(p).zfill(2) for p in parts)
 
 
 def query_crossref(doi):
@@ -20,7 +38,7 @@ def query_crossref(doi):
 
 def enrich_work(work):
     enriched = dict(work)
-    doi = work.get("doi")
+    doi = normalize_doi(work.get("doi"))
 
     enriched["crossref"] = {
         "queried": False,
@@ -49,10 +67,11 @@ def enrich_work(work):
         "volume": crossref.get("volume"),
         "issue": crossref.get("issue"),
         "pages": crossref.get("page"),
-        "issn": crossref.get("ISSN"),
+        "issn": (crossref.get("ISSN") or [None])[0],
         "publisher": crossref.get("publisher"),
-        "published": crossref.get("published-print")
-            or crossref.get("published-online"),
+        "published": parse_crossref_date(
+            crossref.get("published-print") or crossref.get("published-online")
+        ),
         "authors_structured": [
             {
                 "first": a.get("given"),
@@ -70,33 +89,28 @@ def main():
     with open(INPUT_PATH) as f:
         data = json.load(f)
 
-    works = data.get("records", [])
-    unmatched = data.get("unmatched_external_records", [])
+    new_candidates = data.get("new_candidates", [])
+    dup_prod = data.get("duplicate_production", [])
+    dup_stage = data.get("duplicate_staging", [])
 
-    print(f"Enriching {len(works)} resolved OpenAlex records with Crossref metadata")
+    print(f"Enriching {len(new_candidates)} new candidates with Crossref metadata (skipping {len(dup_prod) + len(dup_stage)} duplicates)")
 
-    enriched_works = []
-
-    for work in works:
-        title = work.get("title", "<no title>")
-        print(f"Enriching: {title}")
-        enriched_works.append(enrich_work(work))
+    enriched = []
+    for work in new_candidates:
+        print(f"Enriching: {work.get('title', '<no title>')}")
+        enriched.append(enrich_work(work))
 
     output = {
-        "metadata": {
-            "source": "Resolved OpenAlex + Crossref",
-            "matched_count": len(enriched_works),
-            "unmatched_count": len(unmatched)
-        },
-        "records": enriched_works,
-        "unmatched_external_records": unmatched
+        "new_candidates": enriched,
+        "duplicate_production": dup_prod,
+        "duplicate_staging": dup_stage
     }
 
     DATA_DIR.mkdir(exist_ok=True)
     with open(OUTPUT_PATH, "w") as f:
         json.dump(output, f, indent=2)
 
-    print(f"Saved enriched metadata to {OUTPUT_PATH}")
+    print(f"Saved {len(enriched)} enriched candidates to {OUTPUT_PATH}")
 
 
 if __name__ == "__main__":

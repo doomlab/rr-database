@@ -41,25 +41,28 @@ Get a zotero API key by following this guide: https://forums.zotero.org/discussi
     * Pulls new articles from PCIRR
     * Inputs/outputs: no upstream data required; writes the scraped PCIRR records to `data/pcirr_index.json`.
 * /scripts/merge_data_sources.py
-    * Runs queries for scholar, pcirr into openalex
-    * Includes resolved information found in open alex and unresolved ones not matched
-    * Then merges all three data sources together
-    * Inputs/outputs: starts from `data/google_scholar_index.json`, `data/pcirr_index.json`, and any cached `data/openalex_index.json`, resolves everything via OpenAlex, and writes `data/merged_index.json`.
-* /scripts/enrich_data_with_crossref.py
-    * Adds more metadata and helps with deduplication 
-    * Inputs/outputs: reads `data/merged_index.json` (the resolved index) and writes `data/enriched_index.json` with additional Crossref metadata.
+    * Merges Scholar, PCI RR, and cached OpenAlex records into a single index keyed on OpenAlex ID
+    * Scholar and PCI RR records are resolved against the OpenAlex API (DOI first, title fallback); unmatched records are preserved under synthetic keys
+    * Inputs/outputs: reads `data/google_scholar_index.json`, `data/pcirr_index.json`, and `data/openalex_index.json`, writes `data/merged_index.json`.
 
 ## Step 3: Deduplication and Tags
 
 * /scripts/deduplicate_results.py
-    * Examines the production zotero library and then deduplicates anything you've found already 
-    * Adds tags for fuzzy match duplicates 
-    * Inputs/outputs: reads `data/enriched_index.json` plus the Zotero indexes (`data/zotero_index_production.json` and `data/zotero_index_staging.json`), and writes deduplication candidates to `data/deduplicated_candidates.json`.
+    * Compares merged records against the production and staging Zotero libraries
+    * Exact DOI matches are dropped; titles within 75% similarity are flagged as fuzzy duplicates
+    * Inputs/outputs: reads `data/merged_index.json` plus `data/zotero_index_production.json` and `data/zotero_index_staging.json`, writes `data/deduplicated_candidates.json`.
 
-## Step 4: Send Information to Staging Library
+## Step 4: Enrich New Candidates
+
+* /scripts/enrich_data_with_crossref.py
+    * Enriches only the new (non-duplicate) candidates with additional metadata from Crossref — journal, volume, issue, pages, ISSN, publisher, publication date, and structured authors
+    * Running enrichment after deduplication avoids Crossref API calls for records already in the library
+    * Inputs/outputs: reads `data/deduplicated_candidates.json` and writes `data/enriched_candidates.json`.
+
+## Step 5: Send Information to Staging Library
 
 * https://www.zotero.org/groups/6373812/settings/library 
 * The staging library is used to ensure we don't screw up the real database connected to COS/OSF. 
 * /scripts/push_to_staging_zotero.py
     * Adds the new ones to the zotero library for human review. 
-    * Inputs/outputs: reads `data/deduplicated_candidates.json` and pushes the resulting items into the staging Zotero group collection (no additional JSON output).
+    * Inputs/outputs: reads `data/enriched_candidates.json` and pushes the resulting items into the staging Zotero group collection (no additional JSON output).

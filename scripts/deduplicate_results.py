@@ -5,7 +5,7 @@ from difflib import SequenceMatcher
 from normalize import normalize_doi, normalize_title
 
 DATA_DIR = Path("data")
-OPENALEX_PATH = DATA_DIR / "enriched_index.json"
+OPENALEX_PATH = DATA_DIR / "merged_index.json"
 PROD_INDEX_PATH = DATA_DIR / "zotero_index_production.json"
 STAGE_INDEX_PATH = DATA_DIR / "zotero_index_staging.json"
 OUTPUT_PATH = DATA_DIR / "deduplicated_candidates.json"
