@@ -1,7 +1,7 @@
 import requests
 from bs4 import BeautifulSoup
 from pathlib import Path
-from datetime import datetime
+from datetime import datetime, timezone
 import json
 import time
 import re
@@ -132,7 +132,7 @@ def scrape_article_details(article_urls):
             doi = doi_link["href"]
 
         # --- Stage 1 OSF link (only for Stage 2 articles) ---
-        stage1_protocol_url = None   
+        stage1_protocol_url = None
         strong_tag = soup.find(
             "strong",
             string=re.compile(r"URL\s+to\s+the\s+preregistered\s+Stage\s+1\s+protocol", re.IGNORECASE)
@@ -143,13 +143,27 @@ def scrape_article_details(article_urls):
             if link_tag:
                 stage1_protocol_url = link_tag["href"]
 
+        # --- Bias level ---
+        bias_level = None
+        bias_tag = soup.find(
+            "strong",
+            string=re.compile(r"Level\s+of\s+bias\s+control\s+achieved", re.IGNORECASE)
+        )
+
+        if bias_tag:
+            parent_text = bias_tag.parent.get_text(strip=True)
+            match = re.search(r"Level\s+of\s+bias\s+control\s+achieved[:\s]+(Level\s+\d+)", parent_text, re.IGNORECASE)
+            if match:
+                bias_level = match.group(1)
+
         records.append({
             "stage": stage,
             "title": title,
             "authors": authors,
             "article_url": url,
             "doi": doi,
-            "stage1_protocol_url": stage1_protocol_url
+            "stage1_protocol_url": stage1_protocol_url,
+            "bias_level": bias_level
         })
 
         time.sleep(1)
@@ -166,7 +180,7 @@ def main():
             "source": "PCI Registered Reports",
             "base_url": BASE_URL,
             "pages_scraped": 5,
-            "retrieved_at": datetime.utcnow().isoformat(),
+            "retrieved_at": datetime.now(timezone.utc).isoformat(),
             "count": len(records),
             "records": records
         }, f, indent=2)
