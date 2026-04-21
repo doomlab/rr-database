@@ -9,6 +9,24 @@ DATA_DIR.mkdir(exist_ok=True)
 OUTPUT_PATH = DATA_DIR / "google_scholar_index.json"
 
 
+REQUIRED_PHRASES = [
+    "registered report",
+    "preregistered report",
+    "pre-registered report",
+    "preregistered research",
+    "pre-registered research",
+]
+
+
+def contains_rr_phrase(record):
+    """Return True if the title or abstract contains at least one RR phrase."""
+    haystack = " ".join(filter(None, [
+        record.get("title", ""),
+        record.get("abstract", ""),
+    ])).lower()
+    return any(phrase in haystack for phrase in REQUIRED_PHRASES)
+
+
 def query_google_scholar(search_term, max_results=500):
     """
     Queries Google Scholar using the scholarly package.
@@ -55,13 +73,24 @@ def query_google_scholar(search_term, max_results=500):
     cutoff_year = current_year - 1
 
     filtered_results = []
+    skipped = 0
     for r in results:
         year = r.get("year")
         try:
-            if year and int(year) >= cutoff_year:
-                filtered_results.append(r)
+            if year and int(year) < cutoff_year:
+                continue
         except ValueError:
             continue
+
+        if not contains_rr_phrase(r):
+            skipped += 1
+            print(f"Filtered false positive: {r.get('title')}")
+            continue
+
+        filtered_results.append(r)
+
+    if skipped:
+        print(f"Removed {skipped} false positives (no RR phrase in title or abstract)")
 
     return filtered_results
 
