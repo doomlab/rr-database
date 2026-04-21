@@ -1,3 +1,4 @@
+import html
 import json
 import os
 import requests
@@ -74,6 +75,13 @@ def _source_record(payload):
     if isinstance(payload, list):
         return payload[-1]
     return payload
+
+
+def clean(value):
+    """Decode HTML entities in string values (e.g. &amp; → &)."""
+    if isinstance(value, str):
+        return html.unescape(value)
+    return value
 
 
 def create_item(work, collection_key):
@@ -318,18 +326,18 @@ def create_item(work, collection_key):
     # -----------------------------
     item = {
         "itemType": "journalArticle",
-        "title": title,
-        "DOI": doi,
-        "date": date,
-        "publicationTitle": publication_title,
-        "volume": volume,
-        "issue": issue,
-        "pages": pages,
-        "ISSN": issn,
-        "url": url,
-        "abstractNote": abstract,
-        "publisher": publisher,
-        "language": language,
+        "title": clean(title),
+        "DOI": clean(doi),
+        "date": clean(date),
+        "publicationTitle": clean(publication_title),
+        "volume": clean(volume),
+        "issue": clean(issue),
+        "pages": clean(pages),
+        "ISSN": clean(issn),
+        "url": clean(url),
+        "abstractNote": clean(abstract),
+        "publisher": clean(publisher),
+        "language": clean(language),
         "extra": (
             f"OpenAlex ID: {openalex_id}" if openalex_id else None
         ),
