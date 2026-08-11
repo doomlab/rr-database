@@ -1,0 +1,29 @@
+{
+  "name": "rr-database",
+  "version": "0.1.0",
+  "private": true,
+  "prisma": {
+    "schema": "db/schema.prisma"
+  },
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "studio": "prisma studio",
+    "migrate": "dotenv -e .env.local -- prisma migrate dev",
+    "migrate:prod": "prisma migrate deploy"
+  },
+  "dependencies": {
+    "@prisma/client": "5.4.2",
+    "next": "15.5.18",
+    "react": "19.0.0",
+    "react-dom": "19.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "18.11.9",
+    "@types/react": "19.0.0",
+    "dotenv-cli": "11.0.0",
+    "prisma": "5.4.2",
+    "typescript": "5.9.3"
+  }
+}

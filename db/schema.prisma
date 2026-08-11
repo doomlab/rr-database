@@ -1,0 +1,217 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+// ---------------------------------------------------------------------------
+// Users / auth
+// ---------------------------------------------------------------------------
+
+enum Role {
+  ADMIN
+  SUPER_ADMIN
+}
+
+model User {
+  id        Int      @id @default(autoincrement())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  email     String   @unique
+  name      String?
+  role      Role     @default(ADMIN)
+
+  hashedPassword String?
+  tokens         Token[]
+  sessions       Session[]
+
+  reviewedPapers Paper[]       @relation("PaperReviewedBy")
+  pipelineRuns   PipelineRun[] @relation("PipelineRunStartedBy")
+}
+
+model Session {
+  id                 Int       @id @default(autoincrement())
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+  expiresAt          DateTime?
+  handle             String    @unique
+  hashedSessionToken String?
+  antiCSRFToken      String?
+  publicData         String?
+  privateData        String?
+
+  user   User? @relation(fields: [userId], references: [id])
+  userId Int?
+}
+
+enum TokenType {
+  RESET_PASSWORD
+}
+
+model Token {
+  id          Int       @id @default(autoincrement())
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  hashedToken String
+  type        TokenType
+  expiresAt   DateTime
+  sentTo      String
+
+  user   User @relation(fields: [userId], references: [id])
+  userId Int
+
+  @@unique([hashedToken, type])
+}
+
+// ---------------------------------------------------------------------------
+// Papers
+// ---------------------------------------------------------------------------
+
+enum PaperStatus {
+  IMPORTED // came from a Zotero library import; already canonical
+  DISCOVERED // found by a discovery script, not yet merged/deduped
+  MERGED // resolved against OpenAlex, ready for dedup
+  DUPLICATE // matched an existing IMPORTED paper
+  NEW_CANDIDATE // passed dedup, not yet enriched
+  ENRICHED // Crossref enrichment complete, ready for review
+  PENDING_REVIEW // queued for admin review
+  APPROVED // admin approved; eligible to sync to Zotero
+  REJECTED // admin rejected; will not sync
+  SYNCED // successfully pushed to a Zotero library
+}
+
+enum Stage {
+  STAGE_1
+  STAGE_2
+}
+
+enum DiscoverySource {
+  ZOTERO_IMPORT
+  OPENALEX
+  GOOGLE_SCHOLAR
+  PCIRR
+}
+
+enum ZoteroSyncStatus {
+  NOT_SYNCED
+  SYNCED_STAGING
+  SYNCED_PRODUCTION
+}
+
+model Paper {
+  id        Int      @id @default(autoincrement())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Bibliographic metadata
+  title        String
+  doi          String?
+  abstract     String?
+  year         Int?
+  venue        String?
+  volume       String?
+  issue        String?
+  pages        String?
+  issn         String?
+  publisher    String?
+  language     String?
+  url          String?
+  citedByCount Int?
+  openAccess   Boolean?
+  itemType     String?
+
+  authors PaperAuthor[]
+
+  // RR-specific metadata
+  stage             Stage?
+  osfLink           String?
+  stage1ProtocolUrl String?
+  biasLevel         String?
+
+  // Source-tracking / provenance
+  openalexId              String? @unique
+  zoteroKeyProduction     String? @unique
+  zoteroKeyStaging        String? @unique
+  zoteroVersionProduction Int?
+  zoteroVersionStaging    Int?
+  discoveredVia           DiscoverySource[]
+  sourceMetadata          Json?
+  pcirrMetadata           Json?
+
+  // Dedup / review state
+  status         PaperStatus @default(DISCOVERED)
+  dedupReason    String?
+  crossrefQueried Boolean    @default(false)
+  crossrefFound   Boolean    @default(false)
+
+  canonicalPaperId Int?
+  canonical        Paper?  @relation("PaperDuplicates", fields: [canonicalPaperId], references: [id])
+  duplicates       Paper[] @relation("PaperDuplicates")
+
+  reviewedById Int?
+  reviewedBy   User?     @relation("PaperReviewedBy", fields: [reviewedById], references: [id])
+  reviewedAt   DateTime?
+  reviewNote   String?
+
+  // Sync-back state
+  zoteroSyncStatus ZoteroSyncStatus @default(NOT_SYNCED)
+  lastSyncedAt     DateTime?
+
+  @@index([status])
+  @@index([doi])
+}
+
+model Author {
+  id   Int    @id @default(autoincrement())
+  name String @unique
+
+  papers PaperAuthor[]
+}
+
+model PaperAuthor {
+  paper    Paper  @relation(fields: [paperId], references: [id])
+  paperId  Int
+  author   Author @relation(fields: [authorId], references: [id])
+  authorId Int
+  position Int
+
+  @@id([paperId, authorId])
+  @@index([paperId])
+}
+
+// ---------------------------------------------------------------------------
+// Pipeline runs
+// ---------------------------------------------------------------------------
+
+enum PipelineStep {
+  PULL_ZOTERO
+  QUERY_OPENALEX
+  QUERY_GOOGLE_SCHOLAR
+  QUERY_PCIRR
+  MERGE
+  DEDUP
+  ENRICH
+  SYNC
+}
+
+enum PipelineStatus {
+  RUNNING
+  DONE
+  FAILED
+}
+
+model PipelineRun {
+  id        Int      @id @default(autoincrement())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  step   PipelineStep
+  status PipelineStatus @default(RUNNING)
+  output String?
+
+  startedById Int?
+  startedBy   User? @relation("PipelineRunStartedBy", fields: [startedById], references: [id])
+}

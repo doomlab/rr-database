@@ -1,3 +1,10 @@
+# Node / Next.js / Prisma
+node_modules/
+.next/
+.env.local
+db/dev.db
+next-env.d.ts
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[codz]
