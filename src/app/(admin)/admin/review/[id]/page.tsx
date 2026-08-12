@@ -73,10 +73,16 @@ export default async function ReviewDetailPage({
             View registration{paper.registrationPlatform ? ` (${paper.registrationPlatform})` : ""}
           </a>
         )}
-        <EnrichButton paperId={paper.id} />
+        <EnrichButton paperId={paper.id} source="openalex" label="Fill in from OpenAlex" />
         {paper.openAlexFetchedAt && (
           <span className="text-xs text-base-content/40">
             OpenAlex checked {paper.openAlexFetchedAt.toLocaleDateString()}
+          </span>
+        )}
+        <EnrichButton paperId={paper.id} source="crossref" label="Fill in from Crossref" />
+        {paper.crossrefQueried && (
+          <span className="text-xs text-base-content/40">
+            Crossref {paper.crossrefFound ? "matched" : "no match"}
           </span>
         )}
       </div>
@@ -91,6 +97,10 @@ export default async function ReviewDetailPage({
           <Row label="Venue" value={paper.venue ?? undefined} italic />
           <Row label="DOI" value={paper.doi ?? undefined} />
           <Row label="Publisher" value={paper.publisher ?? undefined} />
+          <Row label="Volume" value={paper.volume ?? undefined} />
+          <Row label="Issue" value={paper.issue ?? undefined} />
+          <Row label="Pages" value={paper.pages ?? undefined} />
+          <Row label="ISSN" value={paper.issn ?? undefined} />
           <Row label="Item type" value={paper.itemType ?? undefined} />
           <Row label="Stage" value={paper.stage ?? undefined} />
           <Row label="Bias level" value={paper.biasLevel ?? undefined} />

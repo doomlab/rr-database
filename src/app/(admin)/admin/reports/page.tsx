@@ -1,7 +1,6 @@
 import db from "db"
 import { ResolveButton } from "../../components/ResolveButton"
 import { Pagination } from "../../../components/Pagination"
-import resolveReport from "../../mutations/resolveReport"
 
 const PAGE_SIZE = 50
 
@@ -61,7 +60,7 @@ export default async function ReportsQueuePage({
                     {report.note ? `: "${report.note}"` : ""}
                   </p>
                 </div>
-                <ResolveButton mutation={resolveReport} input={{ reportId: report.id }} />
+                <ResolveButton mutation="report" input={{ reportId: report.id }} />
               </li>
             ))}
           </ul>

@@ -1,7 +1,6 @@
 import db from "db"
 import { ResolveButton } from "../../components/ResolveButton"
 import { Pagination } from "../../../components/Pagination"
-import resolveSuggestion from "../../mutations/resolveSuggestion"
 
 const PAGE_SIZE = 50
 
@@ -59,7 +58,7 @@ export default async function SuggestionsQueuePage({
                     {s.note ? ` — "${s.note}"` : ""}
                   </p>
                 </div>
-                <ResolveButton mutation={resolveSuggestion} input={{ suggestionId: s.id }} />
+                <ResolveButton mutation="suggestion" input={{ suggestionId: s.id }} />
               </li>
             ))}
           </ul>

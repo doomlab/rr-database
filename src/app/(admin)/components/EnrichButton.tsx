@@ -4,9 +4,23 @@ import { useMutation } from "@blitzjs/rpc"
 import { useRouter } from "next/navigation"
 import { useState } from "react"
 import enrichFromOpenAlex from "../mutations/enrichFromOpenAlex"
+import enrichFromCrossref from "../mutations/enrichFromCrossref"
 
-export function EnrichButton({ paperId }: { paperId: number }) {
-  const [enrich, { isLoading }] = useMutation(enrichFromOpenAlex)
+const MUTATIONS = {
+  openalex: enrichFromOpenAlex,
+  crossref: enrichFromCrossref,
+} as const
+
+export function EnrichButton({
+  paperId,
+  source,
+  label,
+}: {
+  paperId: number
+  source: keyof typeof MUTATIONS
+  label: string
+}) {
+  const [enrich, { isLoading }] = useMutation(MUTATIONS[source])
   const router = useRouter()
   const [error, setError] = useState<string | null>(null)
 
@@ -25,7 +39,7 @@ export function EnrichButton({ paperId }: { paperId: number }) {
           }
         }}
       >
-        {isLoading ? <span className="loading loading-spinner loading-xs" /> : "Fill in from OpenAlex"}
+        {isLoading ? <span className="loading loading-spinner loading-xs" /> : label}
       </button>
       {error && <span className="text-xs text-error">{error}</span>}
     </div>

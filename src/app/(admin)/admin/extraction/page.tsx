@@ -1,7 +1,6 @@
 import db from "db"
 import { ResolveButton } from "../../components/ResolveButton"
 import { Pagination } from "../../../components/Pagination"
-import resolveExtractionEdit from "../../mutations/resolveExtractionEdit"
 
 const PAGE_SIZE = 50
 
@@ -57,12 +56,12 @@ export default async function ExtractionQueuePage({
                 </div>
                 <div className="flex gap-2 shrink-0">
                   <ResolveButton
-                    mutation={resolveExtractionEdit}
+                    mutation="extractionEdit"
                     input={{ suggestionId: s.id, apply: true }}
                     label="Apply"
                   />
                   <ResolveButton
-                    mutation={resolveExtractionEdit}
+                    mutation="extractionEdit"
                     input={{ suggestionId: s.id, apply: false }}
                     label="Dismiss"
                   />

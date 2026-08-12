@@ -1,7 +1,6 @@
 import db from "db"
 import { ResolveButton } from "../../components/ResolveButton"
 import { Pagination } from "../../../components/Pagination"
-import resolveMetadataEdit from "../../mutations/resolveMetadataEdit"
 
 const PAGE_SIZE = 50
 
@@ -74,12 +73,12 @@ export default async function MetadataQueuePage({
                 </div>
                 <div className="flex gap-2 shrink-0">
                   <ResolveButton
-                    mutation={resolveMetadataEdit}
+                    mutation="metadataEdit"
                     input={{ suggestionId: s.id, apply: true }}
                     label="Apply"
                   />
                   <ResolveButton
-                    mutation={resolveMetadataEdit}
+                    mutation="metadataEdit"
                     input={{ suggestionId: s.id, apply: false }}
                     label="Dismiss"
                   />

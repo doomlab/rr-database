@@ -3,17 +3,28 @@
 import { useMutation } from "@blitzjs/rpc"
 import { useRouter } from "next/navigation"
 import { useState } from "react"
+import resolveReport from "../mutations/resolveReport"
+import resolveSuggestion from "../mutations/resolveSuggestion"
+import resolveMetadataEdit from "../mutations/resolveMetadataEdit"
+import resolveExtractionEdit from "../mutations/resolveExtractionEdit"
 
-export function ResolveButton<TInput extends Record<string, any>>({
+const MUTATIONS = {
+  report: resolveReport,
+  suggestion: resolveSuggestion,
+  metadataEdit: resolveMetadataEdit,
+  extractionEdit: resolveExtractionEdit,
+} as const
+
+export function ResolveButton({
   mutation,
   input,
   label = "Resolve",
 }: {
-  mutation: (input: TInput) => Promise<any>
-  input: TInput
+  mutation: keyof typeof MUTATIONS
+  input: Record<string, any>
   label?: string
 }) {
-  const [run, { isLoading }] = useMutation(mutation as any)
+  const [run, { isLoading }] = useMutation(MUTATIONS[mutation] as any)
   const router = useRouter()
   const [done, setDone] = useState(false)
 
@@ -23,7 +34,7 @@ export function ResolveButton<TInput extends Record<string, any>>({
     <button
       disabled={isLoading}
       onClick={async () => {
-        await run(input)
+        await run(input as any)
         setDone(true)
         router.refresh()
       }}
