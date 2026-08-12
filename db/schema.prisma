@@ -130,8 +130,10 @@ model Paper {
   url          String?
   citedByCount       Int?
   openAccess         Boolean?
+  pdfUrl             String?
   itemType           String?
   citationsFetchedAt DateTime?
+  openAlexFetchedAt  DateTime?
   // Relevance score from the discovery-triage classifier (Phase 2+, once
   // there's enough reviewed PENDING_REVIEW/REJECTED data to train on).
   modelScore         Float?

@@ -2,4 +2,6 @@
 - remove old syncing to databases scripts 
 - When the real linking pass (using zoteroRelations) is eventually built, it can merge two singleton Studies together without touching this structure.
 - One thing worth knowing: Blitz's RPC path is just the bare filename (/api/rpc/signup), not the folder path — took a wrong turn on that before finding it in the compiled output.
-- fill in with openalex information so it links the pdf if we can? 
+- pull previous information like added by and when added from zenodo
+- remember you'll need to put in the new api for open alex so you get more queries because otherwise it defaults to small limits
+- set it up so admin has to put in their API key for openalex and grok

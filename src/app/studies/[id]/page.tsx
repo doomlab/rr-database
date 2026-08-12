@@ -140,6 +140,19 @@ export default async function StudyDetailPage({
                       </a>
                     </div>
                   )}
+                  {paper.pdfUrl && (
+                    <div className="flex gap-3 py-1.5">
+                      <span className="w-32 shrink-0 font-medium text-base-content/70">PDF</span>
+                      <a
+                        href={paper.pdfUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="link link-primary break-all"
+                      >
+                        View PDF
+                      </a>
+                    </div>
+                  )}
                   {paper.abstract && (
                     <div className="pt-2">
                       <p className="text-base-content/70 leading-relaxed">{paper.abstract}</p>
