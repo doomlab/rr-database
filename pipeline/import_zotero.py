@@ -6,9 +6,20 @@ source_of_truth_*.json / zotero_index_*.json, this upserts each Zotero item
 directly into the `Paper` table, keyed on zoteroKeyProduction/zoteroKeyStaging
 (falling back to DOI when a record already exists under the other library's key).
 
+--library production is the ongoing source of truth and can be re-run any time.
+
+--library staging was only ever a one-off historical import (the staging
+library held candidates awaiting human review under the old JSON-file
+workflow). It should not be re-run as a regular data source going forward —
+once the admin review queue (Phase 3) replaces that workflow, staging is
+repurposed purely as a safe target for testing the sync-back script, not as
+an import source. Records that only exist under a staging key (no matching
+production key) are imported as PENDING_REVIEW, not IMPORTED, since they
+were never actually confirmed into the canonical library.
+
 Usage:
-    python pipeline/import_zotero.py --library staging
     python pipeline/import_zotero.py --library production
+    python pipeline/import_zotero.py --library staging   # one-off, historical
 """
 
 import argparse
@@ -91,6 +102,7 @@ def upsert_paper(cur, item, library):
     doi = data.get("DOI") or None
     title = data.get("title") or "(untitled)"
     openalex_id = extract_openalex_id(data.get("extra"))
+    relations = data.get("relations") or None
 
     key_column = "zoteroKeyProduction" if library == "production" else "zoteroKeyStaging"
     version_column = "zoteroVersionProduction" if library == "production" else "zoteroVersionStaging"
@@ -121,10 +133,23 @@ def upsert_paper(cur, item, library):
         "url": data.get("url") or None,
         "itemType": item_type,
         "openalexId": openalex_id,
+        "zoteroRelations": psycopg2.extras.Json(relations) if relations else None,
         key_column: zotero_key,
         version_column: zotero_version,
-        "status": "IMPORTED",
     }
+
+    if library == "production":
+        # Production is the authoritative library — always (re)confirm status,
+        # whether this is a brand new row or one previously only known from
+        # staging (which promotes it out of PENDING_REVIEW).
+        fields["status"] = "IMPORTED"
+    elif not existing_id:
+        # A staging-only record with no production/DOI/openalexId match is a
+        # candidate that was never confirmed into production — queue it for
+        # review rather than marking it canonical.
+        fields["status"] = "PENDING_REVIEW"
+    # else: existing row being touched by a staging re-run — leave status
+    # alone so we don't clobber review state a human may have already set.
 
     if existing_id:
         set_clause = ", ".join(f'"{k}" = %s' for k in fields)
@@ -143,7 +168,27 @@ def upsert_paper(cur, item, library):
         paper_id = cur.fetchone()["id"]
 
     upsert_authors(cur, paper_id, extract_author_names(data.get("creators")))
+
+    if fields.get("status") == "IMPORTED":
+        ensure_extraction_placeholder(cur, paper_id)
+
     return paper_id
+
+
+def ensure_extraction_placeholder(cur, paper_id):
+    # Being IMPORTED means the record was screened and confirmed "yes
+    # include" in production Zotero — that's an inclusion decision, distinct
+    # from whether anyone has coded/reviewed its data in this app yet. Every
+    # confirmed paper should have a PaperExtraction row so the review queue
+    # can see it, even before any coding has happened.
+    cur.execute('SELECT 1 FROM "PaperExtraction" WHERE "paperId" = %s', (paper_id,))
+    if cur.fetchone():
+        return
+    cur.execute(
+        'INSERT INTO "PaperExtraction" ("paperId", "extractedData", "needsReview", "updatedAt") '
+        "VALUES (%s, '{}'::jsonb, true, NOW())",
+        (paper_id,),
+    )
 
 
 def upsert_authors(cur, paper_id, author_names):

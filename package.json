@@ -6,18 +6,27 @@
     "schema": "db/schema.prisma"
   },
   "scripts": {
-    "dev": "next dev",
-    "build": "next build",
-    "start": "next start",
-    "studio": "prisma studio",
-    "migrate": "dotenv -e .env.local -- prisma migrate dev",
-    "migrate:prod": "prisma migrate deploy"
+    "dev": "blitz dev",
+    "build": "blitz build",
+    "start": "blitz start",
+    "studio": "blitz prisma studio",
+    "migrate": "dotenv -e .env.local -- blitz prisma migrate dev",
+    "migrate:prod": "blitz prisma migrate deploy"
   },
   "dependencies": {
+    "@blitzjs/auth": "3.0.2",
+    "@blitzjs/next": "3.0.2",
+    "@blitzjs/rpc": "3.0.2",
     "@prisma/client": "5.4.2",
+    "@tailwindcss/postcss": "4.3.0",
+    "blitz": "3.0.2",
+    "daisyui": "5.5.19",
     "next": "15.5.18",
     "react": "19.0.0",
-    "react-dom": "19.0.0"
+    "react-dom": "19.0.0",
+    "secure-password": "4.0.0",
+    "tailwindcss": "4.3.0",
+    "zod": "3.23.8"
   },
   "devDependencies": {
     "@types/node": "18.11.9",
