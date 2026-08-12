@@ -12,4 +12,5 @@ Not built yet (would be the next piece, matching wordnorms' src/lib/fetchAndStor
 
 
 - remove old syncing to databases scripts 
-- 
+- When the real linking pass (using zoteroRelations) is eventually built, it can merge two singleton Studies together without touching this structure.
+- One thing worth knowing: Blitz's RPC path is just the bare filename (/api/rpc/signup), not the folder path — took a wrong turn on that before finding it in the compiled output.

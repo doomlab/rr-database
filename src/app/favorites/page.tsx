@@ -24,6 +24,7 @@ export default async function FavoritesPage() {
       study: {
         include: {
           papers: {
+            where: { paper: { status: { in: ["IMPORTED", "APPROVED"] } } },
             include: {
               paper: {
                 include: { authors: { include: { author: true }, orderBy: { position: "asc" } } },

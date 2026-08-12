@@ -36,6 +36,7 @@ export default async function StudyDetailPage({
     where: { id: Number(id) },
     include: {
       papers: {
+        where: { paper: { status: { in: ["IMPORTED", "APPROVED"] } } },
         include: {
           paper: {
             include: {
@@ -49,7 +50,7 @@ export default async function StudyDetailPage({
     },
   })
 
-  if (!study) notFound()
+  if (!study || study.papers.length === 0) notFound()
 
   const [isFavorited, reportedIds] = await Promise.all([
     userId

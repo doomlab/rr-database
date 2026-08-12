@@ -28,27 +28,38 @@ export default async function Home({
   const ctx = await getBlitzContext()
   const userId = ctx.session.userId as number | undefined
 
-  const studyWhere = q
-    ? {
-        papers: {
-          some: {
-            paper: {
-              OR: [
-                { title: { contains: q, mode: "insensitive" as const } },
-                { abstract: { contains: q, mode: "insensitive" as const } },
-                { doi: { contains: q, mode: "insensitive" as const } },
-              ],
+  const CONFIRMED_STATUSES = ["IMPORTED", "APPROVED"] as const
+
+  const studyWhere = {
+    papers: { some: { paper: { status: { in: CONFIRMED_STATUSES } } } },
+    ...(q
+      ? {
+          AND: [
+            {
+              papers: {
+                some: {
+                  paper: {
+                    status: { in: CONFIRMED_STATUSES },
+                    OR: [
+                      { title: { contains: q, mode: "insensitive" as const } },
+                      { abstract: { contains: q, mode: "insensitive" as const } },
+                      { doi: { contains: q, mode: "insensitive" as const } },
+                    ],
+                  },
+                },
+              },
             },
-          },
-        },
-      }
-    : {}
+          ],
+        }
+      : {}),
+  }
 
   const [studies, totalStudies, favoritedIds, reportedIds] = await Promise.all([
     db.study.findMany({
       where: studyWhere,
       include: {
         papers: {
+          where: { paper: { status: { in: CONFIRMED_STATUSES } } },
           include: {
             paper: {
               include: { authors: { include: { author: true }, orderBy: { position: "asc" } } },
