@@ -26,7 +26,10 @@ export async function Navbar() {
         <Link href="/" className="text-xl font-bold">
           RR Database
         </Link>
-        <div className="dropdown">
+      </div>
+      <div className="flex-none gap-1">
+        <ThemeToggle />
+        <div className="dropdown dropdown-end">
           <div tabIndex={0} role="button" className="btn btn-primary btn-sm">
             Database ▾
           </div>
@@ -47,14 +50,11 @@ export async function Navbar() {
             )}
           </ul>
         </div>
-      </div>
-      <div className="flex-none gap-2">
-        <ThemeToggle />
         {userId ? (
           <>
             {isAdmin && (
               <div className="dropdown dropdown-end">
-                <div tabIndex={0} role="button" className="btn btn-secondary btn-sm mr-2">
+                <div tabIndex={0} role="button" className="btn btn-secondary btn-sm">
                   Admin ▾
                 </div>
                 <ul
@@ -104,7 +104,7 @@ export async function Navbar() {
           </>
         ) : (
           <>
-            <Link href="/login" className="btn btn-accent btn-sm m-2">
+            <Link href="/login" className="btn btn-accent btn-sm">
               Log in
             </Link>
             <Link href="/signup" className="btn btn-secondary btn-sm">
