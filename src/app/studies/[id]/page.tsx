@@ -16,7 +16,13 @@ async function resolveCitations(paper: {
   id: number
   openalexId: string | null
   citedByCount: number | null
-  citationsFrom: { citedOpenAlexId: string; title: string | null; year: number | null; journal: string | null }[]
+  citationsFrom: {
+    citedOpenAlexId: string
+    title: string | null
+    year: number | null
+    journal: string | null
+    doi: string | null
+  }[]
 }) {
   const citedByResult = paper.openalexId
     ? await fetchCitingWorks(paper.openalexId)
@@ -53,6 +59,8 @@ async function resolveCitations(paper: {
     title: c.title,
     year: c.year,
     journal: c.journal,
+    doi: c.doi,
+    openalexId: c.citedOpenAlexId,
     match: matchedById.get(c.citedOpenAlexId),
   }))
 
@@ -60,6 +68,8 @@ async function resolveCitations(paper: {
     title: w.title,
     year: w.year,
     journal: w.journal,
+    doi: w.doi,
+    openalexId: w.openalexId,
     match: matchedById.get(w.openalexId),
   }))
 

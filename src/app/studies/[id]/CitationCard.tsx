@@ -4,7 +4,15 @@ export type CitationEntry = {
   title: string | null
   year: number | null
   journal: string | null
+  doi?: string | null
+  openalexId?: string
   match?: { id: number; studyId: number }
+}
+
+function externalHref(e: CitationEntry): string | null {
+  if (e.doi) return e.doi.startsWith("http") ? e.doi : `https://doi.org/${e.doi}`
+  if (e.openalexId) return `https://openalex.org/${e.openalexId}`
+  return null
 }
 
 export function CitationCard({
@@ -31,6 +39,20 @@ export function CitationCard({
               >
                 <span className="flex-1 text-base font-semibold text-base-content group-hover/item:underline">
                   {e.title ?? "Untitled"}
+                </span>
+                {e.year && <span className="text-base text-base-content/50 shrink-0">{e.year}</span>}
+              </a>
+            ) : externalHref(e) ? (
+              <a
+                key={i}
+                href={externalHref(e)!}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex gap-3 py-1.5 hover:text-primary group/item"
+              >
+                <span className="flex-1 text-base text-base-content/60 group-hover/item:underline">
+                  {e.title ?? "—"}
+                  {e.journal && <span className="italic"> · {e.journal}</span>}
                 </span>
                 {e.year && <span className="text-base text-base-content/50 shrink-0">{e.year}</span>}
               </a>
