@@ -108,10 +108,18 @@ export default async function Home({
             />
           </form>
 
-          <p className="text-sm text-base-content/60 mb-5">
-            <span className="font-semibold text-base-content">{totalStudies}</span> registered
-            report{totalStudies === 1 ? "" : "s"}
-          </p>
+          <div className="flex items-center justify-between mb-5">
+            <p className="text-sm text-base-content/60">
+              <span className="font-semibold text-base-content">{totalStudies}</span> registered
+              report{totalStudies === 1 ? "" : "s"}
+            </p>
+            <a
+              href={userId ? "/suggest-article" : "/login?next=/suggest-article"}
+              className="btn btn-warning btn-sm"
+            >
+              Can't find a paper? Suggest one
+            </a>
+          </div>
 
           {studies.length === 0 ? (
             <div className="text-center py-16 text-base-content/40">

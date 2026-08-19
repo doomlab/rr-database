@@ -26,14 +26,32 @@ export async function Navbar() {
         <Link href="/" className="text-xl font-bold">
           RR Database
         </Link>
+        <div className="dropdown">
+          <div tabIndex={0} role="button" className="btn btn-primary btn-sm">
+            Database ▾
+          </div>
+          <ul
+            tabIndex={0}
+            className="dropdown-content menu bg-base-100 rounded-box z-50 w-56 p-2 shadow-md border border-base-300 mt-1"
+          >
+            <li>
+              <Link href="/">Search</Link>
+            </li>
+            <li>
+              <Link href="/excluded">Excluded</Link>
+            </li>
+            {userId && (
+              <li>
+                <Link href="/favorites">★ My Favorites</Link>
+              </li>
+            )}
+          </ul>
+        </div>
       </div>
       <div className="flex-none gap-2">
         <ThemeToggle />
         {userId ? (
           <>
-            <Link href="/favorites" className="btn btn-ghost btn-sm mr-2">
-              ★ My Favorites
-            </Link>
             {isAdmin && (
               <div className="dropdown dropdown-end">
                 <div tabIndex={0} role="button" className="btn btn-secondary btn-sm mr-2">
