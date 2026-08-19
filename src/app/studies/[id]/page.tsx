@@ -72,7 +72,7 @@ export default async function StudyDetailPage({
       <Navbar />
 
       <div className="w-full px-10 py-10">
-        <div className="max-w-3xl mx-auto">
+        <div className="w-[90%] mx-auto">
           <a href="/" className="text-sm text-base-content/50 hover:text-base-content mb-6 inline-block">
             ← Back to browse
           </a>

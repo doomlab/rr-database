@@ -97,7 +97,7 @@ export default async function Home({
       <Navbar />
 
       <div className="flex-1 w-full px-10 py-8">
-        <div className="max-w-4xl mx-auto">
+        <div className="w-[90%] mx-auto">
           <form className="mb-6" action="/" method="get">
             <input
               type="text"

@@ -4,22 +4,20 @@ import db from "db"
 
 const ReportPaper = z.object({
   paperId: z.number(),
-  reason: z.string().min(1).default("flagged"),
+  reason: z.enum(["WRONG_CLASSIFICATION", "DUPLICATE", "OTHER"]),
+  note: z.string().max(1000).optional(),
 })
 
 export default resolver.pipe(
   resolver.zod(ReportPaper),
   resolver.authorize(),
-  async ({ paperId, reason }, ctx) => {
+  async ({ paperId, reason, note }, ctx) => {
     const userId = ctx.session.userId as number
-    const existing = await db.paperReport.findUnique({
+    await db.paperReport.upsert({
       where: { userId_paperId: { userId, paperId } },
+      create: { userId, paperId, reason, note, resolved: false },
+      update: { reason, note, resolved: false },
     })
-    if (existing) {
-      await db.paperReport.delete({ where: { id: existing.id } })
-      return { reported: false }
-    }
-    await db.paperReport.create({ data: { userId, paperId, reason } })
     return { reported: true }
   }
 )

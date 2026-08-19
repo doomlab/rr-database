@@ -60,7 +60,7 @@ export default async function FavoritesPage({
       <Navbar />
 
       <div className="flex-1 w-full px-10 py-8">
-        <div className="max-w-4xl mx-auto">
+        <div className="w-[90%] mx-auto">
           <h1 className="text-2xl font-semibold mb-1">My Favorites</h1>
           <p className="text-base-content/60 mb-8">{totalFavorites} saved</p>
 
