@@ -22,12 +22,12 @@ export async function Navbar() {
 
   return (
     <div className="navbar bg-base-200 px-6 shadow-sm sticky top-0 z-50">
-      <div className="flex-1 gap-4">
+      <div className="flex-1 flex items-center gap-2">
         <Link href="/" className="text-xl font-bold">
           RR Database
         </Link>
       </div>
-      <div className="flex-none gap-1">
+      <div className="flex-none flex items-center gap-2">
         <ThemeToggle />
         <div className="dropdown dropdown-end">
           <div tabIndex={0} role="button" className="btn btn-primary btn-sm">
