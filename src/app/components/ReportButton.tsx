@@ -56,8 +56,8 @@ export function ReportButton({
   if (!isLoggedIn) {
     return (
       <div className="tooltip tooltip-left" data-tip="You must have an account to use this feature">
-        <button disabled className="btn btn-ghost btn-sm px-2 opacity-40 cursor-not-allowed">
-          <span className="text-base-content/30">⚑</span>
+        <button disabled className="btn btn-ghost btn-md px-3 opacity-40 cursor-not-allowed">
+          <span className="text-2xl text-base-content/30">⚑</span>
         </button>
       </div>
     )
@@ -67,10 +67,10 @@ export function ReportButton({
     <>
       <button
         onClick={handleOpen}
-        className="btn btn-ghost btn-sm px-2"
+        className="btn btn-ghost btn-md px-3"
         title={reported ? "You reported this paper — click to update" : "Report a problem with this paper"}
       >
-        <span className={reported ? "text-error" : "text-base-content/30"}>⚑</span>
+        <span className={`text-2xl ${reported ? "text-error" : "text-base-content/50"}`}>⚑</span>
       </button>
 
       <dialog ref={dialogRef} className="modal">
