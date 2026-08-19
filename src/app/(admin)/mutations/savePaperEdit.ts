@@ -20,6 +20,7 @@ const SavePaperEdit = z.object({
   url: z.string().nullable(),
   pdfUrl: z.string().nullable(),
   openAccess: z.boolean().nullable(),
+  openAccessStatus: z.string().nullable(),
   citedByCount: z.number().nullable(),
   openalexId: z.string().nullable(),
 })

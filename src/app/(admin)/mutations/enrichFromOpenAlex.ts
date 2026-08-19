@@ -21,6 +21,7 @@ export default resolver.pipe(
         data: {
           pdfUrl: fields.pdfUrl ?? paper.pdfUrl,
           openAccess: fields.openAccess ?? paper.openAccess,
+          openAccessStatus: fields.openAccessStatus ?? paper.openAccessStatus,
           citedByCount: fields.citedByCount ?? paper.citedByCount,
           venue: paper.venue ?? fields.venue,
           abstract: paper.abstract ?? fields.abstract,

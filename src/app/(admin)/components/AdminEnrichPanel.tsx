@@ -21,6 +21,7 @@ type FieldKey =
   | "url"
   | "pdfUrl"
   | "openAccess"
+  | "openAccessStatus"
   | "citedByCount"
   | "openalexId"
 
@@ -40,6 +41,7 @@ const FIELDS: { key: FieldKey; label: string; type: FieldType }[] = [
   { key: "url", label: "URL", type: "text" },
   { key: "pdfUrl", label: "PDF URL", type: "text" },
   { key: "openAccess", label: "Open access", type: "boolean" },
+  { key: "openAccessStatus", label: "Open access status", type: "text" },
   { key: "citedByCount", label: "Cited by count", type: "number" },
   { key: "openalexId", label: "OpenAlex ID", type: "text" },
   { key: "abstract", label: "Abstract", type: "textarea" },
@@ -101,6 +103,7 @@ export function AdminEnrichPanel({ paperId }: { paperId: number }) {
         url: emptyToNull(values.url),
         pdfUrl: emptyToNull(values.pdfUrl),
         openAccess: typeof values.openAccess === "boolean" ? values.openAccess : null,
+        openAccessStatus: emptyToNull(values.openAccessStatus),
         citedByCount:
           values.citedByCount === "" || values.citedByCount == null ? null : Number(values.citedByCount),
         openalexId: emptyToNull(values.openalexId),

@@ -258,7 +258,13 @@ export default async function StudyDetailPage({
                   <Row label="Item type" value={humanizeItemType(paper.itemType)} />
                   <Row
                     label="Open access"
-                    value={paper.openAccess == null ? undefined : paper.openAccess ? "Yes" : "No"}
+                    value={
+                      paper.openAccess == null
+                        ? undefined
+                        : paper.openAccess
+                        ? `Yes${paper.openAccessStatus ? ` (${capitalize(paper.openAccessStatus)})` : ""}`
+                        : "No"
+                    }
                   />
                   <Row
                     label="Cited by"
@@ -344,6 +350,10 @@ function humanizeItemType(itemType: string | null): string | undefined {
     .split(" ")
     .filter(Boolean)
   return words.map((w) => w[0]!.toUpperCase() + w.slice(1)).join(" ")
+}
+
+function capitalize(s: string): string {
+  return s.charAt(0).toUpperCase() + s.slice(1)
 }
 
 function Row({ label, value, italic }: { label: string; value?: string; italic?: boolean }) {

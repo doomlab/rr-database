@@ -131,6 +131,7 @@ model Paper {
   url          String?
   citedByCount       Int?
   openAccess         Boolean?
+  openAccessStatus   String? // OpenAlex oa_status: "gold" | "green" | "hybrid" | "bronze" | "closed" | "diamond"
   pdfUrl             String?
   itemType           String?
   citationsFetchedAt DateTime?

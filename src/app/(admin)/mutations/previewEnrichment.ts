@@ -32,6 +32,7 @@ export default resolver.pipe(
         url: paper.url,
         pdfUrl: paper.pdfUrl,
         openAccess: paper.openAccess,
+        openAccessStatus: paper.openAccessStatus,
         citedByCount: paper.citedByCount,
         openalexId: paper.openalexId,
       },
