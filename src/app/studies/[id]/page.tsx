@@ -125,16 +125,14 @@ export default async function StudyDetailPage({
                   />
                 </div>
 
-                {isAdmin && <AdminEnrichPanel paperId={paper.id} />}
-
-                {(paper.doi || paper.pdfUrl) && (
-                  <div className="flex flex-wrap gap-2 mb-3">
+                {(paper.doi || paper.pdfUrl || isAdmin) && (
+                  <div className="flex flex-wrap items-start gap-2 mb-3">
                     {paper.doi && (
                       <a
                         href={`https://doi.org/${paper.doi}`}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="btn btn-primary btn-sm"
+                        className="btn btn-primary btn-md text-base"
                       >
                         View article (DOI)
                       </a>
@@ -144,11 +142,12 @@ export default async function StudyDetailPage({
                         href={paper.pdfUrl}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="btn btn-secondary btn-sm"
+                        className="btn btn-secondary btn-md text-base"
                       >
                         {paper.openAccess ? "Open access PDF" : "View PDF"}
                       </a>
                     )}
+                    {isAdmin && <AdminEnrichPanel paperId={paper.id} />}
                   </div>
                 )}
 

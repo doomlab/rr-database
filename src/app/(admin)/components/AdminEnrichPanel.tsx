@@ -2,60 +2,111 @@
 
 import { useMutation } from "@blitzjs/rpc"
 import { useRouter } from "next/navigation"
-import { useState } from "react"
+import { useRef, useState } from "react"
 import previewEnrichment from "../mutations/previewEnrichment"
-import enrichFromOpenAlex from "../mutations/enrichFromOpenAlex"
-import enrichFromCrossref from "../mutations/enrichFromCrossref"
+import savePaperEdit from "../mutations/savePaperEdit"
 
-const FIELD_LABELS: Record<string, string> = {
-  venue: "Venue",
-  volume: "Volume",
-  issue: "Issue",
-  pages: "Pages",
-  issn: "ISSN",
-  publisher: "Publisher",
-  abstract: "Abstract",
-  pdfUrl: "PDF URL",
-  openAccess: "Open access",
-  citedByCount: "Cited by count",
-  openalexId: "OpenAlex ID",
-}
+type FieldKey =
+  | "title"
+  | "doi"
+  | "abstract"
+  | "year"
+  | "venue"
+  | "volume"
+  | "issue"
+  | "pages"
+  | "issn"
+  | "publisher"
+  | "language"
+  | "url"
+  | "pdfUrl"
+  | "openAccess"
+  | "citedByCount"
+  | "openalexId"
 
-type Change = { field: string; current: unknown; proposed: unknown }
+type FieldType = "text" | "textarea" | "number" | "boolean"
+
+const FIELDS: { key: FieldKey; label: string; type: FieldType }[] = [
+  { key: "title", label: "Title", type: "text" },
+  { key: "doi", label: "DOI", type: "text" },
+  { key: "venue", label: "Venue", type: "text" },
+  { key: "publisher", label: "Publisher", type: "text" },
+  { key: "year", label: "Year", type: "number" },
+  { key: "volume", label: "Volume", type: "text" },
+  { key: "issue", label: "Issue", type: "text" },
+  { key: "pages", label: "Pages", type: "text" },
+  { key: "issn", label: "ISSN", type: "text" },
+  { key: "language", label: "Language", type: "text" },
+  { key: "url", label: "URL", type: "text" },
+  { key: "pdfUrl", label: "PDF URL", type: "text" },
+  { key: "openAccess", label: "Open access", type: "boolean" },
+  { key: "citedByCount", label: "Cited by count", type: "number" },
+  { key: "openalexId", label: "OpenAlex ID", type: "text" },
+  { key: "abstract", label: "Abstract", type: "textarea" },
+]
+
+type FormValues = Record<FieldKey, string | boolean | null>
 
 export function AdminEnrichPanel({ paperId }: { paperId: number }) {
   const router = useRouter()
+  const dialogRef = useRef<HTMLDialogElement>(null)
   const [source, setSource] = useState<"openalex" | "crossref" | null>(null)
-  const [changes, setChanges] = useState<Change[] | null>(null)
+  const [values, setValues] = useState<FormValues | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [preview, previewState] = useMutation(previewEnrichment)
-  const [saveOpenAlex, saveOpenAlexState] = useMutation(enrichFromOpenAlex)
-  const [saveCrossref, saveCrossrefState] = useMutation(enrichFromCrossref)
+  const [save, saveState] = useMutation(savePaperEdit)
   const isPreviewing = (previewState as any).isLoading
-  const isSaving = (saveOpenAlexState as any).isLoading || (saveCrossrefState as any).isLoading
+  const isSaving = (saveState as any).isLoading
 
   const handlePull = async (src: "openalex" | "crossref") => {
     setError(null)
-    setChanges(null)
     setSource(src)
     try {
-      const result = await preview({ paperId, source: src })
-      setChanges(result.changes)
+      const { fetched, current } = await preview({ paperId, source: src })
+      const initial = {} as FormValues
+      for (const { key } of FIELDS) {
+        const fetchedValue = (fetched as any)[key]
+        initial[key] = fetchedValue != null ? fetchedValue : (current as any)[key]
+      }
+      setValues(initial)
+      dialogRef.current?.showModal()
     } catch (e: any) {
       setError(e.message ?? "Lookup failed")
     }
   }
 
-  const handleSave = async () => {
-    if (!source) return
+  const setField = (key: FieldKey, value: string | boolean | null) => {
+    setValues((v) => (v ? { ...v, [key]: value } : v))
+  }
+
+  const handleSave = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!values || !source) return
     setError(null)
     try {
-      if (source === "openalex") {
-        await saveOpenAlex({ paperId })
-      } else {
-        await saveCrossref({ paperId })
-      }
-      setChanges(null)
+      await save({
+        paperId,
+        source,
+        title: String(values.title ?? "").trim(),
+        doi: emptyToNull(values.doi),
+        abstract: emptyToNull(values.abstract),
+        year: values.year === "" || values.year == null ? null : Number(values.year),
+        venue: emptyToNull(values.venue),
+        volume: emptyToNull(values.volume),
+        issue: emptyToNull(values.issue),
+        pages: emptyToNull(values.pages),
+        issn: emptyToNull(values.issn),
+        publisher: emptyToNull(values.publisher),
+        language: emptyToNull(values.language),
+        url: emptyToNull(values.url),
+        pdfUrl: emptyToNull(values.pdfUrl),
+        openAccess: typeof values.openAccess === "boolean" ? values.openAccess : null,
+        citedByCount:
+          values.citedByCount === "" || values.citedByCount == null ? null : Number(values.citedByCount),
+        openalexId: emptyToNull(values.openalexId),
+      })
+      dialogRef.current?.close()
+      setValues(null)
       setSource(null)
       router.refresh()
     } catch (e: any) {
@@ -63,89 +114,108 @@ export function AdminEnrichPanel({ paperId }: { paperId: number }) {
     }
   }
 
-  const handleDiscard = () => {
-    setChanges(null)
-    setSource(null)
-    setError(null)
-  }
-
   return (
-    <div className="rounded-lg border border-base-300 p-4 mb-3">
-      <div className="flex flex-wrap items-center gap-2">
-        <span className="text-xs font-semibold uppercase tracking-wider text-base-content/40 mr-1">
-          Admin
-        </span>
-        <button
-          className="btn btn-primary btn-sm"
-          disabled={isPreviewing}
-          onClick={() => handlePull("openalex")}
-        >
-          {isPreviewing && source === "openalex" ? (
-            <span className="loading loading-spinner loading-xs" />
-          ) : (
-            "Pull from OpenAlex"
-          )}
-        </button>
-        <button
-          className="btn btn-secondary btn-sm"
-          disabled={isPreviewing}
-          onClick={() => handlePull("crossref")}
-        >
-          {isPreviewing && source === "crossref" ? (
-            <span className="loading loading-spinner loading-xs" />
-          ) : (
-            "Pull from Crossref"
-          )}
-        </button>
-      </div>
+    <>
+      <button
+        className="btn btn-accent btn-md text-base"
+        disabled={isPreviewing}
+        onClick={() => handlePull("openalex")}
+      >
+        {isPreviewing && source === "openalex" ? (
+          <span className="loading loading-spinner loading-sm" />
+        ) : (
+          "Pull from OpenAlex"
+        )}
+      </button>
+      <button
+        className="btn btn-info btn-md text-base"
+        disabled={isPreviewing}
+        onClick={() => handlePull("crossref")}
+      >
+        {isPreviewing && source === "crossref" ? (
+          <span className="loading loading-spinner loading-sm" />
+        ) : (
+          "Pull from Crossref"
+        )}
+      </button>
 
-      {error && <p className="text-sm text-error mt-2">{error}</p>}
+      {error && <p className="text-sm text-error mt-2 basis-full">{error}</p>}
 
-      {changes && (
-        <div className="mt-3">
-          {changes.length === 0 ? (
-            <p className="text-sm text-base-content/50">
-              No new data found from {source === "openalex" ? "OpenAlex" : "Crossref"}.
-            </p>
-          ) : (
-            <>
-              <p className="text-sm text-base-content/60 mb-2">
-                Review the changes from {source === "openalex" ? "OpenAlex" : "Crossref"} before saving:
-              </p>
-              <div className="overflow-x-auto">
-                <table className="table table-sm">
-                  <thead>
-                    <tr>
-                      <th>Field</th>
-                      <th>Current</th>
-                      <th>Proposed</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {changes.map((c) => (
-                      <tr key={c.field}>
-                        <td className="font-medium">{FIELD_LABELS[c.field] ?? c.field}</td>
-                        <td className="text-base-content/50 max-w-xs truncate">
-                          {c.current == null || c.current === "" ? "—" : String(c.current)}
-                        </td>
-                        <td className="max-w-xs truncate">{String(c.proposed)}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-              <div className="flex gap-2 mt-3">
-                <button className="btn btn-primary btn-sm" disabled={isSaving} onClick={handleSave}>
-                  {isSaving ? <span className="loading loading-spinner loading-xs" /> : "Save changes"}
+      <dialog ref={dialogRef} className="modal">
+        <div className="modal-box max-w-3xl">
+          <h3 className="font-bold text-lg mb-1">
+            Review data from {source === "openalex" ? "OpenAlex" : "Crossref"}
+          </h3>
+          <p className="text-sm text-base-content/60 mb-4">
+            Check the pulled values below and correct anything that's wrong before saving.
+          </p>
+
+          {values && (
+            <form onSubmit={handleSave} className="flex flex-col gap-3">
+              {FIELDS.map(({ key, label, type }) => (
+                <div key={key}>
+                  <label className="label py-1">
+                    <span className="label-text font-medium">{label}</span>
+                  </label>
+                  {type === "textarea" ? (
+                    <textarea
+                      className="textarea textarea-bordered w-full"
+                      rows={5}
+                      value={(values[key] as string) ?? ""}
+                      onChange={(e) => setField(key, e.target.value)}
+                    />
+                  ) : type === "boolean" ? (
+                    <select
+                      className="select select-bordered w-full"
+                      value={values[key] == null ? "" : String(values[key])}
+                      onChange={(e) => setField(key, e.target.value === "" ? null : e.target.value === "true")}
+                    >
+                      <option value="">Unknown</option>
+                      <option value="true">Yes</option>
+                      <option value="false">No</option>
+                    </select>
+                  ) : (
+                    <input
+                      type={type === "number" ? "number" : "text"}
+                      className="input input-bordered w-full"
+                      value={(values[key] as string) ?? ""}
+                      onChange={(e) => setField(key, e.target.value)}
+                    />
+                  )}
+                </div>
+              ))}
+
+              {error && <p className="text-sm text-error">{error}</p>}
+
+              <div className="modal-action mt-0">
+                <button
+                  type="button"
+                  className="btn btn-secondary btn-md text-base"
+                  onClick={() => {
+                    dialogRef.current?.close()
+                    setValues(null)
+                    setSource(null)
+                  }}
+                >
+                  Cancel
                 </button>
-                <button className="btn btn-secondary btn-sm" disabled={isSaving} onClick={handleDiscard}>
-                  Discard
+                <button type="submit" className="btn btn-primary btn-md text-base" disabled={isSaving}>
+                  {isSaving ? <span className="loading loading-spinner loading-sm" /> : "Save changes"}
                 </button>
               </div>
-            </>
+            </form>
           )}
         </div>
-      )}
-    </div>
+        <form method="dialog" className="modal-backdrop">
+          <button>close</button>
+        </form>
+      </dialog>
+    </>
   )
+}
+
+function emptyToNull(value: string | boolean | null | undefined): string | null {
+  if (value == null) return null
+  const str = String(value).trim()
+  return str === "" ? null : str
 }
