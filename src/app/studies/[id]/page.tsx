@@ -201,19 +201,12 @@ export default async function StudyDetailPage({
           <div className="divide-y divide-base-200">
             {study.papers.map(({ paper, role }) => (
               <div key={paper.id} className="py-6">
-                <div className="flex items-center justify-between gap-3 mb-3">
-                  <h2 className="text-sm font-semibold uppercase tracking-wider text-base-content/40">
-                    {ROLE_LABELS[role] ?? role}
-                  </h2>
-                  <ReportButton
-                    paperId={paper.id}
-                    initialReported={reportedIds.has(paper.id)}
-                    isLoggedIn={!!userId}
-                  />
-                </div>
+                <h2 className="text-sm font-semibold uppercase tracking-wider text-base-content/40 mb-3">
+                  {ROLE_LABELS[role] ?? role}
+                </h2>
 
-                {(paper.doi || paper.pdfUrl || isAdmin) && (
-                  <div className="flex flex-wrap items-start gap-2 mb-3">
+                <div className="flex flex-wrap items-start justify-between gap-2 mb-3">
+                  <div className="flex flex-wrap items-start gap-2">
                     {paper.doi && (
                       <a
                         href={`https://doi.org/${paper.doi}`}
@@ -235,8 +228,23 @@ export default async function StudyDetailPage({
                       </a>
                     )}
                     {isAdmin && <AdminEnrichPanel paperId={paper.id} />}
+                    <a
+                      href={
+                        userId
+                          ? `/papers/${paper.id}/suggest-edit`
+                          : `/login?next=/papers/${paper.id}/suggest-edit`
+                      }
+                      className="btn btn-warning btn-md text-base"
+                    >
+                      Suggest edit
+                    </a>
                   </div>
-                )}
+                  <ReportButton
+                    paperId={paper.id}
+                    initialReported={reportedIds.has(paper.id)}
+                    isLoggedIn={!!userId}
+                  />
+                </div>
 
                 <div className="space-y-1.5 text-base">
                   {paper.authors.length > 0 && (
