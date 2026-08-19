@@ -34,7 +34,7 @@ export function PaperHistoryCard({ entries }: { entries: PaperHistoryEntry[] }) 
 function HistoryEvent({ label, date }: { label: React.ReactNode; date: Date }) {
   const formatted = date.toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" })
   return (
-    <div className="flex items-baseline gap-2 text-sm text-base-content/40">
+    <div className="flex items-baseline gap-2 text-base text-base-content/70">
       <span className="shrink-0">·</span>
       <span>{label}</span>
       <span className="shrink-0">{formatted}</span>

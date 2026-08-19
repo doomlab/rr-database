@@ -3,9 +3,74 @@ import { Navbar } from "../../components/Navbar"
 import { FavoriteButton } from "../../components/FavoriteButton"
 import { ReportButton } from "../../components/ReportButton"
 import { PaperHistoryCard } from "../../components/PaperHistoryCard"
+import { CollapsibleSection } from "../../components/CollapsibleSection"
+import { CitationCard, type CitationEntry } from "./CitationCard"
 import { AdminEnrichPanel } from "../../(admin)/components/AdminEnrichPanel"
 import { getBlitzContext } from "../../blitz-server"
+import { fetchCitingWorks } from "src/lib/fetchCitingWorks"
 import db from "db"
+
+const CONFIRMED_STATUSES: ("IMPORTED" | "APPROVED")[] = ["IMPORTED", "APPROVED"]
+
+async function resolveCitations(paper: {
+  id: number
+  openalexId: string | null
+  citedByCount: number | null
+  citationsFrom: { citedOpenAlexId: string; title: string | null; year: number | null; journal: string | null }[]
+}) {
+  const citedByResult = paper.openalexId
+    ? await fetchCitingWorks(paper.openalexId)
+    : { works: [], total: null }
+
+  const allOpenAlexIds = [
+    ...paper.citationsFrom.map((c) => c.citedOpenAlexId),
+    ...citedByResult.works.map((w) => w.openalexId),
+  ]
+
+  const matchedCitations =
+    allOpenAlexIds.length > 0
+      ? await db.paper.findMany({
+          where: { openalexId: { in: allOpenAlexIds }, status: { in: CONFIRMED_STATUSES } },
+          select: {
+            id: true,
+            openalexId: true,
+            studyPaper: { select: { studyId: true } },
+            canonical: { select: { id: true, studyPaper: { select: { studyId: true } } } },
+          },
+        })
+      : []
+
+  const matchedById = new Map<string, { id: number; studyId: number }>()
+  for (const p of matchedCitations) {
+    const resolved = p.canonical ?? p
+    const studyId = resolved.studyPaper?.studyId
+    if (p.openalexId && studyId != null) {
+      matchedById.set(p.openalexId, { id: resolved.id, studyId })
+    }
+  }
+
+  const references: CitationEntry[] = paper.citationsFrom.map((c) => ({
+    title: c.title,
+    year: c.year,
+    journal: c.journal,
+    match: matchedById.get(c.citedOpenAlexId),
+  }))
+
+  const citedBy: CitationEntry[] = citedByResult.works.map((w) => ({
+    title: w.title,
+    year: w.year,
+    journal: w.journal,
+    match: matchedById.get(w.openalexId),
+  }))
+
+  return {
+    references,
+    referencesInDbCount: references.filter((r) => r.match).length,
+    citedBy,
+    citedByInDbCount: citedBy.filter((c) => c.match).length,
+    citedByTotal: citedByResult.total ?? paper.citedByCount,
+  }
+}
 
 const ROLE_LABELS: Record<string, string> = {
   STAGE1_ARTICLE: "Stage 1 article",
@@ -44,7 +109,13 @@ export default async function StudyDetailPage({
           paper: {
             include: {
               authors: { include: { author: true }, orderBy: { position: "asc" } },
-              extraction: true,
+              extraction: {
+                include: {
+                  codedBy: { select: { name: true, email: true } },
+                  verifiedBy: { select: { name: true, email: true } },
+                },
+              },
+              citationsFrom: { orderBy: { year: "desc" } },
               editHistory: {
                 include: { user: { select: { name: true, email: true } } },
                 orderBy: { createdAt: "desc" },
@@ -58,6 +129,12 @@ export default async function StudyDetailPage({
   })
 
   if (!study || study.papers.length === 0) notFound()
+
+  const citationDataByPaperId = new Map(
+    await Promise.all(
+      study.papers.map(async ({ paper }) => [paper.id, await resolveCitations(paper)] as const)
+    )
+  )
 
   const [isFavorited, reportedIds] = await Promise.all([
     userId
@@ -160,12 +237,81 @@ export default async function StudyDetailPage({
                   )}
                   <Row label="Year" value={paper.year?.toString()} />
                   <Row label="Venue" value={paper.venue ?? undefined} italic />
+                  <Row label="Publisher" value={paper.publisher ?? undefined} />
+                  <Row
+                    label="Volume / Issue"
+                    value={[paper.volume, paper.issue].filter(Boolean).join(" / ") || undefined}
+                  />
+                  <Row label="Pages" value={paper.pages ?? undefined} />
+                  <Row label="ISSN" value={paper.issn ?? undefined} />
+                  <Row label="Language" value={paper.language ?? undefined} />
+                  <Row label="Item type" value={humanizeItemType(paper.itemType)} />
+                  <Row
+                    label="Open access"
+                    value={paper.openAccess == null ? undefined : paper.openAccess ? "Yes" : "No"}
+                  />
+                  <Row
+                    label="Cited by"
+                    value={paper.citedByCount != null ? `${paper.citedByCount} papers` : undefined}
+                  />
                   {paper.abstract && (
                     <div className="pt-2">
                       <p className="text-base-content/70 leading-relaxed">{paper.abstract}</p>
                     </div>
                   )}
                 </div>
+
+                {paper.extraction && (
+                  <div className="mt-4">
+                    <CollapsibleSection title="Coded data">
+                      <div className="space-y-2">
+                        <p className="text-sm text-base-content/50">
+                          {paper.extraction.needsReview ? "Needs review" : "Reviewed"}
+                          {paper.extraction.confidence != null &&
+                            ` · confidence ${(paper.extraction.confidence * 100).toFixed(0)}%`}
+                          {paper.extraction.codedBy &&
+                            ` · coded by ${paper.extraction.codedBy.name ?? paper.extraction.codedBy.email}`}
+                          {paper.extraction.verifiedBy &&
+                            ` · verified by ${
+                              paper.extraction.verifiedBy.name ?? paper.extraction.verifiedBy.email
+                            }`}
+                        </p>
+                        <div className="space-y-1">
+                          {Object.entries(paper.extraction.extractedData as Record<string, unknown>).map(
+                            ([key, value]) =>
+                              value == null || value === "" ? null : (
+                                <Row key={key} label={key} value={String(value)} />
+                              )
+                          )}
+                        </div>
+                      </div>
+                    </CollapsibleSection>
+                  </div>
+                )}
+
+                {(() => {
+                  const { references, referencesInDbCount, citedBy, citedByInDbCount, citedByTotal } =
+                    citationDataByPaperId.get(paper.id)!
+
+                  const citedByParts: string[] = []
+                  if (citedByInDbCount > 0) citedByParts.push(`${citedByInDbCount} in RR Database`)
+                  if (citedByTotal != null) citedByParts.push(`${citedByTotal.toLocaleString()} total`)
+
+                  return (
+                    <div className="divide-y divide-base-200 border-t border-base-200 mt-2">
+                      {citedBy.length > 0 && (
+                        <CitationCard title="Cited by" subtitle={citedByParts.join(" · ")} entries={citedBy} />
+                      )}
+                      {references.length > 0 && (
+                        <CitationCard
+                          title="References"
+                          subtitle={`${referencesInDbCount} in RR Database · ${references.length} total`}
+                          entries={references}
+                        />
+                      )}
+                    </div>
+                  )
+                })()}
 
                 <div className="mt-3">
                   <PaperHistoryCard entries={paper.editHistory} />
@@ -177,6 +323,17 @@ export default async function StudyDetailPage({
       </div>
     </div>
   )
+}
+
+function humanizeItemType(itemType: string | null): string | undefined {
+  if (!itemType) return undefined
+  const words = itemType
+    .replace(/[_-]+/g, " ")
+    .replace(/([a-z0-9])([A-Z])/g, "$1 $2")
+    .toLowerCase()
+    .split(" ")
+    .filter(Boolean)
+  return words.map((w) => w[0]!.toUpperCase() + w.slice(1)).join(" ")
 }
 
 function Row({ label, value, italic }: { label: string; value?: string; italic?: boolean }) {

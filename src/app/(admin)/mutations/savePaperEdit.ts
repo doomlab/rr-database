@@ -1,6 +1,7 @@
 import { resolver } from "@blitzjs/rpc"
 import { z } from "zod"
 import db from "db"
+import { fetchAndStoreCitations } from "src/lib/fetchAndStoreCitations"
 
 const SavePaperEdit = z.object({
   paperId: z.number(),
@@ -44,6 +45,10 @@ export default resolver.pipe(
         },
       }),
     ])
+
+    if (source === "openalex" && updated.openalexId) {
+      await fetchAndStoreCitations(paperId, updated.openalexId, updated.doi)
+    }
 
     return updated
   }
