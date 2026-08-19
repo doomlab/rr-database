@@ -39,6 +39,7 @@ model User {
   metadataEditSuggestions  MetadataEditSuggestion[]
   extractionEditSuggestions ExtractionEditSuggestion[]
   paperReports             PaperReport[]
+  paperEditHistory         PaperEditHistory[]
 }
 
 model Session {
@@ -189,9 +190,28 @@ model Paper {
   metadataEdits   MetadataEditSuggestion[]
   extractionEdits ExtractionEditSuggestion[]
   reports         PaperReport[]
+  editHistory     PaperEditHistory[]
 
   @@index([status])
   @@index([doi])
+}
+
+// Audit trail of admin-triggered metadata pulls (OpenAlex/Crossref/manual
+// edits) on a paper — who did it, from where, and when. Shown as a history
+// card on the paper's view page.
+model PaperEditHistory {
+  id        Int      @id @default(autoincrement())
+  createdAt DateTime @default(now())
+
+  paperId Int
+  paper   Paper @relation(fields: [paperId], references: [id], onDelete: Cascade)
+  userId  Int
+  user    User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  source  String // "openalex" | "crossref" | "manual"
+  summary String? // short human-readable note on what changed
+
+  @@index([paperId])
 }
 
 // A Study is one registered report project — the OSF-registered plan plus

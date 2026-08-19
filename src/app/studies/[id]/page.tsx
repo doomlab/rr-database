@@ -2,6 +2,8 @@ import { notFound } from "next/navigation"
 import { Navbar } from "../../components/Navbar"
 import { FavoriteButton } from "../../components/FavoriteButton"
 import { ReportButton } from "../../components/ReportButton"
+import { PaperHistoryCard } from "../../components/PaperHistoryCard"
+import { AdminEnrichPanel } from "../../(admin)/components/AdminEnrichPanel"
 import { getBlitzContext } from "../../blitz-server"
 import db from "db"
 
@@ -31,6 +33,7 @@ export default async function StudyDetailPage({
   const { id } = await params
   const ctx = await getBlitzContext()
   const userId = ctx.session.userId as number | undefined
+  const isAdmin = ctx.session.role === "ADMIN" || ctx.session.role === "SUPER_ADMIN"
 
   const study = await db.study.findUnique({
     where: { id: Number(id) },
@@ -42,6 +45,10 @@ export default async function StudyDetailPage({
             include: {
               authors: { include: { author: true }, orderBy: { position: "asc" } },
               extraction: true,
+              editHistory: {
+                include: { user: { select: { name: true, email: true } } },
+                orderBy: { createdAt: "desc" },
+              },
             },
           },
         },
@@ -118,6 +125,33 @@ export default async function StudyDetailPage({
                   />
                 </div>
 
+                {isAdmin && <AdminEnrichPanel paperId={paper.id} />}
+
+                {(paper.doi || paper.pdfUrl) && (
+                  <div className="flex flex-wrap gap-2 mb-3">
+                    {paper.doi && (
+                      <a
+                        href={`https://doi.org/${paper.doi}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="btn btn-primary btn-sm"
+                      >
+                        View article (DOI)
+                      </a>
+                    )}
+                    {paper.pdfUrl && (
+                      <a
+                        href={paper.pdfUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="btn btn-secondary btn-sm"
+                      >
+                        {paper.openAccess ? "Open access PDF" : "View PDF"}
+                      </a>
+                    )}
+                  </div>
+                )}
+
                 <div className="space-y-1.5 text-base">
                   {paper.authors.length > 0 && (
                     <Row
@@ -127,37 +161,15 @@ export default async function StudyDetailPage({
                   )}
                   <Row label="Year" value={paper.year?.toString()} />
                   <Row label="Venue" value={paper.venue ?? undefined} italic />
-                  {paper.doi && (
-                    <div className="flex gap-3 py-1.5">
-                      <span className="w-32 shrink-0 font-medium text-base-content/70">DOI</span>
-                      <a
-                        href={`https://doi.org/${paper.doi}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="link link-primary break-all"
-                      >
-                        {paper.doi}
-                      </a>
-                    </div>
-                  )}
-                  {paper.pdfUrl && (
-                    <div className="flex gap-3 py-1.5">
-                      <span className="w-32 shrink-0 font-medium text-base-content/70">PDF</span>
-                      <a
-                        href={paper.pdfUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="link link-primary break-all"
-                      >
-                        View PDF
-                      </a>
-                    </div>
-                  )}
                   {paper.abstract && (
                     <div className="pt-2">
                       <p className="text-base-content/70 leading-relaxed">{paper.abstract}</p>
                     </div>
                   )}
+                </div>
+
+                <div className="mt-3">
+                  <PaperHistoryCard entries={paper.editHistory} />
                 </div>
               </div>
             ))}

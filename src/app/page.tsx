@@ -176,7 +176,7 @@ export default async function Home({
                             initialFavorited={favoritedIds.has(study.id)}
                             isLoggedIn={!!userId}
                           />
-                          <a href={`/studies/${study.id}`} className="btn btn-outline btn-sm">
+                          <a href={`/studies/${study.id}`} className="btn btn-primary btn-sm">
                             View
                           </a>
                         </div>

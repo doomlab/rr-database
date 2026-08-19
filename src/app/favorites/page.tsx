@@ -97,7 +97,7 @@ export default async function FavoritesPage({
                         </div>
                         <div className="flex items-center gap-2 shrink-0">
                           <FavoriteButton studyId={fav.study.id} initialFavorited={true} />
-                          <a href={`/studies/${fav.study.id}`} className="btn btn-outline btn-sm">
+                          <a href={`/studies/${fav.study.id}`} className="btn btn-primary btn-sm">
                             View
                           </a>
                         </div>
