@@ -63,7 +63,7 @@ export default async function PullDataPage({
   }
 
   return (
-    <div className="max-w-3xl mx-auto">
+    <div>
       <a href={backHref} className="text-sm text-base-content/50 hover:text-base-content mb-6 inline-block">
         ← Back to article
       </a>

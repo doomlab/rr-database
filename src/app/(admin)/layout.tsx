@@ -12,7 +12,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   return (
     <div className="min-h-screen bg-base-100">
       <Navbar />
-      <main className="max-w-5xl mx-auto px-6 py-10">{children}</main>
+      <main className="w-[90%] mx-auto px-6 py-10">{children}</main>
     </div>
   )
 }
