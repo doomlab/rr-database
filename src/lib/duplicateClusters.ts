@@ -1,0 +1,93 @@
+// Groups papers that are probably the same underlying work (e.g. OpenAlex
+// indexing a preprint, the published article, and a Zenodo/OSF registration
+// as separate records) so an admin can link them into one Study, or mark the
+// extras as duplicates of a chosen canonical paper.
+
+const STOPWORDS = new Set([
+  "the", "and", "for", "with", "from", "into", "onto", "over", "under",
+  "about", "across", "after", "before", "between", "during", "without",
+  "study", "studies", "analysis", "effect", "effects", "using", "based",
+])
+
+function normalizeTitle(title: string): string {
+  return title
+    .toLowerCase()
+    .replace(/[^a-z0-9\s]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim()
+}
+
+function significantWords(normalized: string): Set<string> {
+  return new Set(normalized.split(" ").filter((w) => w.length >= 4 && !STOPWORDS.has(w)))
+}
+
+function diceCoefficient(a: Set<string>, b: Set<string>): number {
+  if (a.size === 0 || b.size === 0) return 0
+  let intersection = 0
+  for (const w of a) if (b.has(w)) intersection++
+  return (2 * intersection) / (a.size + b.size)
+}
+
+const SIMILARITY_THRESHOLD = 0.6
+
+export type ClusterablePaper = {
+  id: number
+  title: string
+}
+
+export function clusterPapersByTitle<T extends ClusterablePaper>(papers: T[]): T[][] {
+  const words = new Map<number, Set<string>>()
+  const wordIndex = new Map<string, number[]>()
+
+  for (const paper of papers) {
+    const w = significantWords(normalizeTitle(paper.title))
+    words.set(paper.id, w)
+    for (const word of w) {
+      const bucket = wordIndex.get(word)
+      if (bucket) bucket.push(paper.id)
+      else wordIndex.set(word, [paper.id])
+    }
+  }
+
+  // Union-find over papers that share enough significant words.
+  const parent = new Map<number, number>()
+  const find = (id: number): number => {
+    let root = id
+    while (parent.get(root) !== undefined && parent.get(root) !== root) root = parent.get(root)!
+    parent.set(id, root)
+    return root
+  }
+  const union = (a: number, b: number) => {
+    const ra = find(a)
+    const rb = find(b)
+    if (ra !== rb) parent.set(ra, rb)
+  }
+  for (const paper of papers) parent.set(paper.id, paper.id)
+
+  for (const paper of papers) {
+    const paperWords = words.get(paper.id)!
+    const candidateIds = new Set<number>()
+    for (const word of paperWords) {
+      for (const otherId of wordIndex.get(word) ?? []) {
+        if (otherId !== paper.id) candidateIds.add(otherId)
+      }
+    }
+    for (const otherId of candidateIds) {
+      if (diceCoefficient(paperWords, words.get(otherId)!) >= SIMILARITY_THRESHOLD) {
+        union(paper.id, otherId)
+      }
+    }
+  }
+
+  const groups = new Map<number, T[]>()
+  for (const paper of papers) {
+    const root = find(paper.id)
+    const group = groups.get(root)
+    if (group) group.push(paper)
+    else groups.set(root, [paper])
+  }
+
+  return Array.from(groups.values())
+    .filter((g) => g.length >= 2)
+    .sort((a, b) => b.length - a.length)
+}

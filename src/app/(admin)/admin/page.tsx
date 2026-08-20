@@ -2,6 +2,7 @@ import db from "db"
 import { getBlitzContext } from "src/app/blitz-server"
 import { lastZoteroRun, lastPipelineRun, openAlexYearRunHistory } from "src/lib/pipelineRuns"
 import { userHasOpenAlexApiKey } from "src/lib/apiKeyPool"
+import { clusterPapersByTitle } from "src/lib/duplicateClusters"
 import { WorkflowCard } from "../components/WorkflowCard"
 import { RunCard } from "../components/RunCard"
 import { RunImportButton } from "../components/RunImportButton"
@@ -30,6 +31,7 @@ export default async function AdminHomePage() {
     openAlexRecentRun,
     yearRunHistory,
     reviewCount,
+    unlinkedPapers,
   ] = await Promise.all([
     isSuperAdmin ? lastZoteroRun("[production]") : Promise.resolve(null),
     isSuperAdmin ? lastZoteroRun("[stagingCollections]") : Promise.resolve(null),
@@ -37,7 +39,17 @@ export default async function AdminHomePage() {
     lastPipelineRun("QUERY_OPENALEX", "[openalex:recent]"),
     openAlexYearRunHistory(),
     db.paper.count({ where: { status: "PENDING_REVIEW", canonicalPaperId: null } }),
+    db.paper.findMany({
+      where: {
+        status: { in: ["PENDING_REVIEW", "IMPORTED", "APPROVED"] },
+        canonicalPaperId: null,
+        studyPaper: null,
+      },
+      select: { id: true, title: true },
+    }),
   ])
+
+  const linkGroupCount = clusterPapersByTitle(unlinkedPapers).length
 
   return (
     <div>
@@ -123,6 +135,16 @@ export default async function AdminHomePage() {
         >
           <a href="/admin/review" className="btn btn-primary btn-sm text-base">
             Go to review queue
+          </a>
+        </WorkflowCard>
+
+        <WorkflowCard
+          title="Link duplicates"
+          description="Papers with matching titles get grouped together — usually the same registered report indexed more than once (a preprint, the published article, a registration link). Mark each one as Stage 1, Stage 2, materials, or a duplicate to link them into a single Study."
+          badge={linkGroupCount}
+        >
+          <a href="/admin/link" className="btn btn-primary btn-sm text-base">
+            Go to duplicate groups
           </a>
         </WorkflowCard>
       </div>
