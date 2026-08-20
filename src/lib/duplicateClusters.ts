@@ -3,6 +3,8 @@
 // as separate records) so an admin can link them into one Study, or mark the
 // extras as duplicates of a chosen canonical paper.
 
+import db from "db"
+
 const STOPWORDS = new Set([
   "the", "and", "for", "with", "from", "into", "onto", "over", "under",
   "about", "across", "after", "before", "between", "during", "without",
@@ -116,4 +118,33 @@ export function clusterPapersByTitle<T extends ClusterablePaper>(
   return Array.from(groups.values())
     .filter((g) => g.length >= minGroupSize)
     .sort((a, b) => b.length - a.length)
+}
+
+// Single source of truth for "how many things need attention on the Link
+// papers page" — used by the nav badge, the admin home card, and the stats
+// page, so they can't drift out of sync with what that page actually shows
+// under its "Needs review" tab (every eligible, not-yet-touched paper,
+// including singletons with no title match).
+export async function countLinkNeedsReviewGroups(): Promise<number> {
+  const [papers, touched] = await Promise.all([
+    db.paper.findMany({
+      where: { status: { in: [...LINK_ELIGIBLE_STATUSES] }, canonicalPaperId: null },
+      select: {
+        id: true,
+        title: true,
+        status: true,
+        canonicalPaperId: true,
+        studyPaper: { select: { study: { select: { _count: { select: { papers: true } } } } } },
+      },
+    }),
+    db.paperEditHistory.findMany({
+      where: { source: "link" },
+      select: { paperId: true },
+      distinct: ["paperId"],
+    }),
+  ])
+
+  const touchedIds = new Set(touched.map((t) => t.paperId))
+  const eligible = papers.filter(isLinkEligible).filter((p) => !touchedIds.has(p.id))
+  return clusterPapersByTitle(eligible, 1).length
 }

@@ -3,7 +3,7 @@ import db from "db"
 import { getBlitzContext } from "../blitz-server"
 import { LogoutButton } from "../(auth)/components/LogoutButton"
 import { ThemeToggle } from "./ThemeToggle"
-import { clusterPapersByTitle, isLinkEligible, LINK_ELIGIBLE_STATUSES } from "src/lib/duplicateClusters"
+import { countLinkNeedsReviewGroups } from "src/lib/duplicateClusters"
 
 export async function Navbar() {
   const ctx = await getBlitzContext()
@@ -12,7 +12,7 @@ export async function Navbar() {
   const isAdmin = role === "ADMIN" || role === "SUPER_ADMIN"
   const isSuperAdmin = role === "SUPER_ADMIN"
 
-  const [reviewCount, reportsCount, suggestionsCount, metadataCount, extractionCount, unlinkedPapers] =
+  const [reviewCount, reportsCount, suggestionsCount, metadataCount, extractionCount, linkGroupCount] =
     isAdmin
       ? await Promise.all([
           db.paper.count({ where: { status: "PENDING_REVIEW" } }),
@@ -20,20 +20,9 @@ export async function Navbar() {
           db.articleSuggestion.count({ where: { resolved: false } }),
           db.metadataEditSuggestion.count({ where: { resolved: false } }),
           db.extractionEditSuggestion.count({ where: { resolved: false } }),
-          db.paper.findMany({
-            where: { status: { in: [...LINK_ELIGIBLE_STATUSES] }, canonicalPaperId: null },
-            select: {
-              id: true,
-              title: true,
-              status: true,
-              canonicalPaperId: true,
-              studyPaper: { select: { study: { select: { _count: { select: { papers: true } } } } } },
-            },
-          }),
+          countLinkNeedsReviewGroups(),
         ])
-      : [0, 0, 0, 0, 0, []]
-
-  const linkGroupCount = clusterPapersByTitle(unlinkedPapers.filter(isLinkEligible)).length
+      : [0, 0, 0, 0, 0, 0]
 
   return (
     <div className="navbar bg-base-200 px-6 shadow-sm sticky top-0 z-50">
@@ -78,6 +67,9 @@ export async function Navbar() {
                 >
                   <li>
                     <Link href="/admin">Home</Link>
+                  </li>
+                  <li>
+                    <Link href="/admin/stats">Stats</Link>
                   </li>
                   <li>
                     <Link href="/admin/review" className="flex justify-between">

@@ -14,6 +14,12 @@ export type LinkablePaper = {
   doi: string | null
   status: string
   currentRole: "STAGE1_ARTICLE" | "STAGE1_MATERIALS" | "STAGE2_ARTICLE" | "STAGE2_MATERIALS" | "OTHER" | null
+  // Whether currentRole was actually set by an admin through this page
+  // (tracked via edit history) rather than being the generic "OTHER"
+  // fallback almost every paper got from the old Zotero import — without
+  // this, every legacy paper would look like it had already been tagged
+  // "PCI RR page".
+  roleConfirmed: boolean
   authors: { author: { name: string } }[]
 }
 
@@ -30,25 +36,22 @@ const ROLE_OPTIONS = [
 
 type Choice = (typeof ROLE_OPTIONS)[number]["value"]
 
-function defaultChoiceFor(role: LinkablePaper["currentRole"]): Choice {
-  if (
-    role === "STAGE1_ARTICLE" ||
-    role === "STAGE1_MATERIALS" ||
-    role === "STAGE2_ARTICLE" ||
-    role === "STAGE2_MATERIALS" ||
-    role === "OTHER"
-  ) {
+function defaultChoiceFor(role: LinkablePaper["currentRole"], roleConfirmed: boolean): Choice {
+  if (role === "STAGE1_ARTICLE" || role === "STAGE1_MATERIALS" || role === "STAGE2_ARTICLE" || role === "STAGE2_MATERIALS") {
     return role
   }
+  // "OTHER" is ambiguous — only trust it as a real "PCI RR page" tag if an
+  // admin actually set it through this page.
+  if (role === "OTHER" && roleConfirmed) return role
   return "skip"
 }
 
 export function DuplicateGroupCard({ papers }: { papers: LinkablePaper[] }) {
   const defaults = useMemo(
-    () => Object.fromEntries(papers.map((p) => [p.id, defaultChoiceFor(p.currentRole)])) as Record<
-      number,
-      Choice
-    >,
+    () =>
+      Object.fromEntries(
+        papers.map((p) => [p.id, defaultChoiceFor(p.currentRole, p.roleConfirmed)])
+      ) as Record<number, Choice>,
     [papers]
   )
   const [choices, setChoices] = useState<Record<number, Choice>>({})
@@ -148,7 +151,7 @@ export function DuplicateGroupCard({ papers }: { papers: LinkablePaper[] }) {
                     )}
                     {paper.year && <span>· {paper.year}</span>}
                     {paper.venue && <span className="italic">· {paper.venue}</span>}
-                    {defaultChoiceFor(paper.currentRole) !== "skip" && (
+                    {defaultChoiceFor(paper.currentRole, paper.roleConfirmed) !== "skip" && (
                       <span className="badge badge-sm badge-ghost">
                         currently {ROLE_OPTIONS.find((o) => o.value === paper.currentRole)?.label}
                       </span>

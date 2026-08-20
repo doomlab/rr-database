@@ -2,7 +2,7 @@ import db from "db"
 import { getBlitzContext } from "src/app/blitz-server"
 import { lastZoteroRun, lastPipelineRun, openAlexYearRunHistory } from "src/lib/pipelineRuns"
 import { userHasOpenAlexApiKey } from "src/lib/apiKeyPool"
-import { clusterPapersByTitle, isLinkEligible, LINK_ELIGIBLE_STATUSES } from "src/lib/duplicateClusters"
+import { countLinkNeedsReviewGroups } from "src/lib/duplicateClusters"
 import { WorkflowCard } from "../components/WorkflowCard"
 import { RunCard } from "../components/RunCard"
 import { RunImportButton } from "../components/RunImportButton"
@@ -31,7 +31,7 @@ export default async function AdminHomePage() {
     openAlexRecentRun,
     yearRunHistory,
     reviewCount,
-    unlinkedPapers,
+    linkGroupCount,
   ] = await Promise.all([
     isSuperAdmin ? lastZoteroRun("[production]") : Promise.resolve(null),
     isSuperAdmin ? lastZoteroRun("[stagingCollections]") : Promise.resolve(null),
@@ -39,19 +39,8 @@ export default async function AdminHomePage() {
     lastPipelineRun("QUERY_OPENALEX", "[openalex:recent]"),
     openAlexYearRunHistory(),
     db.paper.count({ where: { status: "PENDING_REVIEW", canonicalPaperId: null } }),
-    db.paper.findMany({
-      where: { status: { in: [...LINK_ELIGIBLE_STATUSES] }, canonicalPaperId: null },
-      select: {
-        id: true,
-        title: true,
-        status: true,
-        canonicalPaperId: true,
-        studyPaper: { select: { study: { select: { _count: { select: { papers: true } } } } } },
-      },
-    }),
+    countLinkNeedsReviewGroups(),
   ])
-
-  const linkGroupCount = clusterPapersByTitle(unlinkedPapers.filter(isLinkEligible)).length
 
   return (
     <div>

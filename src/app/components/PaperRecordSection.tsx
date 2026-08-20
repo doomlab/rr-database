@@ -24,6 +24,12 @@ type RecordPaper = {
   citedByCount: number | null
   abstract: string | null
   keywords: string[]
+  tags: string[]
+  registrationUrl: string | null
+  registrationPlatform: string | null
+  biasLevel: string | null
+  openalexId: string | null
+  zoteroNotes: string | null
   authors: { author: { name: string } }[]
   extraction: {
     needsReview: boolean
@@ -120,6 +126,16 @@ export function PaperRecordSection({
               Go to page
             </a>
           )}
+          {paper.registrationUrl && (
+            <a
+              href={paper.registrationUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="btn btn-outline btn-md text-base"
+            >
+              View registration{paper.registrationPlatform ? ` (${paper.registrationPlatform})` : ""}
+            </a>
+          )}
           {isAdmin && (
             <AdminEnrichPanel
               paperId={paper.id}
@@ -163,12 +179,32 @@ export function PaperRecordSection({
           label="Cited by"
           value={paper.citedByCount != null ? `${paper.citedByCount} papers` : undefined}
         />
+        <Row label="Bias level" value={paper.biasLevel ?? undefined} />
+        <Row label="DOI" value={paper.doi ?? undefined} />
+        <Row label="URL" value={paper.url ?? undefined} />
+        <Row label="Registration" value={paper.registrationUrl ?? undefined} />
+        <Row label="OpenAlex ID" value={paper.openalexId ?? undefined} />
         {paper.abstract && (
           <div className="pt-2">
             <p className="text-base-content/70 leading-relaxed">{paper.abstract}</p>
           </div>
         )}
       </div>
+
+      {paper.tags.length > 0 && (
+        <div className="mt-4">
+          <h3 className="text-sm font-semibold uppercase tracking-wider text-base-content/60 mb-2">
+            Tags
+          </h3>
+          <div className="flex flex-wrap gap-1.5">
+            {paper.tags.map((tag) => (
+              <span key={tag} className="badge badge-secondary badge-outline">
+                {tag}
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
 
       {paper.keywords.length > 0 && (
         <div className="mt-4">
@@ -186,6 +222,16 @@ export function PaperRecordSection({
               </a>
             ))}
           </div>
+        </div>
+      )}
+
+      {paper.zoteroNotes && (
+        <div className="mt-4">
+          <CollapsibleSection title="Notes (from Zotero)">
+            <p className="text-base-content/70 leading-relaxed whitespace-pre-line">
+              {paper.zoteroNotes}
+            </p>
+          </CollapsibleSection>
         </div>
       )}
 

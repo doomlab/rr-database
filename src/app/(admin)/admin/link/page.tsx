@@ -20,7 +20,8 @@ function toLinkable(
     status: string
     authors: { author: { name: string } }[]
   },
-  role: LinkablePaper["currentRole"]
+  role: LinkablePaper["currentRole"],
+  roleConfirmed: boolean
 ): LinkablePaper {
   return {
     id: paper.id,
@@ -30,6 +31,7 @@ function toLinkable(
     doi: paper.doi,
     status: paper.status,
     currentRole: role,
+    roleConfirmed,
     authors: paper.authors,
   }
 }
@@ -88,9 +90,26 @@ async function groupsForPaperIds(paperIds: number[]): Promise<LinkablePaper[][]>
     db.paper.findMany({ where: { id: { in: soloPaperIds } }, include: paperInclude }),
   ])
 
+  // A group's own members might include papers nobody has actually touched
+  // yet (e.g. a sibling pulled in via shared Study membership), so look up
+  // which of them really have a "link" edit history entry rather than
+  // assuming every paper here counts as confirmed.
+  const allPaperIds = [
+    ...studies.flatMap((s) => s.papers.map((sp) => sp.paper.id)),
+    ...soloPapers.map((p) => p.id),
+  ]
+  const touched = await db.paperEditHistory.findMany({
+    where: { source: "link", paperId: { in: allPaperIds } },
+    select: { paperId: true },
+    distinct: ["paperId"],
+  })
+  const touchedIds = new Set(touched.map((t) => t.paperId))
+
   return [
-    ...studies.map((s) => s.papers.map((sp) => toLinkable(sp.paper, sp.role))),
-    ...soloPapers.map((p) => [toLinkable(p, null)]),
+    ...studies.map((s) =>
+      s.papers.map((sp) => toLinkable(sp.paper, sp.role, touchedIds.has(sp.paper.id)))
+    ),
+    ...soloPapers.map((p) => [toLinkable(p, null, touchedIds.has(p.id))]),
   ]
 }
 
@@ -149,7 +168,10 @@ async function AutoDetectedGroups({ page, tab }: { page: number; tab: "needs-rev
 
   const touchedIds = new Set(touchedHistory.map((h) => h.paperId))
   const eligible = eligiblePapers.filter(isLinkEligible).filter((p) => !touchedIds.has(p.id))
-  const linkable = eligible.map((p) => toLinkable(p, p.studyPaper?.role ?? null))
+  // Every paper here was just filtered to exclude anything touched via this
+  // page, so none of them have a confirmed role — any "OTHER" they carry is
+  // just the untouched legacy fallback.
+  const linkable = eligible.map((p) => toLinkable(p, p.studyPaper?.role ?? null, false))
 
   // minGroupSize 1 so untouched papers with no title match still show up as
   // their own single-paper card, with a way to link them manually.
