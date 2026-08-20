@@ -1,4 +1,4 @@
-import type { lastZoteroRun } from "src/lib/pipelineRuns"
+import type { lastPipelineRun } from "src/lib/pipelineRuns"
 
 export function RunCard({
   title,
@@ -9,7 +9,7 @@ export function RunCard({
 }: {
   title: string
   description: React.ReactNode
-  run: Awaited<ReturnType<typeof lastZoteroRun>>
+  run: Awaited<ReturnType<typeof lastPipelineRun>>
   nested?: boolean
   children: React.ReactNode
 }) {
@@ -17,7 +17,7 @@ export function RunCard({
     <div className={`card shadow-sm ${nested ? "bg-base-100" : "bg-base-200"}`}>
       <div className="card-body gap-3">
         <div>
-          <h3 className="font-semibold">{title}</h3>
+          <h3 className="text-xl font-semibold">{title}</h3>
           <p className="text-base text-base-content/60">{description}</p>
         </div>
 

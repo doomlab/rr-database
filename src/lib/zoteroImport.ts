@@ -85,7 +85,7 @@ function extractAuthorNames(creators: any[] | undefined | null): string[] {
   return names
 }
 
-async function upsertAuthors(paperId: number, authorNames: string[]) {
+export async function upsertAuthors(paperId: number, authorNames: string[]) {
   await db.paperAuthor.deleteMany({ where: { paperId } })
   const deduped = [...new Set(authorNames)]
 

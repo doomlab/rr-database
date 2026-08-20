@@ -19,7 +19,7 @@ export function RunImportButton({
   return (
     <div className="flex flex-col items-start gap-1">
       <button
-        className="btn btn-primary btn-sm"
+        className="btn btn-primary btn-sm text-base"
         disabled={isPending}
         onClick={async () => {
           setError(null)
@@ -33,7 +33,7 @@ export function RunImportButton({
       >
         {isPending ? <span className="loading loading-spinner loading-xs" /> : label}
       </button>
-      {error && <span className="text-xs text-error">{error}</span>}
+      {error && <span className="text-base text-error">{error}</span>}
     </div>
   )
 }
