@@ -24,7 +24,7 @@ export function ResolveButton({
   input: Record<string, any>
   label?: string
 }) {
-  const [run, { isLoading }] = useMutation(MUTATIONS[mutation] as any)
+  const [run, { isPending }] = useMutation(MUTATIONS[mutation] as any)
   const router = useRouter()
   const [done, setDone] = useState(false)
 
@@ -32,7 +32,7 @@ export function ResolveButton({
 
   return (
     <button
-      disabled={isLoading}
+      disabled={isPending}
       onClick={async () => {
         await run(input as any)
         setDone(true)

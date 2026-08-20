@@ -3,7 +3,7 @@ import { FavoriteButton } from "./components/FavoriteButton"
 import { ReportButton } from "./components/ReportButton"
 import { Pagination } from "./components/Pagination"
 import { getBlitzContext } from "./blitz-server"
-import db from "db"
+import db, { PaperStatus } from "db"
 
 const PAGE_SIZE = 50
 
@@ -28,7 +28,7 @@ export default async function Home({
   const ctx = await getBlitzContext()
   const userId = ctx.session.userId as number | undefined
 
-  const CONFIRMED_STATUSES = ["IMPORTED", "APPROVED"] as const
+  const CONFIRMED_STATUSES: PaperStatus[] = [PaperStatus.IMPORTED, PaperStatus.APPROVED]
 
   const studyWhere = {
     papers: { some: { paper: { status: { in: CONFIRMED_STATUSES } } } },

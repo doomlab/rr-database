@@ -13,7 +13,7 @@ export function UserRoleSelect({
   role: string
   canEdit: boolean
 }) {
-  const [update, { isLoading }] = useMutation(updateUserRole)
+  const [update, { isPending }] = useMutation(updateUserRole)
   const router = useRouter()
 
   if (!canEdit) {
@@ -24,7 +24,7 @@ export function UserRoleSelect({
     <select
       className="select select-bordered select-sm"
       defaultValue={role}
-      disabled={isLoading}
+      disabled={isPending}
       onChange={async (e) => {
         await update({ userId, role: e.target.value as "USER" | "ADMIN" | "SUPER_ADMIN" })
         router.refresh()

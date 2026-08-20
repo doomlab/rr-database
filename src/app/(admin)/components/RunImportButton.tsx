@@ -12,7 +12,7 @@ export function RunImportButton({
   target: "production" | "stagingCollections"
   label: string
 }) {
-  const [run, { isLoading }] = useMutation(runZoteroImport)
+  const [run, { isPending }] = useMutation(runZoteroImport)
   const router = useRouter()
   const [error, setError] = useState<string | null>(null)
 
@@ -20,7 +20,7 @@ export function RunImportButton({
     <div className="flex flex-col items-start gap-1">
       <button
         className="btn btn-primary btn-sm"
-        disabled={isLoading}
+        disabled={isPending}
         onClick={async () => {
           setError(null)
           try {
@@ -31,7 +31,7 @@ export function RunImportButton({
           }
         }}
       >
-        {isLoading ? <span className="loading loading-spinner loading-xs" /> : label}
+        {isPending ? <span className="loading loading-spinner loading-xs" /> : label}
       </button>
       {error && <span className="text-xs text-error">{error}</span>}
     </div>

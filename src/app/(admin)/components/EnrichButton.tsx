@@ -20,7 +20,7 @@ export function EnrichButton({
   source: keyof typeof MUTATIONS
   label: string
 }) {
-  const [enrich, { isLoading }] = useMutation(MUTATIONS[source])
+  const [enrich, { isPending }] = useMutation(MUTATIONS[source])
   const router = useRouter()
   const [error, setError] = useState<string | null>(null)
 
@@ -28,7 +28,7 @@ export function EnrichButton({
     <div className="flex flex-col items-start gap-1">
       <button
         className="btn btn-outline btn-sm"
-        disabled={isLoading}
+        disabled={isPending}
         onClick={async () => {
           setError(null)
           try {
@@ -39,7 +39,7 @@ export function EnrichButton({
           }
         }}
       >
-        {isLoading ? <span className="loading loading-spinner loading-xs" /> : label}
+        {isPending ? <span className="loading loading-spinner loading-xs" /> : label}
       </button>
       {error && <span className="text-xs text-error">{error}</span>}
     </div>
