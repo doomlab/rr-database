@@ -34,17 +34,6 @@ function toLinkable(
   }
 }
 
-const ROLE_VALUES = new Set([
-  "STAGE1_ARTICLE",
-  "STAGE1_MATERIALS",
-  "STAGE2_ARTICLE",
-  "STAGE2_MATERIALS",
-])
-
-function groupNeedsReview(group: LinkablePaper[]): boolean {
-  return !group.some((p) => p.currentRole && ROLE_VALUES.has(p.currentRole))
-}
-
 export default async function LinkDuplicatesPage({
   searchParams,
 }: {
@@ -124,16 +113,22 @@ async function AutoDetectedGroups({ page, tab }: { page: number; tab: "needs-rev
       studyPaper: {
         select: { role: true, study: { select: { _count: { select: { papers: true } } } } },
       },
+      // A paper only counts as "reviewed" once someone has actually acted on
+      // it through this page — not just because it carries the "OTHER"
+      // fallback role that ~every paper already got from the old Zotero
+      // import, which would otherwise make almost everything look reviewed.
+      editHistory: { where: { source: "link" }, select: { id: true }, take: 1 },
     },
     orderBy: { title: "asc" },
   })
 
   const eligible = papers.filter(isLinkEligible)
   const linkable = eligible.map((p) => toLinkable(p, p.studyPaper?.role ?? null))
+  const reviewedIds = new Set(eligible.filter((p) => p.editHistory.length > 0).map((p) => p.id))
 
   const allGroups = clusterPapersByTitle(linkable)
-  const needsReviewGroups = allGroups.filter(groupNeedsReview)
-  const reviewedGroups = allGroups.filter((g) => !groupNeedsReview(g))
+  const needsReviewGroups = allGroups.filter((g) => !g.some((p) => reviewedIds.has(p.id)))
+  const reviewedGroups = allGroups.filter((g) => g.some((p) => reviewedIds.has(p.id)))
   const groups = tab === "reviewed" ? reviewedGroups : needsReviewGroups
 
   const totalPages = Math.ceil(groups.length / GROUPS_PER_PAGE)
