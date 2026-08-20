@@ -16,7 +16,7 @@ export default async function SuggestionsQueuePage({
   const [suggestions, totalSuggestions] = await Promise.all([
     db.articleSuggestion.findMany({
       where: { resolved: false },
-      include: { user: { select: { email: true } } },
+      include: { user: { select: { name: true, email: true } } },
       orderBy: { createdAt: "desc" },
       skip,
       take: PAGE_SIZE,
@@ -54,7 +54,7 @@ export default async function SuggestionsQueuePage({
                     )}
                   </div>
                   <p className="text-xs text-base-content/40">
-                    Suggested by {s.user.email}
+                    Suggested by {s.user.name ?? s.user.email}
                     {s.note ? ` — "${s.note}"` : ""}
                   </p>
                 </div>

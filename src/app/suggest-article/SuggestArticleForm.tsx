@@ -58,6 +58,9 @@ export function SuggestArticleForm() {
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-4 max-w-3xl">
+      <p className="text-sm text-base-content/60 -mt-1">
+        A DOI is best — if you have one, you don't need to fill in much else.
+      </p>
       <div>
         <label className="label py-1">
           <span className="label-text font-medium">Title</span>

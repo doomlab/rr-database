@@ -100,6 +100,9 @@ export async function Navbar() {
                 </ul>
               </div>
             )}
+            <Link href="/account" className="btn btn-ghost btn-sm">
+              Account
+            </Link>
             <LogoutButton />
           </>
         ) : (

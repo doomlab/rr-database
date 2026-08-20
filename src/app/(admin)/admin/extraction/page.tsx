@@ -18,7 +18,7 @@ export default async function ExtractionQueuePage({
       where: { resolved: false },
       include: {
         paper: { select: { id: true, title: true } },
-        user: { select: { email: true } },
+        user: { select: { name: true, email: true } },
       },
       orderBy: { createdAt: "desc" },
       skip,
@@ -50,7 +50,7 @@ export default async function ExtractionQueuePage({
                     {JSON.stringify(s.suggestedData, null, 2)}
                   </pre>
                   <p className="text-xs text-base-content/40">
-                    Suggested by {s.user.email}
+                    Suggested by {s.user.name ?? s.user.email}
                     {s.note ? ` — "${s.note}"` : ""}
                   </p>
                 </div>

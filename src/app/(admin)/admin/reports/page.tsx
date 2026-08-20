@@ -18,7 +18,7 @@ export default async function ReportsQueuePage({
       where: { resolved: false },
       include: {
         paper: { select: { id: true, title: true, studyPaper: { select: { studyId: true } } } },
-        user: { select: { email: true } },
+        user: { select: { name: true, email: true } },
       },
       orderBy: { createdAt: "desc" },
       skip,
@@ -56,7 +56,7 @@ export default async function ReportsQueuePage({
                     <span className="font-semibold text-base leading-snug">{report.paper.title}</span>
                   )}
                   <p className="text-xs text-base-content/50 mt-1">
-                    Reported by {report.user.email} — {report.reason}
+                    Reported by {report.user.name ?? report.user.email} — {report.reason}
                     {report.note ? `: "${report.note}"` : ""}
                   </p>
                 </div>
