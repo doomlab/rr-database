@@ -1,7 +1,7 @@
 import { resolver } from "@blitzjs/rpc"
 import { z } from "zod"
 import db from "db"
-import { name } from "../../(auth)/validations"
+import { name, email } from "../../(auth)/validations"
 import { encryptApiKey } from "../../../lib/apiKeyEncryption"
 
 const apiKey = z
@@ -13,6 +13,7 @@ const apiKey = z
 
 const UpdateProfile = z.object({
   name,
+  email,
   openAlexApiKey: apiKey.optional(),
   groqApiKey: apiKey.optional(),
 })
@@ -20,12 +21,19 @@ const UpdateProfile = z.object({
 export default resolver.pipe(
   resolver.zod(UpdateProfile),
   resolver.authorize(),
-  async ({ name, openAlexApiKey, groqApiKey }, ctx) => {
+  async ({ name, email, openAlexApiKey, groqApiKey }, ctx) => {
     const userId = ctx.session.userId as number
+
+    const existing = await db.user.findFirst({ where: { email, NOT: { id: userId } } })
+    if (existing) {
+      throw new Error("That email is already in use by another account.")
+    }
+
     const user = await db.user.update({
       where: { id: userId },
       data: {
         name,
+        email,
         ...(openAlexApiKey !== undefined && {
           openAlexApiKey: openAlexApiKey ? encryptApiKey(openAlexApiKey) : null,
         }),

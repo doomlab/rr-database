@@ -17,6 +17,9 @@ export default async function AccountPage() {
     select: { name: true, email: true, openAlexApiKey: true, groqApiKey: true },
   })
 
+  const [initialFirstName = "", ...rest] = (user?.name ?? "").trim().split(/\s+/).filter(Boolean)
+  const initialLastName = rest.join(" ")
+
   return (
     <div className="min-h-screen bg-base-100 flex flex-col">
       <Navbar />
@@ -27,8 +30,9 @@ export default async function AccountPage() {
           <p className="text-base-content/60 mb-8">Update your profile details.</p>
 
           <AccountForm
-            initialName={user?.name ?? ""}
-            email={user?.email ?? ""}
+            initialFirstName={initialFirstName}
+            initialLastName={initialLastName}
+            initialEmail={user?.email ?? ""}
             hasOpenAlexApiKey={!!user?.openAlexApiKey}
             hasGroqApiKey={!!user?.groqApiKey}
           />

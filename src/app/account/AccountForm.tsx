@@ -6,19 +6,23 @@ import updateProfile from "../(dashboard)/mutations/updateProfile"
 import { PasswordInput } from "../components/PasswordInput"
 
 type AccountFormProps = {
-  initialName: string
-  email: string
+  initialFirstName: string
+  initialLastName: string
+  initialEmail: string
   hasOpenAlexApiKey: boolean
   hasGroqApiKey: boolean
 }
 
 export function AccountForm({
-  initialName,
-  email,
+  initialFirstName,
+  initialLastName,
+  initialEmail,
   hasOpenAlexApiKey,
   hasGroqApiKey,
 }: AccountFormProps) {
-  const [name, setName] = useState(initialName)
+  const [firstName, setFirstName] = useState(initialFirstName)
+  const [lastName, setLastName] = useState(initialLastName)
+  const [email, setEmail] = useState(initialEmail)
   const [openAlexApiKey, setOpenAlexApiKey] = useState("")
   const [groqApiKey, setGroqApiKey] = useState("")
   const [removeOpenAlex, setRemoveOpenAlex] = useState(false)
@@ -37,10 +41,12 @@ export function AccountForm({
 
     try {
       const result = await submit({
-        name,
+        name: [firstName.trim(), lastName.trim()].filter(Boolean).join(" "),
+        email,
         openAlexApiKey: removeOpenAlex ? "" : openAlexApiKey || undefined,
         groqApiKey: removeGroq ? "" : groqApiKey || undefined,
       })
+      setEmail(result.email)
       setHasOpenAlex(result.hasOpenAlexApiKey)
       setHasGroq(result.hasGroqApiKey)
       setOpenAlexApiKey("")
@@ -59,19 +65,39 @@ export function AccountForm({
         <label className="label py-1">
           <span className="label-text font-medium">Email</span>
         </label>
-        <input type="email" className="input input-bordered w-full" value={email} disabled />
-      </div>
-      <div>
-        <label className="label py-1">
-          <span className="label-text font-medium">Full name</span>
-        </label>
         <input
-          type="text"
+          type="email"
           className="input input-bordered w-full"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
           maxLength={200}
         />
+      </div>
+      <div className="flex gap-3">
+        <div className="flex-1">
+          <label className="label py-1">
+            <span className="label-text font-medium">First name</span>
+          </label>
+          <input
+            type="text"
+            className="input input-bordered w-full"
+            value={firstName}
+            onChange={(e) => setFirstName(e.target.value)}
+            maxLength={100}
+          />
+        </div>
+        <div className="flex-1">
+          <label className="label py-1">
+            <span className="label-text font-medium">Last name</span>
+          </label>
+          <input
+            type="text"
+            className="input input-bordered w-full"
+            value={lastName}
+            onChange={(e) => setLastName(e.target.value)}
+            maxLength={100}
+          />
+        </div>
       </div>
 
       <div className="divider my-0" />
