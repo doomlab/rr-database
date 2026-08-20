@@ -97,6 +97,9 @@ export async function Navbar() {
                   <li>
                     <Link href="/admin/users">Users</Link>
                   </li>
+                  <li>
+                    <Link href="/admin/api-keys">API keys</Link>
+                  </li>
                 </ul>
               </div>
             )}

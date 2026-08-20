@@ -3,6 +3,7 @@ import { z } from "zod"
 import db from "db"
 import { fetchOpenAlexFields } from "src/lib/enrichment"
 import { fetchAndStoreCitations } from "src/lib/fetchAndStoreCitations"
+import { userHasOpenAlexApiKey } from "src/lib/apiKeyPool"
 
 const EnrichFromOpenAlex = z.object({
   paperId: z.number(),
@@ -12,6 +13,11 @@ export default resolver.pipe(
   resolver.zod(EnrichFromOpenAlex),
   resolver.authorize(["ADMIN", "SUPER_ADMIN"]),
   async ({ paperId }, ctx) => {
+    const hasKey = await userHasOpenAlexApiKey(ctx.session.userId as number)
+    if (!hasKey) {
+      throw new Error("Add your OpenAlex API key on your Account page before pulling data.")
+    }
+
     const paper = await db.paper.findUniqueOrThrow({ where: { id: paperId } })
     const fields = await fetchOpenAlexFields(paper)
 

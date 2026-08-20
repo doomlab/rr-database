@@ -6,6 +6,7 @@ import { PaperHistoryCard } from "../../components/PaperHistoryCard"
 import { CollapsibleSection } from "../../components/CollapsibleSection"
 import { CitationCard, type CitationEntry } from "./CitationCard"
 import { AdminEnrichPanel } from "../../(admin)/components/AdminEnrichPanel"
+import { userHasOpenAlexApiKey } from "src/lib/apiKeyPool"
 import { getBlitzContext } from "../../blitz-server"
 import { fetchCitingWorks } from "src/lib/fetchCitingWorks"
 import db from "db"
@@ -109,6 +110,7 @@ export default async function StudyDetailPage({
   const ctx = await getBlitzContext()
   const userId = ctx.session.userId as number | undefined
   const isAdmin = ctx.session.role === "ADMIN" || ctx.session.role === "SUPER_ADMIN"
+  const hasOpenAlexApiKey = isAdmin && userId ? await userHasOpenAlexApiKey(userId) : false
 
   const study = await db.study.findUnique({
     where: { id: Number(id) },
@@ -227,7 +229,9 @@ export default async function StudyDetailPage({
                         {paper.openAccess ? "Open access PDF" : "View PDF"}
                       </a>
                     )}
-                    {isAdmin && <AdminEnrichPanel paperId={paper.id} />}
+                    {isAdmin && (
+                      <AdminEnrichPanel paperId={paper.id} hasOpenAlexApiKey={hasOpenAlexApiKey} />
+                    )}
                     <a
                       href={
                         userId

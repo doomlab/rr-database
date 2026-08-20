@@ -1,7 +1,10 @@
 import { notFound } from "next/navigation"
+import Link from "next/link"
 import db from "db"
 import { PaperActions } from "../PaperActions"
 import { EnrichButton } from "../../../components/EnrichButton"
+import { userHasOpenAlexApiKey } from "src/lib/apiKeyPool"
+import { getBlitzContext } from "src/app/blitz-server"
 
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
@@ -18,6 +21,9 @@ export default async function ReviewDetailPage({
 }) {
   const { id } = await params
   const { next: nextParam } = await searchParams
+
+  const ctx = await getBlitzContext()
+  const hasOpenAlexApiKey = await userHasOpenAlexApiKey(ctx.session.userId as number)
 
   const paper = await db.paper.findUnique({
     where: { id: Number(id), status: "PENDING_REVIEW" },
@@ -73,7 +79,13 @@ export default async function ReviewDetailPage({
             View registration{paper.registrationPlatform ? ` (${paper.registrationPlatform})` : ""}
           </a>
         )}
-        <EnrichButton paperId={paper.id} source="openalex" label="Fill in from OpenAlex" />
+        {hasOpenAlexApiKey ? (
+          <EnrichButton paperId={paper.id} source="openalex" label="Fill in from OpenAlex" />
+        ) : (
+          <Link href={"/admin/api-keys" as any} className="text-sm text-base-content/50 hover:text-base-content link">
+            Add an OpenAlex key to enable pulling
+          </Link>
+        )}
         {paper.openAlexFetchedAt && (
           <span className="text-xs text-base-content/40">
             OpenAlex checked {paper.openAlexFetchedAt.toLocaleDateString()}

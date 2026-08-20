@@ -1,6 +1,9 @@
 import { notFound } from "next/navigation"
+import Link from "next/link"
 import db from "db"
 import { fetchCrossrefFields, fetchOpenAlexFields, type EnrichmentFields } from "src/lib/enrichment"
+import { userHasOpenAlexApiKey } from "src/lib/apiKeyPool"
+import { getBlitzContext } from "src/app/blitz-server"
 import { PaperEditForm, type FieldKey } from "./PaperEditForm"
 
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }) {
@@ -27,6 +30,28 @@ export default async function PullDataPage({
   if (!paper) notFound()
 
   const backHref = paper.studyPaper ? `/studies/${paper.studyPaper.studyId}` : "/"
+
+  if (source === "openalex") {
+    const ctx = await getBlitzContext()
+    const hasKey = await userHasOpenAlexApiKey(ctx.session.userId as number)
+    if (!hasKey) {
+      return (
+        <div>
+          <a href={backHref} className="text-sm text-base-content/50 hover:text-base-content mb-6 inline-block">
+            ← Back to article
+          </a>
+          <h1 className="text-2xl font-bold leading-snug mb-1">Add your OpenAlex API key first</h1>
+          <p className="text-base-content/60 mb-4">
+            Pulling from OpenAlex requires your own API key so calls spread across everyone's
+            keys instead of one shared limit.
+          </p>
+          <Link href={"/admin/api-keys" as any} className="link">
+            See how to get one
+          </Link>
+        </div>
+      )
+    }
+  }
 
   let fetched: EnrichmentFields = {}
   let fetchError: string | null = null
