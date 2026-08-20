@@ -289,6 +289,20 @@ export default async function StudyDetailPage({
                   )}
                 </div>
 
+                {paper.keywords.length > 0 && (
+                  <div className="flex flex-wrap gap-1.5 mt-3">
+                    {paper.keywords.map((kw) => (
+                      <a
+                        key={kw}
+                        href={`/?keyword=${encodeURIComponent(kw)}`}
+                        className="badge badge-outline hover:badge-primary"
+                      >
+                        {kw}
+                      </a>
+                    ))}
+                  </div>
+                )}
+
                 {paper.extraction && (
                   <div className="mt-4">
                     <CollapsibleSection title="Coded data">

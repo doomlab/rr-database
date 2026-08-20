@@ -31,44 +31,41 @@ export default async function Home({
 
   const CONFIRMED_STATUSES: PaperStatus[] = [PaperStatus.IMPORTED, PaperStatus.APPROVED]
 
+  const andConditions = [
+    ...(q
+      ? [
+          {
+            papers: {
+              some: {
+                paper: {
+                  status: { in: CONFIRMED_STATUSES },
+                  OR: [
+                    { title: { contains: q, mode: "insensitive" as const } },
+                    { abstract: { contains: q, mode: "insensitive" as const } },
+                    { doi: { contains: q, mode: "insensitive" as const } },
+                  ],
+                },
+              },
+            },
+          },
+        ]
+      : []),
+    ...(keyword
+      ? [
+          {
+            papers: {
+              some: {
+                paper: { status: { in: CONFIRMED_STATUSES }, keywords: { has: keyword } },
+              },
+            },
+          },
+        ]
+      : []),
+  ]
+
   const studyWhere = {
     papers: { some: { paper: { status: { in: CONFIRMED_STATUSES } } } },
-    ...(q
-      ? {
-          AND: [
-            {
-              papers: {
-                some: {
-                  paper: {
-                    status: { in: CONFIRMED_STATUSES },
-                    OR: [
-                      { title: { contains: q, mode: "insensitive" as const } },
-                      { abstract: { contains: q, mode: "insensitive" as const } },
-                      { doi: { contains: q, mode: "insensitive" as const } },
-                    ],
-                  },
-                },
-              },
-            },
-          ],
-        }
-      : {}),
-    ...(keyword
-      ? {
-          AND: [
-            {
-              papers: {
-                some: {
-                  paper: {
-                    status: { in: CONFIRMED_STATUSES },
-                    keywords: { has: keyword },
-                  },
-                },
-              },
-            },
-          ],
-        }
-      : {}),
+    ...(andConditions.length > 0 ? { AND: andConditions } : {}),
   }
 
   const [studies, totalStudies, favoritedIds, reportedIds] = await Promise.all([
@@ -105,6 +102,7 @@ export default async function Home({
   const buildHref = (p: number) => {
     const sp = new URLSearchParams()
     if (q) sp.set("q", q)
+    if (keyword) sp.set("keyword", keyword)
     sp.set("page", String(p))
     return `/?${sp.toString()}`
   }
@@ -116,6 +114,7 @@ export default async function Home({
       <div className="flex-1 w-full px-10 py-8">
         <div className="w-[90%] mx-auto">
           <form className="mb-6" action="/" method="get">
+            {keyword && <input type="hidden" name="keyword" value={keyword} />}
             <input
               type="text"
               name="q"
@@ -124,6 +123,26 @@ export default async function Home({
               className="input input-bordered w-full"
             />
           </form>
+
+          {keyword && (
+            <div className="flex items-center gap-2 mb-5 -mt-3">
+              <span className="text-sm text-base-content/50">Filtering by keyword:</span>
+              <span className="badge badge-primary gap-1">
+                {keyword}
+                <a
+                  href={(() => {
+                    const sp = new URLSearchParams()
+                    if (q) sp.set("q", q)
+                    return sp.toString() ? `/?${sp.toString()}` : "/"
+                  })()}
+                  className="ml-1"
+                  aria-label="Clear keyword filter"
+                >
+                  ✕
+                </a>
+              </span>
+            </div>
+          )}
 
           <div className="flex items-center justify-between mb-5">
             <p className="text-base text-base-content/60">
@@ -189,6 +208,21 @@ export default async function Home({
                               </>
                             )}
                           </div>
+                          {paper.keywords.length > 0 && (
+                            <div className="flex flex-wrap gap-1 mt-2">
+                              {paper.keywords.map((kw: string) => (
+                                <a
+                                  key={kw}
+                                  href={`/?keyword=${encodeURIComponent(kw)}`}
+                                  className={`badge badge-sm ${
+                                    kw === keyword ? "badge-primary" : "badge-outline"
+                                  }`}
+                                >
+                                  {kw}
+                                </a>
+                              ))}
+                            </div>
+                          )}
                         </div>
                         <div className="flex items-center gap-2 shrink-0">
                           <ReportButton

@@ -118,6 +118,7 @@ export default async function ReviewDetailPage({
           <Row label="Stage" value={paper.stage ?? undefined} />
           <Row label="Bias level" value={paper.biasLevel ?? undefined} />
           <Row label="Tags" value={paper.tags.length > 0 ? paper.tags.join(", ") : undefined} />
+          <Row label="Keywords" value={paper.keywords.length > 0 ? paper.keywords.join(", ") : undefined} />
         </Section>
 
         {paper.abstract && (

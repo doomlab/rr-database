@@ -2,6 +2,8 @@ import { notFound } from "next/navigation"
 import { Navbar } from "../../components/Navbar"
 import { PaperFavoriteButton } from "../../components/PaperFavoriteButton"
 import { ReportButton } from "../../components/ReportButton"
+import { AdminEnrichPanel } from "../../(admin)/components/AdminEnrichPanel"
+import { userHasOpenAlexApiKey } from "src/lib/apiKeyPool"
 import { getBlitzContext } from "../../blitz-server"
 import db from "db"
 
@@ -15,6 +17,8 @@ export default async function PaperDetailPage({ params }: { params: Promise<{ id
   const { id } = await params
   const ctx = await getBlitzContext()
   const userId = ctx.session.userId as number | undefined
+  const isAdmin = ctx.session.role === "ADMIN" || ctx.session.role === "SUPER_ADMIN"
+  const hasOpenAlexApiKey = isAdmin && userId ? await userHasOpenAlexApiKey(userId) : false
 
   const paper = await db.paper.findUnique({
     where: { id: Number(id) },
@@ -79,6 +83,9 @@ export default async function PaperDetailPage({ params }: { params: Promise<{ id
                 {paper.openAccess ? "Open access PDF" : "View PDF"}
               </a>
             )}
+            {isAdmin && (
+              <AdminEnrichPanel paperId={paper.id} hasOpenAlexApiKey={hasOpenAlexApiKey} />
+            )}
           </div>
 
           <div className="space-y-1.5 text-base">
@@ -100,6 +107,20 @@ export default async function PaperDetailPage({ params }: { params: Promise<{ id
               </div>
             )}
           </div>
+
+          {paper.keywords.length > 0 && (
+            <div className="flex flex-wrap gap-1.5 mt-4">
+              {paper.keywords.map((kw) => (
+                <a
+                  key={kw}
+                  href={`${paper.status === "REJECTED" ? "/excluded" : "/"}?keyword=${encodeURIComponent(kw)}`}
+                  className="badge badge-outline hover:badge-primary"
+                >
+                  {kw}
+                </a>
+              ))}
+            </div>
+          )}
 
           {paper.reviewNote && (
             <div className="mt-6 pt-4 border-t border-base-200">

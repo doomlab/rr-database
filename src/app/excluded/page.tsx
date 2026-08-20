@@ -12,24 +12,30 @@ export const metadata = { title: "Excluded – RR Database" }
 export default async function ExcludedPage({
   searchParams,
 }: {
-  searchParams: Promise<{ page?: string }>
+  searchParams: Promise<{ page?: string; keyword?: string }>
 }) {
-  const { page: pageParam } = await searchParams
+  const { page: pageParam, keyword: keywordParam } = await searchParams
   const page = Math.max(1, parseInt(pageParam ?? "1", 10) || 1)
   const skip = (page - 1) * PAGE_SIZE
+  const keyword = keywordParam?.trim().toLowerCase() || undefined
 
   const ctx = await getBlitzContext()
   const userId = ctx.session.userId as number | undefined
 
+  const paperWhere = {
+    status: "REJECTED" as const,
+    ...(keyword ? { keywords: { has: keyword } } : {}),
+  }
+
   const [papers, totalPapers, favoritedIds, reportedIds] = await Promise.all([
     db.paper.findMany({
-      where: { status: "REJECTED" },
+      where: paperWhere,
       include: { authors: { include: { author: true }, orderBy: { position: "asc" } } },
       orderBy: { reviewedAt: "desc" },
       skip,
       take: PAGE_SIZE,
     }),
-    db.paper.count({ where: { status: "REJECTED" } }),
+    db.paper.count({ where: paperWhere }),
     userId
       ? db.paperFavorite
           .findMany({ where: { userId }, select: { paperId: true } })
@@ -43,7 +49,7 @@ export default async function ExcludedPage({
   ])
 
   const totalPages = Math.ceil(totalPapers / PAGE_SIZE)
-  const buildHref = (p: number) => `/excluded?page=${p}`
+  const buildHref = (p: number) => `/excluded?page=${p}${keyword ? `&keyword=${encodeURIComponent(keyword)}` : ""}`
 
   return (
     <div className="min-h-screen bg-base-100 flex flex-col">
@@ -52,13 +58,26 @@ export default async function ExcludedPage({
       <div className="flex-1 w-full px-10 py-8">
         <div className="w-[90%] mx-auto">
           <h1 className="text-2xl font-semibold mb-1">Excluded</h1>
-          <p className="text-base text-base-content/60 mb-8">
+          <p className="text-base text-base-content/60 mb-1">
             {totalPapers} paper{totalPapers === 1 ? "" : "s"} reviewed and excluded from the database
           </p>
 
+          {keyword && (
+            <div className="flex items-center gap-2 mb-6">
+              <span className="text-sm text-base-content/50">Filtering by keyword:</span>
+              <span className="badge badge-primary gap-1">
+                {keyword}
+                <a href="/excluded" className="ml-1" aria-label="Clear keyword filter">
+                  ✕
+                </a>
+              </span>
+            </div>
+          )}
+          {!keyword && <div className="mb-7" />}
+
           {papers.length === 0 ? (
             <p className="text-base-content/40 py-16 text-center">
-              Nothing has been excluded yet.
+              {keyword ? "No excluded papers match that keyword." : "Nothing has been excluded yet."}
             </p>
           ) : (
             <>
@@ -95,6 +114,21 @@ export default async function ExcludedPage({
                           <p className="text-base text-base-content/60 mt-2">
                             <span className="font-medium">Reason:</span> {paper.reviewNote}
                           </p>
+                        )}
+                        {paper.keywords.length > 0 && (
+                          <div className="flex flex-wrap gap-1 mt-2">
+                            {paper.keywords.map((kw) => (
+                              <a
+                                key={kw}
+                                href={`/excluded?keyword=${encodeURIComponent(kw)}`}
+                                className={`badge badge-sm ${
+                                  kw === keyword ? "badge-primary" : "badge-outline"
+                                }`}
+                              >
+                                {kw}
+                              </a>
+                            ))}
+                          </div>
                         )}
                       </div>
                       <div className="flex items-center gap-2 shrink-0">

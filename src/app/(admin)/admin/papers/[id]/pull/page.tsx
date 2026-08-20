@@ -29,7 +29,7 @@ export default async function PullDataPage({
   })
   if (!paper) notFound()
 
-  const backHref = paper.studyPaper ? `/studies/${paper.studyPaper.studyId}` : "/"
+  const backHref = paper.studyPaper ? `/studies/${paper.studyPaper.studyId}` : `/papers/${paper.id}`
 
   if (source === "openalex") {
     const ctx = await getBlitzContext()
