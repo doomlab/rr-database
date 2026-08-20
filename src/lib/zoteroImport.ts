@@ -164,32 +164,37 @@ async function upsertPaperFromZoteroItem(
   const manualTags = extractManualTags(data.tags)
   const detectedStage = detectStage(manualTags)
 
-  let existingId: number | null = null
+  let existing: Awaited<ReturnType<typeof db.paper.findFirst>> = null
   const byKey = await db.paper.findFirst({ where: { [keyColumn]: zoteroKey } })
   if (byKey) {
-    existingId = byKey.id
+    existing = byKey
   } else if (doi) {
-    const byDoi = await db.paper.findFirst({ where: { doi } })
-    if (byDoi) existingId = byDoi.id
+    existing = await db.paper.findFirst({ where: { doi } })
   } else if (openalexId) {
-    const byOpenAlex = await db.paper.findFirst({ where: { openalexId } })
-    if (byOpenAlex) existingId = byOpenAlex.id
+    existing = await db.paper.findFirst({ where: { openalexId } })
   }
+  const existingId = existing?.id ?? null
 
   const status = resolveStatus(existingId)
 
+  // Bibliographic content fields only fill in when the existing record is
+  // still blank there — this pull shouldn't overwrite an admin's later
+  // OpenAlex/Crossref enrichment (or manual edit) just because Zotero's own
+  // copy of that field happens to be empty or stale.
   const fields: Record<string, any> = {
-    title,
-    doi,
-    abstract: data.abstractNote || null,
-    year: extractYear(data.date),
-    venue: data.publicationTitle || null,
-    url: data.url || null,
-    itemType: itemType ?? null,
-    openalexId,
+    title: existing?.title ?? title,
+    doi: existing?.doi ?? doi,
+    abstract: existing?.abstract ?? (data.abstractNote || null),
+    year: existing?.year ?? extractYear(data.date),
+    venue: existing?.venue ?? (data.publicationTitle || null),
+    url: existing?.url ?? (data.url || null),
+    itemType: existing?.itemType ?? (itemType ?? null),
+    openalexId: existing?.openalexId ?? openalexId,
     zoteroRelations: relations ?? undefined,
     zoteroNotes: notes.length > 0 ? notes.join("\n\n---\n\n") : null,
-    tags: manualTags,
+    // Adds any tags newly applied in Zotero without dropping ones already on
+    // the record — never destructive, even if a tag gets removed in Zotero.
+    tags: [...new Set([...(existing?.tags ?? []), ...manualTags])],
     [keyColumn]: zoteroKey,
     [versionColumn]: zoteroVersion,
     ...(status !== undefined && { status }),
@@ -200,7 +205,7 @@ async function upsertPaperFromZoteroItem(
 
   const paper = existingId
     ? await db.paper.update({ where: { id: existingId }, data: fields })
-    : await db.paper.create({ data: { ...fields, title } })
+    : await db.paper.create({ data: fields as Prisma.PaperCreateInput })
 
   await upsertAuthors(paper.id, extractAuthorNames(data.creators))
 
