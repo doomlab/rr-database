@@ -88,6 +88,9 @@ export default async function StudyDetailPage({
   ])
 
   const headlinePaper = study.papers[0]?.paper
+  const hasStage1 = study.papers.some(
+    ({ role }) => role === "STAGE1_ARTICLE" || role === "STAGE1_MATERIALS"
+  )
 
   return (
     <div className="min-h-screen bg-base-100 flex flex-col">
@@ -110,7 +113,7 @@ export default async function StudyDetailPage({
             </div>
           </div>
 
-          {(study.registrationUrl || study.biasLevel) && (
+          {(study.registrationUrl || study.biasLevel || !hasStage1) && (
             <div className="flex flex-wrap gap-2 mb-8">
               {study.registrationUrl && (
                 <a
@@ -123,6 +126,7 @@ export default async function StudyDetailPage({
                 </a>
               )}
               {study.biasLevel && <span className="badge badge-info">{study.biasLevel}</span>}
+              {!hasStage1 && <span className="badge badge-warning">No Stage 1 found</span>}
             </div>
           )}
 
