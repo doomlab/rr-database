@@ -3,7 +3,6 @@ import { FavoriteButton } from "./components/FavoriteButton"
 import { ReportButton } from "./components/ReportButton"
 import { Pagination } from "./components/Pagination"
 import { SearchAndKeywordFilter } from "./components/SearchAndKeywordFilter"
-import { KeywordBadges } from "./components/KeywordBadges"
 import { getBlitzContext } from "./blitz-server"
 import db, { PaperStatus } from "db"
 
@@ -181,7 +180,6 @@ export default async function Home({
                               </>
                             )}
                           </div>
-                          <KeywordBadges keywords={paper.keywords} basePath="/" activeKeyword={keyword} />
                         </div>
                         <div className="flex items-center gap-2 shrink-0">
                           <ReportButton

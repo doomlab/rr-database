@@ -1,14 +1,21 @@
 export function AdminEnrichPanel({
   paperId,
   hasOpenAlexApiKey,
+  reviewNext,
 }: {
   paperId: number
   hasOpenAlexApiKey: boolean
+  reviewNext?: string
 }) {
+  const suffix = reviewNext ? `&next=${encodeURIComponent(reviewNext)}` : ""
+
   return (
     <>
       {hasOpenAlexApiKey ? (
-        <a href={`/admin/papers/${paperId}/pull?source=openalex`} className="btn btn-accent btn-md text-base">
+        <a
+          href={`/admin/papers/${paperId}/pull?source=openalex${suffix}`}
+          className="btn btn-accent btn-md text-base"
+        >
           Pull from OpenAlex
         </a>
       ) : (
@@ -18,7 +25,10 @@ export function AdminEnrichPanel({
           </button>
         </div>
       )}
-      <a href={`/admin/papers/${paperId}/pull?source=crossref`} className="btn btn-info btn-md text-base">
+      <a
+        href={`/admin/papers/${paperId}/pull?source=crossref${suffix}`}
+        className="btn btn-info btn-md text-base"
+      >
         Pull from Crossref
       </a>
     </>

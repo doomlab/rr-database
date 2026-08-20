@@ -59,6 +59,8 @@ export function PaperRecordSection({
   keywordBasePath,
   activeKeyword,
   suggestEditHref,
+  citationsDefaultOpen = false,
+  reviewNext,
 }: {
   paper: RecordPaper
   roleLabel: string
@@ -70,6 +72,8 @@ export function PaperRecordSection({
   keywordBasePath: string
   activeKeyword?: string
   suggestEditHref: string
+  citationsDefaultOpen?: boolean
+  reviewNext?: string
 }) {
   const { references, referencesInDbCount, citedBy, citedByInDbCount, citedByTotal } = citationData
 
@@ -105,7 +109,13 @@ export function PaperRecordSection({
               {paper.openAccess ? "Open access PDF" : "View PDF"}
             </a>
           )}
-          {isAdmin && <AdminEnrichPanel paperId={paper.id} hasOpenAlexApiKey={hasOpenAlexApiKey} />}
+          {isAdmin && (
+            <AdminEnrichPanel
+              paperId={paper.id}
+              hasOpenAlexApiKey={hasOpenAlexApiKey}
+              reviewNext={reviewNext}
+            />
+          )}
           <a href={suggestEditHref} className="btn btn-warning btn-md text-base">
             Suggest edit
           </a>
@@ -150,16 +160,21 @@ export function PaperRecordSection({
       </div>
 
       {paper.keywords.length > 0 && (
-        <div className="flex flex-wrap gap-1.5 mt-3">
-          {paper.keywords.map((kw) => (
-            <a
-              key={kw}
-              href={`${keywordBasePath}?keyword=${encodeURIComponent(kw)}`}
-              className={`badge ${kw === activeKeyword ? "badge-primary" : "badge-outline hover:badge-primary"}`}
-            >
-              {kw}
-            </a>
-          ))}
+        <div className="mt-4">
+          <h3 className="text-sm font-semibold uppercase tracking-wider text-base-content/60 mb-2">
+            Keywords
+          </h3>
+          <div className="flex flex-wrap gap-1.5">
+            {paper.keywords.map((kw) => (
+              <a
+                key={kw}
+                href={`${keywordBasePath}?keyword=${encodeURIComponent(kw)}`}
+                className={`badge ${kw === activeKeyword ? "badge-primary" : "badge-outline hover:badge-primary"}`}
+              >
+                {kw}
+              </a>
+            ))}
+          </div>
         </div>
       )}
 
@@ -193,13 +208,19 @@ export function PaperRecordSection({
 
       <div className="divide-y divide-base-200 border-t border-base-200 mt-2">
         {citedBy.length > 0 && (
-          <CitationCard title="Cited by" subtitle={citedByParts.join(" · ")} entries={citedBy} />
+          <CitationCard
+            title="Cited by"
+            subtitle={citedByParts.join(" · ")}
+            entries={citedBy}
+            defaultOpen={citationsDefaultOpen}
+          />
         )}
         {references.length > 0 && (
           <CitationCard
             title="References"
             subtitle={`${referencesInDbCount} in RR Database · ${references.length} total`}
             entries={references}
+            defaultOpen={citationsDefaultOpen}
           />
         )}
       </div>

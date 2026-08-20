@@ -5,11 +5,13 @@ import { useState } from "react"
 export function WorkflowCard({
   title,
   description,
-  defaultOpen = true,
+  badge,
+  defaultOpen = false,
   children,
 }: {
   title: string
   description: React.ReactNode
+  badge?: number
   defaultOpen?: boolean
   children: React.ReactNode
 }) {
@@ -31,7 +33,12 @@ export function WorkflowCard({
             ›
           </span>
           <div>
-            <h2 className="text-xl font-semibold">{title}</h2>
+            <div className="flex items-center gap-2">
+              {badge !== undefined && badge > 0 && (
+                <span className="badge badge-warning">{badge}</span>
+              )}
+              <h2 className="text-xl font-semibold">{title}</h2>
+            </div>
             <p className="text-base text-base-content/60 mt-1">{description}</p>
           </div>
         </button>

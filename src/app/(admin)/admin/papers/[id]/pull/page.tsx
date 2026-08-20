@@ -17,10 +17,10 @@ export default async function PullDataPage({
   searchParams,
 }: {
   params: Promise<{ id: string }>
-  searchParams: Promise<{ source?: string }>
+  searchParams: Promise<{ source?: string; next?: string }>
 }) {
   const { id } = await params
-  const { source: sourceParam } = await searchParams
+  const { source: sourceParam, next } = await searchParams
   const source = sourceParam === "crossref" ? "crossref" : "openalex"
 
   const paper = await db.paper.findUnique({
@@ -29,12 +29,19 @@ export default async function PullDataPage({
   })
   if (!paper) notFound()
 
-  // Only route back to the study page if the paper is actually confirmed —
-  // a paper can keep a stale StudyPaper link after being rejected, and that
-  // study page 404s once none of its papers are IMPORTED/APPROVED.
+  // Still awaiting a decision — go back to judging it in the review queue,
+  // preserving the queue's remaining order.
+  // Otherwise, only route back to the study page if the paper is actually
+  // confirmed — a paper can keep a stale StudyPaper link after being
+  // rejected, and that study page 404s once none of its papers are
+  // IMPORTED/APPROVED.
   const isConfirmed = paper.status === "IMPORTED" || paper.status === "APPROVED"
   const backHref =
-    paper.studyPaper && isConfirmed ? `/studies/${paper.studyPaper.studyId}` : `/papers/${paper.id}`
+    paper.status === "PENDING_REVIEW"
+      ? `/admin/review/${paper.id}${next ? `?next=${next}` : ""}`
+      : paper.studyPaper && isConfirmed
+        ? `/studies/${paper.studyPaper.studyId}`
+        : `/papers/${paper.id}`
 
   if (source === "openalex") {
     const ctx = await getBlitzContext()

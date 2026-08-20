@@ -3,7 +3,6 @@ import { Pagination } from "../components/Pagination"
 import { PaperFavoriteButton } from "../components/PaperFavoriteButton"
 import { ReportButton } from "../components/ReportButton"
 import { SearchAndKeywordFilter } from "../components/SearchAndKeywordFilter"
-import { KeywordBadges } from "../components/KeywordBadges"
 import { getBlitzContext } from "../blitz-server"
 import db from "db"
 
@@ -127,11 +126,6 @@ export default async function ExcludedPage({
                             <span className="font-medium">Reason:</span> {paper.reviewNote}
                           </p>
                         )}
-                        <KeywordBadges
-                          keywords={paper.keywords}
-                          basePath="/excluded"
-                          activeKeyword={keyword}
-                        />
                       </div>
                       <div className="flex items-center gap-2 shrink-0">
                         <ReportButton

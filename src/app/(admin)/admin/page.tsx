@@ -1,3 +1,4 @@
+import db from "db"
 import { getBlitzContext } from "src/app/blitz-server"
 import { lastZoteroRun, lastPipelineRun, openAlexYearRunHistory } from "src/lib/pipelineRuns"
 import { userHasOpenAlexApiKey } from "src/lib/apiKeyPool"
@@ -22,14 +23,21 @@ export default async function AdminHomePage() {
     (_, i) => currentYear - i
   )
 
-  const [productionRun, stagingCollectionsRun, openAlexYearRun, openAlexRecentRun, yearRunHistory] =
-    await Promise.all([
-      isSuperAdmin ? lastZoteroRun("[production]") : Promise.resolve(null),
-      isSuperAdmin ? lastZoteroRun("[stagingCollections]") : Promise.resolve(null),
-      lastPipelineRun("QUERY_OPENALEX", "[openalex:year:"),
-      lastPipelineRun("QUERY_OPENALEX", "[openalex:recent]"),
-      openAlexYearRunHistory(),
-    ])
+  const [
+    productionRun,
+    stagingCollectionsRun,
+    openAlexYearRun,
+    openAlexRecentRun,
+    yearRunHistory,
+    reviewCount,
+  ] = await Promise.all([
+    isSuperAdmin ? lastZoteroRun("[production]") : Promise.resolve(null),
+    isSuperAdmin ? lastZoteroRun("[stagingCollections]") : Promise.resolve(null),
+    lastPipelineRun("QUERY_OPENALEX", "[openalex:year:"),
+    lastPipelineRun("QUERY_OPENALEX", "[openalex:recent]"),
+    openAlexYearRunHistory(),
+    db.paper.count({ where: { status: "PENDING_REVIEW", canonicalPaperId: null } }),
+  ])
 
   return (
     <div>
@@ -106,6 +114,16 @@ export default async function AdminHomePage() {
               </button>
             </div>
           )}
+        </WorkflowCard>
+
+        <WorkflowCard
+          title="Review candidates"
+          description="Go through papers that have been discovered or imported but not yet confirmed — approve them into the database or reject them. Each one shows its full details and lets you pull fresh data from OpenAlex or Crossref before you decide."
+          badge={reviewCount}
+        >
+          <a href="/admin/review" className="btn btn-primary btn-sm text-base">
+            Go to review queue
+          </a>
         </WorkflowCard>
       </div>
     </div>
