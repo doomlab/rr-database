@@ -1,5 +1,4 @@
 import { notFound } from "next/navigation"
-import Link from "next/link"
 import db from "db"
 import { PaperActions } from "../PaperActions"
 import { EnrichButton } from "../../../components/EnrichButton"
