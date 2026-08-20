@@ -75,7 +75,7 @@ export function AccountForm({
 
       <div className="divider my-0" />
 
-      <p className="text-sm text-base-content/60 -mb-1">
+      <p className="text-base text-base-content/60 -mb-1">
         Optional — contribute your own API keys so we can spread enrichment calls (OpenAlex
         lookups, Groq LLM calls) across more than one key instead of hitting a single shared rate
         limit. Keys are encrypted at rest and only ever used server-side to make these calls on
@@ -145,8 +145,8 @@ export function AccountForm({
         )}
       </div>
 
-      {error && <p className="text-sm text-error">{error}</p>}
-      {saved && <p className="text-sm text-success">Saved.</p>}
+      {error && <p className="text-base text-error">{error}</p>}
+      {saved && <p className="text-base text-success">Saved.</p>}
 
       <div className="flex gap-2 pt-2">
         <button type="submit" className="btn btn-primary btn-md text-base" disabled={isSubmitting}>

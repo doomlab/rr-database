@@ -76,7 +76,7 @@ export function ReportButton({
       <dialog ref={dialogRef} className="modal">
         <div className="modal-box">
           <h3 className="font-bold text-lg mb-1">Report paper</h3>
-          <p className="text-sm text-base-content/60 mb-4">
+          <p className="text-base text-base-content/60 mb-4">
             Let us know what's wrong with this paper's entry.
           </p>
           <form onSubmit={handleSubmit} className="flex flex-col gap-4">

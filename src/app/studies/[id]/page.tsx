@@ -293,7 +293,7 @@ export default async function StudyDetailPage({
                   <div className="mt-4">
                     <CollapsibleSection title="Coded data">
                       <div className="space-y-2">
-                        <p className="text-sm text-base-content/50">
+                        <p className="text-base text-base-content/50">
                           {paper.extraction.needsReview ? "Needs review" : "Reviewed"}
                           {paper.extraction.confidence != null &&
                             ` · confidence ${(paper.extraction.confidence * 100).toFixed(0)}%`}

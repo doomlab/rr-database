@@ -53,7 +53,7 @@ export default async function AdminHomePage() {
           const content = (
             <div className="card bg-base-200 shadow-sm">
               <div className="card-body p-5">
-                <p className="text-sm text-base-content/60">{c.label}</p>
+                <p className="text-base text-base-content/60">{c.label}</p>
                 <p className="text-3xl font-bold">{c.value}</p>
               </div>
             </div>

@@ -36,7 +36,7 @@ export default async function ExcludedPage({
       <div className="flex-1 w-full px-10 py-8">
         <div className="w-[90%] mx-auto">
           <h1 className="text-2xl font-semibold mb-1">Excluded</h1>
-          <p className="text-sm text-base-content/60 mb-8">
+          <p className="text-base text-base-content/60 mb-8">
             {totalPapers} paper{totalPapers === 1 ? "" : "s"} reviewed and excluded from the database
           </p>
 
@@ -58,7 +58,7 @@ export default async function ExcludedPage({
                       {paper.venue && <span className="italic">{paper.venue}</span>}
                     </div>
                     {paper.reviewNote && (
-                      <p className="text-sm text-base-content/60">
+                      <p className="text-base text-base-content/60">
                         <span className="font-medium">Reason:</span> {paper.reviewNote}
                       </p>
                     )}

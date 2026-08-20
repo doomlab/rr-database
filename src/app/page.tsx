@@ -109,7 +109,7 @@ export default async function Home({
           </form>
 
           <div className="flex items-center justify-between mb-5">
-            <p className="text-sm text-base-content/60">
+            <p className="text-base text-base-content/60">
               <span className="font-semibold text-base-content">{totalStudies}</span> registered
               report{totalStudies === 1 ? "" : "s"}
             </p>
@@ -151,7 +151,7 @@ export default async function Home({
                             )}
                           </div>
                           {paper.abstract && (
-                            <p className="text-sm text-base-content/60 mb-2 line-clamp-2">
+                            <p className="text-base text-base-content/60 mb-2 line-clamp-2">
                               {paper.abstract}
                             </p>
                           )}

@@ -123,7 +123,7 @@ export function SuggestEditForm({
         />
       </div>
 
-      {error && <p className="text-sm text-error">{error}</p>}
+      {error && <p className="text-base text-error">{error}</p>}
 
       <div className="flex gap-2 pt-2">
         <button type="submit" className="btn btn-primary btn-md text-base" disabled={isSubmitting}>

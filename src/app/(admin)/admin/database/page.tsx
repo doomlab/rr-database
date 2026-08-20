@@ -77,7 +77,7 @@ function RunCard({
       <div className="card-body gap-3">
         <div>
           <h2 className="font-semibold">{title}</h2>
-          <p className="text-sm text-base-content/60">{description}</p>
+          <p className="text-base text-base-content/60">{description}</p>
         </div>
 
         {run ? (

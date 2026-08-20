@@ -58,7 +58,7 @@ export function SuggestArticleForm() {
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-4 max-w-3xl">
-      <p className="text-sm text-base-content/60 -mt-1">
+      <p className="text-base text-base-content/60 -mt-1">
         A DOI is best — if you have one, you don't need to fill in much else.
       </p>
       <div>
@@ -140,7 +140,7 @@ export function SuggestArticleForm() {
         />
       </div>
 
-      {error && <p className="text-sm text-error">{error}</p>}
+      {error && <p className="text-base text-error">{error}</p>}
 
       <div className="flex gap-2 pt-2">
         <button type="submit" className="btn btn-primary btn-md text-base" disabled={isSubmitting}>

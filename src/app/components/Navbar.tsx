@@ -109,7 +109,7 @@ export async function Navbar() {
                 </ul>
               </div>
             )}
-            <Link href="/account" className="btn btn-ghost btn-sm">
+            <Link href="/account" className="btn btn-info btn-sm">
               Account
             </Link>
             <LogoutButton />

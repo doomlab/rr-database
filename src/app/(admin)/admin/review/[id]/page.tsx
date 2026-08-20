@@ -82,9 +82,11 @@ export default async function ReviewDetailPage({
         {hasOpenAlexApiKey ? (
           <EnrichButton paperId={paper.id} source="openalex" label="Fill in from OpenAlex" />
         ) : (
-          <Link href={"/admin/api-keys" as any} className="text-sm text-base-content/50 hover:text-base-content link">
-            Add an OpenAlex key to enable pulling
-          </Link>
+          <div className="tooltip" data-tip="Add an OpenAlex key in your account settings to enable pulling">
+            <button type="button" className="btn btn-outline btn-sm" disabled>
+              Fill in from OpenAlex
+            </button>
+          </div>
         )}
         {paper.openAlexFetchedAt && (
           <span className="text-xs text-base-content/40">
@@ -99,7 +101,7 @@ export default async function ReviewDetailPage({
         )}
       </div>
 
-      <div className="divide-y divide-base-200 text-sm mb-10">
+      <div className="divide-y divide-base-200 text-base mb-10">
         <Section title="Publication">
           <Row
             label="Authors"
@@ -135,7 +137,7 @@ export default async function ReviewDetailPage({
       </div>
 
       <div className="border-t border-base-200 pt-8 text-center">
-        <p className="text-sm text-base-content/60 mb-3">Include this paper?</p>
+        <p className="text-base text-base-content/60 mb-3">Include this paper?</p>
         <PaperActions paperId={paper.id} nextHref={nextHref} />
       </div>
     </div>

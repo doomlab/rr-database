@@ -105,7 +105,7 @@ export function PaperEditForm({
 
   return (
     <form onSubmit={handleSave} className="flex flex-col gap-4">
-      <p className="text-sm text-base-content/60 -mt-2">
+      <p className="text-base text-base-content/60 -mt-2">
         Check the pulled values below and correct anything that's wrong before saving.
       </p>
 
@@ -142,7 +142,7 @@ export function PaperEditForm({
         </div>
       ))}
 
-      {error && <p className="text-sm text-error">{error}</p>}
+      {error && <p className="text-base text-error">{error}</p>}
 
       <div className="flex gap-2 pt-2">
         <button type="submit" className="btn btn-primary btn-md text-base" disabled={isSaving}>

@@ -43,7 +43,7 @@ export function Form<S extends z.ZodType<any, any>>({
           {children}
 
           {formError && (
-            <div role="alert" className="alert alert-error text-sm py-2">
+            <div role="alert" className="alert alert-error text-base py-2">
               {formError}
             </div>
           )}
