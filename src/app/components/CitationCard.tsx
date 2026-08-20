@@ -1,4 +1,4 @@
-import { CollapsibleSection } from "../../components/CollapsibleSection"
+import { CollapsibleSection } from "./CollapsibleSection"
 
 export type CitationEntry = {
   title: string | null

@@ -24,7 +24,12 @@ export default async function SuggestEditPage({ params }: { params: Promise<{ id
   })
   if (!paper) notFound()
 
-  const backHref = paper.studyPaper ? `/studies/${paper.studyPaper.studyId}` : "/"
+  // Only route back to the study page if the paper is actually confirmed —
+  // a paper can keep a stale StudyPaper link after being rejected, and that
+  // study page 404s once none of its papers are IMPORTED/APPROVED.
+  const isConfirmed = paper.status === "IMPORTED" || paper.status === "APPROVED"
+  const backHref =
+    paper.studyPaper && isConfirmed ? `/studies/${paper.studyPaper.studyId}` : `/papers/${paper.id}`
 
   const initial = {
     title: paper.title,

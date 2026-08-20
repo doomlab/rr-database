@@ -2,6 +2,8 @@ import { Navbar } from "../components/Navbar"
 import { Pagination } from "../components/Pagination"
 import { PaperFavoriteButton } from "../components/PaperFavoriteButton"
 import { ReportButton } from "../components/ReportButton"
+import { SearchAndKeywordFilter } from "../components/SearchAndKeywordFilter"
+import { KeywordBadges } from "../components/KeywordBadges"
 import { getBlitzContext } from "../blitz-server"
 import db from "db"
 
@@ -12,18 +14,28 @@ export const metadata = { title: "Excluded – RR Database" }
 export default async function ExcludedPage({
   searchParams,
 }: {
-  searchParams: Promise<{ page?: string; keyword?: string }>
+  searchParams: Promise<{ q?: string; keyword?: string; page?: string }>
 }) {
-  const { page: pageParam, keyword: keywordParam } = await searchParams
-  const page = Math.max(1, parseInt(pageParam ?? "1", 10) || 1)
+  const params = await searchParams
+  const q = params.q?.trim() || undefined
+  const keyword = params.keyword?.trim().toLowerCase() || undefined
+  const page = Math.max(1, parseInt(params.page ?? "1", 10) || 1)
   const skip = (page - 1) * PAGE_SIZE
-  const keyword = keywordParam?.trim().toLowerCase() || undefined
 
   const ctx = await getBlitzContext()
   const userId = ctx.session.userId as number | undefined
 
   const paperWhere = {
     status: "REJECTED" as const,
+    ...(q
+      ? {
+          OR: [
+            { title: { contains: q, mode: "insensitive" as const } },
+            { abstract: { contains: q, mode: "insensitive" as const } },
+            { doi: { contains: q, mode: "insensitive" as const } },
+          ],
+        }
+      : {}),
     ...(keyword ? { keywords: { has: keyword } } : {}),
   }
 
@@ -49,7 +61,13 @@ export default async function ExcludedPage({
   ])
 
   const totalPages = Math.ceil(totalPapers / PAGE_SIZE)
-  const buildHref = (p: number) => `/excluded?page=${p}${keyword ? `&keyword=${encodeURIComponent(keyword)}` : ""}`
+  const buildHref = (p: number) => {
+    const sp = new URLSearchParams()
+    if (q) sp.set("q", q)
+    if (keyword) sp.set("keyword", keyword)
+    sp.set("page", String(p))
+    return `/excluded?${sp.toString()}`
+  }
 
   return (
     <div className="min-h-screen bg-base-100 flex flex-col">
@@ -57,28 +75,22 @@ export default async function ExcludedPage({
 
       <div className="flex-1 w-full px-10 py-8">
         <div className="w-[90%] mx-auto">
-          <h1 className="text-2xl font-semibold mb-1">Excluded</h1>
-          <p className="text-base text-base-content/60 mb-1">
-            {totalPapers} paper{totalPapers === 1 ? "" : "s"} reviewed and excluded from the database
-          </p>
+          <SearchAndKeywordFilter action="/excluded" q={q} keyword={keyword} />
 
-          {keyword && (
-            <div className="flex items-center gap-2 mb-6">
-              <span className="text-sm text-base-content/50">Filtering by keyword:</span>
-              <span className="badge badge-primary gap-1">
-                {keyword}
-                <a href="/excluded" className="ml-1" aria-label="Clear keyword filter">
-                  ✕
-                </a>
-              </span>
-            </div>
-          )}
-          {!keyword && <div className="mb-7" />}
+          <div className="flex items-center justify-between mb-5">
+            <p className="text-base text-base-content/60">
+              <span className="font-semibold text-base-content">{totalPapers}</span> excluded
+              paper{totalPapers === 1 ? "" : "s"}
+            </p>
+          </div>
 
           {papers.length === 0 ? (
-            <p className="text-base-content/40 py-16 text-center">
-              {keyword ? "No excluded papers match that keyword." : "Nothing has been excluded yet."}
-            </p>
+            <div className="text-center py-16 text-base-content/40">
+              <p className="text-lg">No results match your search.</p>
+              <a href="/excluded" className="link link-primary text-sm mt-2 inline-block">
+                Clear search
+              </a>
+            </div>
           ) : (
             <>
               <ul className="flex flex-col divide-y divide-base-200">
@@ -115,21 +127,11 @@ export default async function ExcludedPage({
                             <span className="font-medium">Reason:</span> {paper.reviewNote}
                           </p>
                         )}
-                        {paper.keywords.length > 0 && (
-                          <div className="flex flex-wrap gap-1 mt-2">
-                            {paper.keywords.map((kw) => (
-                              <a
-                                key={kw}
-                                href={`/excluded?keyword=${encodeURIComponent(kw)}`}
-                                className={`badge badge-sm ${
-                                  kw === keyword ? "badge-primary" : "badge-outline"
-                                }`}
-                              >
-                                {kw}
-                              </a>
-                            ))}
-                          </div>
-                        )}
+                        <KeywordBadges
+                          keywords={paper.keywords}
+                          basePath="/excluded"
+                          activeKeyword={keyword}
+                        />
                       </div>
                       <div className="flex items-center gap-2 shrink-0">
                         <ReportButton

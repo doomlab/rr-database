@@ -1,10 +1,10 @@
 import { notFound } from "next/navigation"
 import { Navbar } from "../../components/Navbar"
 import { PaperFavoriteButton } from "../../components/PaperFavoriteButton"
-import { ReportButton } from "../../components/ReportButton"
-import { AdminEnrichPanel } from "../../(admin)/components/AdminEnrichPanel"
+import { PaperRecordSection } from "../../components/PaperRecordSection"
 import { userHasOpenAlexApiKey } from "src/lib/apiKeyPool"
 import { getBlitzContext } from "../../blitz-server"
+import { resolveCitations } from "src/lib/resolveCitations"
 import db from "db"
 
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }) {
@@ -22,12 +22,26 @@ export default async function PaperDetailPage({ params }: { params: Promise<{ id
 
   const paper = await db.paper.findUnique({
     where: { id: Number(id) },
-    include: { authors: { include: { author: true }, orderBy: { position: "asc" } } },
+    include: {
+      authors: { include: { author: true }, orderBy: { position: "asc" } },
+      extraction: {
+        include: {
+          codedBy: { select: { name: true, email: true } },
+          verifiedBy: { select: { name: true, email: true } },
+        },
+      },
+      citationsFrom: { orderBy: { year: "desc" } },
+      editHistory: {
+        include: { user: { select: { name: true, email: true } } },
+        orderBy: { createdAt: "desc" },
+      },
+    },
   })
 
   if (!paper) notFound()
 
-  const [isFavorited, isReported] = await Promise.all([
+  const [citationData, isFavorited, isReported] = await Promise.all([
+    resolveCitations(paper),
     userId
       ? db.paperFavorite.findUnique({ where: { userId_paperId: { userId, paperId: paper.id } } }).then(Boolean)
       : false,
@@ -35,6 +49,8 @@ export default async function PaperDetailPage({ params }: { params: Promise<{ id
       ? db.paperReport.findUnique({ where: { userId_paperId: { userId, paperId: paper.id } } }).then(Boolean)
       : false,
   ])
+
+  const keywordBasePath = paper.status === "REJECTED" ? "/excluded" : "/"
 
   return (
     <div className="min-h-screen bg-base-100 flex flex-col">
@@ -49,7 +65,6 @@ export default async function PaperDetailPage({ params }: { params: Promise<{ id
           <div className="flex items-start justify-between gap-4 mb-2">
             <h1 className="text-3xl font-bold leading-snug">{paper.title}</h1>
             <div className="flex items-center gap-2 shrink-0 pt-1">
-              <ReportButton paperId={paper.id} initialReported={isReported} isLoggedIn={!!userId} />
               <PaperFavoriteButton
                 paperId={paper.id}
                 initialFavorited={isFavorited}
@@ -59,68 +74,28 @@ export default async function PaperDetailPage({ params }: { params: Promise<{ id
           </div>
 
           {paper.status === "REJECTED" && (
-            <span className="badge badge-error mb-6">Excluded</span>
-          )}
-
-          <div className="flex flex-wrap items-start gap-2 mb-6">
-            {paper.doi && (
-              <a
-                href={`https://doi.org/${paper.doi}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="btn btn-primary btn-md text-base"
-              >
-                View article (DOI)
-              </a>
-            )}
-            {paper.pdfUrl && (
-              <a
-                href={paper.pdfUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="btn btn-secondary btn-md text-base"
-              >
-                {paper.openAccess ? "Open access PDF" : "View PDF"}
-              </a>
-            )}
-            {isAdmin && (
-              <AdminEnrichPanel paperId={paper.id} hasOpenAlexApiKey={hasOpenAlexApiKey} />
-            )}
-          </div>
-
-          <div className="space-y-1.5 text-base">
-            {paper.authors.length > 0 && (
-              <Row label="Authors" value={paper.authors.map((pa) => pa.author.name).join(", ")} />
-            )}
-            <Row label="Year" value={paper.year?.toString()} />
-            <Row label="Venue" value={paper.venue ?? undefined} italic />
-            <Row label="Publisher" value={paper.publisher ?? undefined} />
-            <Row
-              label="Volume / Issue"
-              value={[paper.volume, paper.issue].filter(Boolean).join(" / ") || undefined}
-            />
-            <Row label="Pages" value={paper.pages ?? undefined} />
-            <Row label="Item type" value={humanizeItemType(paper.itemType)} />
-            {paper.abstract && (
-              <div className="pt-2">
-                <p className="text-base-content/70 leading-relaxed">{paper.abstract}</p>
-              </div>
-            )}
-          </div>
-
-          {paper.keywords.length > 0 && (
-            <div className="flex flex-wrap gap-1.5 mt-4">
-              {paper.keywords.map((kw) => (
-                <a
-                  key={kw}
-                  href={`${paper.status === "REJECTED" ? "/excluded" : "/"}?keyword=${encodeURIComponent(kw)}`}
-                  className="badge badge-outline hover:badge-primary"
-                >
-                  {kw}
-                </a>
-              ))}
+            <div className="flex flex-wrap gap-2 mb-8">
+              <span className="badge badge-error">Excluded</span>
             </div>
           )}
+
+          <div className="divide-y divide-base-200">
+            <PaperRecordSection
+              paper={paper}
+              roleLabel="Record"
+              citationData={citationData}
+              isAdmin={isAdmin}
+              hasOpenAlexApiKey={hasOpenAlexApiKey}
+              userId={userId}
+              isReported={isReported}
+              keywordBasePath={keywordBasePath}
+              suggestEditHref={
+                userId
+                  ? `/papers/${paper.id}/suggest-edit`
+                  : `/login?next=/papers/${paper.id}/suggest-edit`
+              }
+            />
+          </div>
 
           {paper.reviewNote && (
             <div className="mt-6 pt-4 border-t border-base-200">
@@ -131,27 +106,6 @@ export default async function PaperDetailPage({ params }: { params: Promise<{ id
           )}
         </div>
       </div>
-    </div>
-  )
-}
-
-function humanizeItemType(itemType: string | null): string | undefined {
-  if (!itemType) return undefined
-  const words = itemType
-    .replace(/[_-]+/g, " ")
-    .replace(/([a-z0-9])([A-Z])/g, "$1 $2")
-    .toLowerCase()
-    .split(" ")
-    .filter(Boolean)
-  return words.map((w) => w[0]!.toUpperCase() + w.slice(1)).join(" ")
-}
-
-function Row({ label, value, italic }: { label: string; value?: string; italic?: boolean }) {
-  if (!value) return null
-  return (
-    <div className="flex gap-3 py-1.5">
-      <span className="w-32 shrink-0 font-medium text-base-content/70">{label}</span>
-      <span className={`text-base-content/80 ${italic ? "italic" : ""}`}>{value}</span>
     </div>
   )
 }

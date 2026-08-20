@@ -1,87 +1,11 @@
 import { notFound } from "next/navigation"
 import { Navbar } from "../../components/Navbar"
 import { FavoriteButton } from "../../components/FavoriteButton"
-import { ReportButton } from "../../components/ReportButton"
-import { PaperHistoryCard } from "../../components/PaperHistoryCard"
-import { CollapsibleSection } from "../../components/CollapsibleSection"
-import { CitationCard, type CitationEntry } from "./CitationCard"
-import { AdminEnrichPanel } from "../../(admin)/components/AdminEnrichPanel"
+import { PaperRecordSection } from "../../components/PaperRecordSection"
 import { userHasOpenAlexApiKey } from "src/lib/apiKeyPool"
 import { getBlitzContext } from "../../blitz-server"
-import { fetchCitingWorks } from "src/lib/fetchCitingWorks"
+import { resolveCitations } from "src/lib/resolveCitations"
 import db from "db"
-
-const CONFIRMED_STATUSES: ("IMPORTED" | "APPROVED")[] = ["IMPORTED", "APPROVED"]
-
-async function resolveCitations(paper: {
-  id: number
-  openalexId: string | null
-  citedByCount: number | null
-  citationsFrom: {
-    citedOpenAlexId: string
-    title: string | null
-    year: number | null
-    journal: string | null
-    doi: string | null
-  }[]
-}) {
-  const citedByResult = paper.openalexId
-    ? await fetchCitingWorks(paper.openalexId)
-    : { works: [], total: null }
-
-  const allOpenAlexIds = [
-    ...paper.citationsFrom.map((c) => c.citedOpenAlexId),
-    ...citedByResult.works.map((w) => w.openalexId),
-  ]
-
-  const matchedCitations =
-    allOpenAlexIds.length > 0
-      ? await db.paper.findMany({
-          where: { openalexId: { in: allOpenAlexIds }, status: { in: CONFIRMED_STATUSES } },
-          select: {
-            id: true,
-            openalexId: true,
-            studyPaper: { select: { studyId: true } },
-            canonical: { select: { id: true, studyPaper: { select: { studyId: true } } } },
-          },
-        })
-      : []
-
-  const matchedById = new Map<string, { id: number; studyId: number }>()
-  for (const p of matchedCitations) {
-    const resolved = p.canonical ?? p
-    const studyId = resolved.studyPaper?.studyId
-    if (p.openalexId && studyId != null) {
-      matchedById.set(p.openalexId, { id: resolved.id, studyId })
-    }
-  }
-
-  const references: CitationEntry[] = paper.citationsFrom.map((c) => ({
-    title: c.title,
-    year: c.year,
-    journal: c.journal,
-    doi: c.doi,
-    openalexId: c.citedOpenAlexId,
-    match: matchedById.get(c.citedOpenAlexId),
-  }))
-
-  const citedBy: CitationEntry[] = citedByResult.works.map((w) => ({
-    title: w.title,
-    year: w.year,
-    journal: w.journal,
-    doi: w.doi,
-    openalexId: w.openalexId,
-    match: matchedById.get(w.openalexId),
-  }))
-
-  return {
-    references,
-    referencesInDbCount: references.filter((r) => r.match).length,
-    citedBy,
-    citedByInDbCount: citedBy.filter((c) => c.match).length,
-    citedByTotal: citedByResult.total ?? paper.citedByCount,
-  }
-}
 
 const ROLE_LABELS: Record<string, string> = {
   STAGE1_ARTICLE: "Stage 1 article",
@@ -202,192 +126,26 @@ export default async function StudyDetailPage({
 
           <div className="divide-y divide-base-200">
             {study.papers.map(({ paper, role }) => (
-              <div key={paper.id} className="py-6">
-                <h2 className="text-sm font-semibold uppercase tracking-wider text-base-content/40 mb-3">
-                  {ROLE_LABELS[role] ?? role}
-                </h2>
-
-                <div className="flex flex-wrap items-start justify-between gap-2 mb-3">
-                  <div className="flex flex-wrap items-start gap-2">
-                    {paper.doi && (
-                      <a
-                        href={`https://doi.org/${paper.doi}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="btn btn-primary btn-md text-base"
-                      >
-                        View article (DOI)
-                      </a>
-                    )}
-                    {paper.pdfUrl && (
-                      <a
-                        href={paper.pdfUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="btn btn-secondary btn-md text-base"
-                      >
-                        {paper.openAccess ? "Open access PDF" : "View PDF"}
-                      </a>
-                    )}
-                    {isAdmin && (
-                      <AdminEnrichPanel paperId={paper.id} hasOpenAlexApiKey={hasOpenAlexApiKey} />
-                    )}
-                    <a
-                      href={
-                        userId
-                          ? `/papers/${paper.id}/suggest-edit`
-                          : `/login?next=/papers/${paper.id}/suggest-edit`
-                      }
-                      className="btn btn-warning btn-md text-base"
-                    >
-                      Suggest edit
-                    </a>
-                  </div>
-                  <ReportButton
-                    paperId={paper.id}
-                    initialReported={reportedIds.has(paper.id)}
-                    isLoggedIn={!!userId}
-                  />
-                </div>
-
-                <div className="space-y-1.5 text-base">
-                  {paper.authors.length > 0 && (
-                    <Row
-                      label="Authors"
-                      value={paper.authors.map((pa) => pa.author.name).join(", ")}
-                    />
-                  )}
-                  <Row label="Year" value={paper.year?.toString()} />
-                  <Row label="Venue" value={paper.venue ?? undefined} italic />
-                  <Row label="Publisher" value={paper.publisher ?? undefined} />
-                  <Row
-                    label="Volume / Issue"
-                    value={[paper.volume, paper.issue].filter(Boolean).join(" / ") || undefined}
-                  />
-                  <Row label="Pages" value={paper.pages ?? undefined} />
-                  <Row label="ISSN" value={paper.issn ?? undefined} />
-                  <Row label="Language" value={paper.language ?? undefined} />
-                  <Row label="Item type" value={humanizeItemType(paper.itemType)} />
-                  <Row
-                    label="Open access"
-                    value={
-                      paper.openAccess == null
-                        ? undefined
-                        : paper.openAccess
-                        ? `Yes${paper.openAccessStatus ? ` (${capitalize(paper.openAccessStatus)})` : ""}`
-                        : "No"
-                    }
-                  />
-                  <Row
-                    label="Cited by"
-                    value={paper.citedByCount != null ? `${paper.citedByCount} papers` : undefined}
-                  />
-                  {paper.abstract && (
-                    <div className="pt-2">
-                      <p className="text-base-content/70 leading-relaxed">{paper.abstract}</p>
-                    </div>
-                  )}
-                </div>
-
-                {paper.keywords.length > 0 && (
-                  <div className="flex flex-wrap gap-1.5 mt-3">
-                    {paper.keywords.map((kw) => (
-                      <a
-                        key={kw}
-                        href={`/?keyword=${encodeURIComponent(kw)}`}
-                        className="badge badge-outline hover:badge-primary"
-                      >
-                        {kw}
-                      </a>
-                    ))}
-                  </div>
-                )}
-
-                {paper.extraction && (
-                  <div className="mt-4">
-                    <CollapsibleSection title="Coded data">
-                      <div className="space-y-2">
-                        <p className="text-base text-base-content/50">
-                          {paper.extraction.needsReview ? "Needs review" : "Reviewed"}
-                          {paper.extraction.confidence != null &&
-                            ` · confidence ${(paper.extraction.confidence * 100).toFixed(0)}%`}
-                          {paper.extraction.codedBy &&
-                            ` · coded by ${paper.extraction.codedBy.name ?? paper.extraction.codedBy.email}`}
-                          {paper.extraction.verifiedBy &&
-                            ` · verified by ${
-                              paper.extraction.verifiedBy.name ?? paper.extraction.verifiedBy.email
-                            }`}
-                        </p>
-                        <div className="space-y-1">
-                          {Object.entries(paper.extraction.extractedData as Record<string, unknown>).map(
-                            ([key, value]) =>
-                              value == null || value === "" ? null : (
-                                <Row key={key} label={key} value={String(value)} />
-                              )
-                          )}
-                        </div>
-                      </div>
-                    </CollapsibleSection>
-                  </div>
-                )}
-
-                {(() => {
-                  const { references, referencesInDbCount, citedBy, citedByInDbCount, citedByTotal } =
-                    citationDataByPaperId.get(paper.id)!
-
-                  const citedByParts: string[] = []
-                  if (citedByInDbCount > 0) citedByParts.push(`${citedByInDbCount} in RR Database`)
-                  if (citedByTotal != null) citedByParts.push(`${citedByTotal.toLocaleString()} total`)
-
-                  return (
-                    <div className="divide-y divide-base-200 border-t border-base-200 mt-2">
-                      {citedBy.length > 0 && (
-                        <CitationCard title="Cited by" subtitle={citedByParts.join(" · ")} entries={citedBy} />
-                      )}
-                      {references.length > 0 && (
-                        <CitationCard
-                          title="References"
-                          subtitle={`${referencesInDbCount} in RR Database · ${references.length} total`}
-                          entries={references}
-                        />
-                      )}
-                    </div>
-                  )
-                })()}
-
-                <div className="mt-3">
-                  <PaperHistoryCard entries={paper.editHistory} />
-                </div>
-              </div>
+              <PaperRecordSection
+                key={paper.id}
+                paper={paper}
+                roleLabel={ROLE_LABELS[role] ?? role}
+                citationData={citationDataByPaperId.get(paper.id)!}
+                isAdmin={isAdmin}
+                hasOpenAlexApiKey={hasOpenAlexApiKey}
+                userId={userId}
+                isReported={reportedIds.has(paper.id)}
+                keywordBasePath="/"
+                suggestEditHref={
+                  userId
+                    ? `/papers/${paper.id}/suggest-edit`
+                    : `/login?next=/papers/${paper.id}/suggest-edit`
+                }
+              />
             ))}
           </div>
         </div>
       </div>
-    </div>
-  )
-}
-
-function humanizeItemType(itemType: string | null): string | undefined {
-  if (!itemType) return undefined
-  const words = itemType
-    .replace(/[_-]+/g, " ")
-    .replace(/([a-z0-9])([A-Z])/g, "$1 $2")
-    .toLowerCase()
-    .split(" ")
-    .filter(Boolean)
-  return words.map((w) => w[0]!.toUpperCase() + w.slice(1)).join(" ")
-}
-
-function capitalize(s: string): string {
-  return s.charAt(0).toUpperCase() + s.slice(1)
-}
-
-function Row({ label, value, italic }: { label: string; value?: string; italic?: boolean }) {
-  if (!value) return null
-  return (
-    <div className="flex gap-3 py-1.5">
-      <span className="w-32 shrink-0 font-medium text-base-content/70">{label}</span>
-      <span className={`text-base-content/80 ${italic ? "italic" : ""}`}>{value}</span>
     </div>
   )
 }

@@ -2,6 +2,8 @@ import { Navbar } from "./components/Navbar"
 import { FavoriteButton } from "./components/FavoriteButton"
 import { ReportButton } from "./components/ReportButton"
 import { Pagination } from "./components/Pagination"
+import { SearchAndKeywordFilter } from "./components/SearchAndKeywordFilter"
+import { KeywordBadges } from "./components/KeywordBadges"
 import { getBlitzContext } from "./blitz-server"
 import db, { PaperStatus } from "db"
 
@@ -113,36 +115,7 @@ export default async function Home({
 
       <div className="flex-1 w-full px-10 py-8">
         <div className="w-[90%] mx-auto">
-          <form className="mb-6" action="/" method="get">
-            {keyword && <input type="hidden" name="keyword" value={keyword} />}
-            <input
-              type="text"
-              name="q"
-              defaultValue={q}
-              placeholder="Search title, abstract, or DOI..."
-              className="input input-bordered w-full"
-            />
-          </form>
-
-          {keyword && (
-            <div className="flex items-center gap-2 mb-5 -mt-3">
-              <span className="text-sm text-base-content/50">Filtering by keyword:</span>
-              <span className="badge badge-primary gap-1">
-                {keyword}
-                <a
-                  href={(() => {
-                    const sp = new URLSearchParams()
-                    if (q) sp.set("q", q)
-                    return sp.toString() ? `/?${sp.toString()}` : "/"
-                  })()}
-                  className="ml-1"
-                  aria-label="Clear keyword filter"
-                >
-                  ✕
-                </a>
-              </span>
-            </div>
-          )}
+          <SearchAndKeywordFilter action="/" q={q} keyword={keyword} />
 
           <div className="flex items-center justify-between mb-5">
             <p className="text-base text-base-content/60">
@@ -208,21 +181,7 @@ export default async function Home({
                               </>
                             )}
                           </div>
-                          {paper.keywords.length > 0 && (
-                            <div className="flex flex-wrap gap-1 mt-2">
-                              {paper.keywords.map((kw: string) => (
-                                <a
-                                  key={kw}
-                                  href={`/?keyword=${encodeURIComponent(kw)}`}
-                                  className={`badge badge-sm ${
-                                    kw === keyword ? "badge-primary" : "badge-outline"
-                                  }`}
-                                >
-                                  {kw}
-                                </a>
-                              ))}
-                            </div>
-                          )}
+                          <KeywordBadges keywords={paper.keywords} basePath="/" activeKeyword={keyword} />
                         </div>
                         <div className="flex items-center gap-2 shrink-0">
                           <ReportButton

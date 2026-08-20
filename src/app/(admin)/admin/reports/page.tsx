@@ -17,7 +17,9 @@ export default async function ReportsQueuePage({
     db.paperReport.findMany({
       where: { resolved: false },
       include: {
-        paper: { select: { id: true, title: true, studyPaper: { select: { studyId: true } } } },
+        paper: {
+          select: { id: true, title: true, status: true, studyPaper: { select: { studyId: true } } },
+        },
         user: { select: { name: true, email: true } },
       },
       orderBy: { createdAt: "desc" },
@@ -45,7 +47,8 @@ export default async function ReportsQueuePage({
             {reports.map((report) => (
               <li key={report.id} className="py-4 flex items-start justify-between gap-4">
                 <div className="min-w-0">
-                  {report.paper.studyPaper ? (
+                  {report.paper.studyPaper &&
+                  (report.paper.status === "IMPORTED" || report.paper.status === "APPROVED") ? (
                     <a
                       href={`/studies/${report.paper.studyPaper.studyId}`}
                       className="font-semibold text-base leading-snug link"
@@ -53,7 +56,12 @@ export default async function ReportsQueuePage({
                       {report.paper.title}
                     </a>
                   ) : (
-                    <span className="font-semibold text-base leading-snug">{report.paper.title}</span>
+                    <a
+                      href={`/papers/${report.paper.id}`}
+                      className="font-semibold text-base leading-snug link"
+                    >
+                      {report.paper.title}
+                    </a>
                   )}
                   <p className="text-xs text-base-content/50 mt-1">
                     Reported by {report.user.name ?? report.user.email} — {report.reason}
