@@ -1,56 +1,142 @@
 import db from "db"
 import { Pagination } from "../../../components/Pagination"
-import { clusterPapersByTitle } from "src/lib/duplicateClusters"
-import { DuplicateGroupCard } from "./DuplicateGroupCard"
+import { SearchAndKeywordFilter } from "../../../components/SearchAndKeywordFilter"
+import { clusterPapersByTitle, isLinkEligible, LINK_ELIGIBLE_STATUSES } from "src/lib/duplicateClusters"
+import { DuplicateGroupCard, type LinkablePaper } from "./DuplicateGroupCard"
 
 const GROUPS_PER_PAGE = 20
+
+const paperInclude = {
+  authors: { include: { author: true }, orderBy: { position: "asc" as const } },
+}
+
+function toLinkable(
+  paper: {
+    id: number
+    title: string
+    year: number | null
+    venue: string | null
+    doi: string | null
+    status: string
+    authors: { author: { name: string } }[]
+  },
+  role: LinkablePaper["currentRole"]
+): LinkablePaper {
+  return {
+    id: paper.id,
+    title: paper.title,
+    year: paper.year,
+    venue: paper.venue,
+    doi: paper.doi,
+    status: paper.status,
+    currentRole: role,
+    authors: paper.authors,
+  }
+}
 
 export default async function LinkDuplicatesPage({
   searchParams,
 }: {
-  searchParams: Promise<{ page?: string }>
+  searchParams: Promise<{ q?: string; page?: string }>
 }) {
-  const { page: pageParam } = await searchParams
+  const { q: qParam, page: pageParam } = await searchParams
+  const q = qParam?.trim() || undefined
   const page = Math.max(1, parseInt(pageParam ?? "1", 10) || 1)
 
-  const papers = await db.paper.findMany({
+  return (
+    <div>
+      <h1 className="text-2xl font-semibold mb-1">Link papers</h1>
+      <p className="text-base text-base-content/60 mb-8">
+        Papers with matching titles are grouped below automatically — probably the same
+        registered report indexed more than once (a preprint, the published article, a
+        registration link). Mark each one as Stage 1, Stage 2, materials, or a duplicate of
+        another paper in the group to link them into one Study. Search for a specific paper to
+        edit or unlink a study it's already part of, even if it wasn't grouped automatically.
+      </p>
+
+      <SearchAndKeywordFilter action="/admin/link" q={q} />
+
+      {q ? <SearchResults q={q} /> : <AutoDetectedGroups page={page} />}
+    </div>
+  )
+}
+
+async function SearchResults({ q }: { q: string }) {
+  const matches = await db.paper.findMany({
     where: {
-      status: { in: ["PENDING_REVIEW", "IMPORTED", "APPROVED"] },
-      canonicalPaperId: null,
-      studyPaper: null,
+      OR: [
+        { title: { contains: q, mode: "insensitive" } },
+        { doi: { contains: q, mode: "insensitive" } },
+        { authors: { some: { author: { name: { contains: q, mode: "insensitive" } } } } },
+      ],
     },
-    include: { authors: { include: { author: true }, orderBy: { position: "asc" } } },
+    select: { id: true, studyPaper: { select: { studyId: true } } },
+  })
+
+  if (matches.length === 0) {
+    return <p className="text-base-content/40">No papers match "{q}".</p>
+  }
+
+  const studyIds = Array.from(
+    new Set(matches.map((p) => p.studyPaper?.studyId).filter((id): id is number => id != null))
+  )
+  const soloPaperIds = matches.filter((p) => !p.studyPaper).map((p) => p.id)
+
+  const [studies, soloPapers] = await Promise.all([
+    db.study.findMany({
+      where: { id: { in: studyIds } },
+      include: { papers: { include: { paper: { include: paperInclude } } } },
+    }),
+    db.paper.findMany({ where: { id: { in: soloPaperIds } }, include: paperInclude }),
+  ])
+
+  const groups: LinkablePaper[][] = [
+    ...studies.map((s) => s.papers.map((sp) => toLinkable(sp.paper, sp.role))),
+    ...soloPapers.map((p) => [toLinkable(p, null)]),
+  ]
+
+  return (
+    <div className="flex flex-col gap-6">
+      {groups.map((group) => (
+        <DuplicateGroupCard key={group.map((p) => p.id).join("-")} papers={group} />
+      ))}
+    </div>
+  )
+}
+
+async function AutoDetectedGroups({ page }: { page: number }) {
+  const papers = await db.paper.findMany({
+    where: { status: { in: [...LINK_ELIGIBLE_STATUSES] }, canonicalPaperId: null },
+    include: {
+      ...paperInclude,
+      studyPaper: {
+        select: { role: true, study: { select: { _count: { select: { papers: true } } } } },
+      },
+    },
     orderBy: { title: "asc" },
   })
 
-  const groups = clusterPapersByTitle(papers)
+  const eligible = papers.filter(isLinkEligible)
+  const linkable = eligible.map((p) => toLinkable(p, p.studyPaper?.role ?? null))
+
+  const groups = clusterPapersByTitle(linkable)
+
   const totalPages = Math.ceil(groups.length / GROUPS_PER_PAGE)
   const pageGroups = groups.slice((page - 1) * GROUPS_PER_PAGE, page * GROUPS_PER_PAGE)
   const buildHref = (p: number) => `/admin/link?page=${p}`
 
-  return (
-    <div>
-      <h1 className="text-2xl font-semibold mb-1">Link duplicates</h1>
-      <p className="text-base text-base-content/60 mb-8">
-        Papers with matching titles, grouped together — probably the same registered report
-        indexed more than once (a preprint, the published article, a registration link). Mark
-        each one as Stage 1, Stage 2, materials, or a duplicate of another paper in the group.
-        Assigning any role links the whole group into one Study; marking a paper a duplicate
-        removes it from the database views and points it at the paper it duplicates.
-      </p>
+  if (groups.length === 0) {
+    return <p className="text-base-content/40">No duplicate-looking groups found.</p>
+  }
 
-      {groups.length === 0 ? (
-        <p className="text-base-content/40">No duplicate-looking groups found.</p>
-      ) : (
-        <>
-          <div className="flex flex-col gap-6">
-            {pageGroups.map((group) => (
-              <DuplicateGroupCard key={group.map((p) => p.id).join("-")} papers={group} />
-            ))}
-          </div>
-          <Pagination page={page} totalPages={totalPages} buildHref={buildHref} />
-        </>
-      )}
-    </div>
+  return (
+    <>
+      <div className="flex flex-col gap-6">
+        {pageGroups.map((group) => (
+          <DuplicateGroupCard key={group.map((p) => p.id).join("-")} papers={group} />
+        ))}
+      </div>
+      <Pagination page={page} totalPages={totalPages} buildHref={buildHref} />
+    </>
   )
 }

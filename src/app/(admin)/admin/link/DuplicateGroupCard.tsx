@@ -2,31 +2,52 @@
 
 import { useMutation } from "@blitzjs/rpc"
 import { useRouter } from "next/navigation"
-import { useState } from "react"
+import { useMemo, useState } from "react"
 import linkDuplicateGroup from "../../mutations/linkDuplicateGroup"
 
-type Paper = {
+export type LinkablePaper = {
   id: number
   title: string
   year: number | null
   venue: string | null
   doi: string | null
   status: string
+  currentRole: "STAGE1_ARTICLE" | "STAGE1_MATERIALS" | "STAGE2_ARTICLE" | "STAGE2_MATERIALS" | "OTHER" | null
   authors: { author: { name: string } }[]
 }
 
 const ROLE_OPTIONS = [
-  { value: "skip", label: "Skip (leave as-is)" },
+  { value: "skip", label: "Leave as-is" },
   { value: "STAGE1_ARTICLE", label: "Stage 1 article" },
   { value: "STAGE1_MATERIALS", label: "Stage 1 materials" },
   { value: "STAGE2_ARTICLE", label: "Stage 2 article" },
   { value: "STAGE2_MATERIALS", label: "Stage 2 materials" },
+  { value: "unlink", label: "Unlink from study" },
   { value: "duplicate", label: "Duplicate of…" },
 ] as const
 
 type Choice = (typeof ROLE_OPTIONS)[number]["value"]
 
-export function DuplicateGroupCard({ papers }: { papers: Paper[] }) {
+function defaultChoiceFor(role: LinkablePaper["currentRole"]): Choice {
+  if (
+    role === "STAGE1_ARTICLE" ||
+    role === "STAGE1_MATERIALS" ||
+    role === "STAGE2_ARTICLE" ||
+    role === "STAGE2_MATERIALS"
+  ) {
+    return role
+  }
+  return "skip"
+}
+
+export function DuplicateGroupCard({ papers }: { papers: LinkablePaper[] }) {
+  const defaults = useMemo(
+    () => Object.fromEntries(papers.map((p) => [p.id, defaultChoiceFor(p.currentRole)])) as Record<
+      number,
+      Choice
+    >,
+    [papers]
+  )
   const [choices, setChoices] = useState<Record<number, Choice>>({})
   const [duplicateOf, setDuplicateOf] = useState<Record<number, number>>({})
   const [link] = useMutation(linkDuplicateGroup)
@@ -39,33 +60,33 @@ export function DuplicateGroupCard({ papers }: { papers: Paper[] }) {
     setChoices((prev) => ({ ...prev, [paperId]: choice }))
   }
 
-  const hasAnyChoice = papers.some((p) => (choices[p.id] ?? "skip") !== "skip")
+  const buildAssignments = () => {
+    return papers
+      .filter((p) => choices[p.id] !== undefined)
+      .map((p) => {
+        const choice = choices[p.id]!
+        if (choice === "skip") return null
+        if (choice === "unlink") return { action: "unlink" as const, paperId: p.id }
+        if (choice === "duplicate") {
+          const target = duplicateOf[p.id]
+          if (!target) return null
+          return { action: "duplicate" as const, paperId: p.id, duplicateOfPaperId: target }
+        }
+        return { action: "role" as const, paperId: p.id, role: choice }
+      })
+      .filter((a): a is NonNullable<typeof a> => a !== null)
+  }
+
+  const assignments = buildAssignments()
 
   const handleSave = async () => {
     setError(null)
+    if (assignments.length === 0) {
+      setError("Change at least one paper before saving.")
+      return
+    }
     setSaving(true)
     try {
-      const assignments = papers
-        .map((p) => {
-          const choice = choices[p.id] ?? "skip"
-          if (choice === "skip") return { action: "skip" as const, paperId: p.id }
-          if (choice === "duplicate") {
-            const target = duplicateOf[p.id]
-            if (!target) return null
-            return { action: "duplicate" as const, paperId: p.id, duplicateOfPaperId: target }
-          }
-          return { action: "role" as const, paperId: p.id, role: choice }
-        })
-        .filter((a) => a !== null && a.action !== "skip") as Parameters<
-        typeof linkDuplicateGroup
-      >[0]["assignments"]
-
-      if (assignments.length === 0) {
-        setError("Pick at least one role or duplicate before saving.")
-        setSaving(false)
-        return
-      }
-
       await link({ assignments })
       setDone(true)
       router.refresh()
@@ -81,11 +102,13 @@ export function DuplicateGroupCard({ papers }: { papers: Paper[] }) {
   return (
     <div className="card bg-base-200 shadow-sm w-full">
       <div className="card-body gap-4">
-        <p className="text-base text-base-content/60">{papers.length} matching papers</p>
+        <p className="text-base text-base-content/60">
+          {papers.length} paper{papers.length === 1 ? "" : "s"} in this group
+        </p>
 
         <div className="flex flex-col divide-y divide-base-300">
           {papers.map((paper) => {
-            const choice = choices[paper.id] ?? "skip"
+            const choice = choices[paper.id] ?? defaults[paper.id]!
             return (
               <div key={paper.id} className="py-4 flex flex-col md:flex-row md:items-start gap-3">
                 <div className="flex-1 min-w-0">
@@ -97,6 +120,11 @@ export function DuplicateGroupCard({ papers }: { papers: Paper[] }) {
                     {paper.year && <span>· {paper.year}</span>}
                     {paper.venue && <span className="italic">· {paper.venue}</span>}
                     <span className="badge badge-sm badge-outline">{paper.status}</span>
+                    {defaultChoiceFor(paper.currentRole) !== "skip" && (
+                      <span className="badge badge-sm badge-ghost">
+                        currently {ROLE_OPTIONS.find((o) => o.value === paper.currentRole)?.label}
+                      </span>
+                    )}
                   </div>
                   {paper.doi && (
                     <a
@@ -154,7 +182,7 @@ export function DuplicateGroupCard({ papers }: { papers: Paper[] }) {
           <button
             type="button"
             className="btn btn-primary btn-sm text-base"
-            disabled={saving || !hasAnyChoice}
+            disabled={saving || assignments.length === 0}
             onClick={handleSave}
           >
             {saving ? <span className="loading loading-spinner loading-xs" /> : "Save group"}

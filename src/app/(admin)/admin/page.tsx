@@ -2,7 +2,7 @@ import db from "db"
 import { getBlitzContext } from "src/app/blitz-server"
 import { lastZoteroRun, lastPipelineRun, openAlexYearRunHistory } from "src/lib/pipelineRuns"
 import { userHasOpenAlexApiKey } from "src/lib/apiKeyPool"
-import { clusterPapersByTitle } from "src/lib/duplicateClusters"
+import { clusterPapersByTitle, isLinkEligible, LINK_ELIGIBLE_STATUSES } from "src/lib/duplicateClusters"
 import { WorkflowCard } from "../components/WorkflowCard"
 import { RunCard } from "../components/RunCard"
 import { RunImportButton } from "../components/RunImportButton"
@@ -40,16 +40,18 @@ export default async function AdminHomePage() {
     openAlexYearRunHistory(),
     db.paper.count({ where: { status: "PENDING_REVIEW", canonicalPaperId: null } }),
     db.paper.findMany({
-      where: {
-        status: { in: ["PENDING_REVIEW", "IMPORTED", "APPROVED"] },
-        canonicalPaperId: null,
-        studyPaper: null,
+      where: { status: { in: [...LINK_ELIGIBLE_STATUSES] }, canonicalPaperId: null },
+      select: {
+        id: true,
+        title: true,
+        status: true,
+        canonicalPaperId: true,
+        studyPaper: { select: { study: { select: { _count: { select: { papers: true } } } } } },
       },
-      select: { id: true, title: true },
     }),
   ])
 
-  const linkGroupCount = clusterPapersByTitle(unlinkedPapers).length
+  const linkGroupCount = clusterPapersByTitle(unlinkedPapers.filter(isLinkEligible)).length
 
   return (
     <div>
@@ -139,12 +141,12 @@ export default async function AdminHomePage() {
         </WorkflowCard>
 
         <WorkflowCard
-          title="Link duplicates"
-          description="Papers with matching titles get grouped together — usually the same registered report indexed more than once (a preprint, the published article, a registration link). Mark each one as Stage 1, Stage 2, materials, or a duplicate to link them into a single Study."
+          title="Link papers"
+          description="Papers with matching titles get grouped together — usually the same registered report indexed more than once (a preprint, the published article, a registration link). Mark each one as Stage 1, Stage 2, materials, or a duplicate to link them into a single Study. You can also search for a paper directly to edit or unlink a study it's already part of."
           badge={linkGroupCount}
         >
           <a href="/admin/link" className="btn btn-primary btn-sm text-base">
-            Go to duplicate groups
+            Go to link papers
           </a>
         </WorkflowCard>
       </div>

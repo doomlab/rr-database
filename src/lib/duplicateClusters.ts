@@ -35,6 +35,25 @@ export type ClusterablePaper = {
   title: string
 }
 
+// Almost every paper in this database already has its own solo, 1-paper
+// Study — leftover from an old schema migration, not a real Stage 1/Stage 2
+// link. A paper only counts as "actually linked" once its Study has more
+// than one paper in it; anything else (no Study, or a solo Study) is still
+// fair game to group and link.
+export const LINK_ELIGIBLE_STATUSES = ["PENDING_REVIEW", "IMPORTED", "APPROVED"] as const
+
+export type LinkEligibilityPaper = {
+  status: string
+  canonicalPaperId: number | null
+  studyPaper: { study: { _count: { papers: number } } } | null
+}
+
+export function isLinkEligible(paper: LinkEligibilityPaper): boolean {
+  if (paper.canonicalPaperId != null) return false
+  if (!(LINK_ELIGIBLE_STATUSES as readonly string[]).includes(paper.status)) return false
+  return !paper.studyPaper || paper.studyPaper.study._count.papers <= 1
+}
+
 export function clusterPapersByTitle<T extends ClusterablePaper>(papers: T[]): T[][] {
   const words = new Map<number, Set<string>>()
   const wordIndex = new Map<string, number[]>()
