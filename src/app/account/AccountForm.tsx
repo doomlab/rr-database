@@ -3,6 +3,7 @@
 import { useMutation } from "@blitzjs/rpc"
 import { useState } from "react"
 import updateProfile from "../(dashboard)/mutations/updateProfile"
+import { PasswordInput } from "../components/PasswordInput"
 
 type AccountFormProps = {
   initialName: string
@@ -86,10 +87,8 @@ export function AccountForm({
         <label className="label py-1">
           <span className="label-text font-medium">OpenAlex API key</span>
         </label>
-        <input
-          type="password"
+        <PasswordInput
           autoComplete="off"
-          className="input input-bordered w-full"
           placeholder={hasOpenAlex ? "•••••••••• (saved — leave blank to keep)" : ""}
           value={openAlexApiKey}
           onChange={(e) => {
@@ -117,10 +116,8 @@ export function AccountForm({
         <label className="label py-1">
           <span className="label-text font-medium">Groq API key</span>
         </label>
-        <input
-          type="password"
+        <PasswordInput
           autoComplete="off"
-          className="input input-bordered w-full"
           placeholder={hasGroq ? "•••••••••• (saved — leave blank to keep)" : ""}
           value={groqApiKey}
           onChange={(e) => {
