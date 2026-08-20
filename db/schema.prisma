@@ -40,6 +40,7 @@ model User {
   codedExtractions PaperExtraction[] @relation("ExtractionCodedBy")
   verifiedExtractions PaperExtraction[] @relation("ExtractionVerifiedBy")
   favoriteStudies StudyFavorite[]
+  favoritePapers  PaperFavorite[]
 
   articleSuggestions       ArticleSuggestion[]
   metadataEditSuggestions  MetadataEditSuggestion[]
@@ -206,6 +207,7 @@ model Paper {
   extractionEdits ExtractionEditSuggestion[]
   reports         PaperReport[]
   editHistory     PaperEditHistory[]
+  favorites       PaperFavorite[]
 
   @@index([status])
   @@index([doi])
@@ -469,6 +471,20 @@ model PaperReport {
   note   String?
 
   resolved Boolean @default(false)
+
+  @@unique([userId, paperId])
+}
+
+// Save a Paper for later — used on standalone papers (e.g. excluded/rejected
+// ones) that aren't linked into a Study and so can't use StudyFavorite.
+model PaperFavorite {
+  id        Int      @id @default(autoincrement())
+  createdAt DateTime @default(now())
+
+  userId  Int
+  user    User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  paperId Int
+  paper   Paper @relation(fields: [paperId], references: [id], onDelete: Cascade)
 
   @@unique([userId, paperId])
 }
