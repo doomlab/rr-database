@@ -17,7 +17,7 @@ export default async function DatabasePage() {
   const ctx = await getBlitzContext()
   if (ctx.session.role !== "SUPER_ADMIN") redirect("/admin")
 
-  const [productionRun, stagingRun] = await Promise.all([
+  const [productionRun, stagingCollectionsRun] = await Promise.all([
     lastRun("[production]"),
     lastRun("[stagingCollections]"),
   ])
@@ -26,8 +26,9 @@ export default async function DatabasePage() {
     <div className="max-w-2xl">
       <h1 className="text-2xl font-semibold mb-1">Database</h1>
       <p className="text-base-content/60 mb-8">
-        Pull data in from Zotero. These can take a few minutes to run — the page will refresh
-        with the result when done.
+        Pull data in from Zotero. The production pull is safe to run any number of times —
+        staging should only need to run once, unless it needs to be redone. Both can take a few
+        minutes — the page will refresh with the result when done.
       </p>
 
       <div className="flex flex-col gap-6">
@@ -44,12 +45,14 @@ export default async function DatabasePage() {
           description={
             <>
               One-time migration of the staging library's review folders: "1 – To Check" →
-              pending review, "2 – To Tag" → imported, "4 – Do Not Add" → rejected. See{" "}
+              pending review, "2 – To Tag" → imported, "4 – Do Not Add" → rejected. Safe to
+              re-run if staging gets messed up — it's idempotent per Zotero item, so re-running
+              just re-applies the same mapping. See{" "}
               <code>pipeline/import_staging_collections.py</code> for the same logic run from
               the CLI.
             </>
           }
-          run={stagingRun}
+          run={stagingCollectionsRun}
         >
           <RunImportButton target="stagingCollections" label="Import staging collections" />
         </RunCard>
