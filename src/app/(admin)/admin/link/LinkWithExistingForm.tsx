@@ -10,7 +10,8 @@ const ROLE_OPTIONS = [
   { value: "STAGE1_MATERIALS", label: "Stage 1 materials" },
   { value: "STAGE2_ARTICLE", label: "Stage 2 article" },
   { value: "STAGE2_MATERIALS", label: "Stage 2 materials" },
-  { value: "OTHER", label: "PCI RR page" },
+  { value: "PCIRR_PAGE", label: "PCI RR page" },
+  { value: "OTHER", label: "Other" },
 ] as const
 
 type Role = (typeof ROLE_OPTIONS)[number]["value"]

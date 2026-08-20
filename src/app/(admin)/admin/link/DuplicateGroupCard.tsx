@@ -13,12 +13,18 @@ export type LinkablePaper = {
   venue: string | null
   doi: string | null
   status: string
-  currentRole: "STAGE1_ARTICLE" | "STAGE1_MATERIALS" | "STAGE2_ARTICLE" | "STAGE2_MATERIALS" | "OTHER" | null
+  currentRole:
+    | "STAGE1_ARTICLE"
+    | "STAGE1_MATERIALS"
+    | "STAGE2_ARTICLE"
+    | "STAGE2_MATERIALS"
+    | "PCIRR_PAGE"
+    | "OTHER"
+    | null
   // Whether currentRole was actually set by an admin through this page
   // (tracked via edit history) rather than being the generic "OTHER"
   // fallback almost every paper got from the old Zotero import — without
-  // this, every legacy paper would look like it had already been tagged
-  // "PCI RR page".
+  // this, every legacy paper would look like it had already been tagged.
   roleConfirmed: boolean
   authors: { author: { name: string } }[]
 }
@@ -29,7 +35,8 @@ const ROLE_OPTIONS = [
   { value: "STAGE1_MATERIALS", label: "Stage 1 materials" },
   { value: "STAGE2_ARTICLE", label: "Stage 2 article" },
   { value: "STAGE2_MATERIALS", label: "Stage 2 materials" },
-  { value: "OTHER", label: "PCI RR page" },
+  { value: "PCIRR_PAGE", label: "PCI RR page" },
+  { value: "OTHER", label: "Other" },
   { value: "unlink", label: "Unlink from study" },
   { value: "duplicate", label: "Duplicate of…" },
 ] as const
@@ -37,11 +44,17 @@ const ROLE_OPTIONS = [
 type Choice = (typeof ROLE_OPTIONS)[number]["value"]
 
 function defaultChoiceFor(role: LinkablePaper["currentRole"], roleConfirmed: boolean): Choice {
-  if (role === "STAGE1_ARTICLE" || role === "STAGE1_MATERIALS" || role === "STAGE2_ARTICLE" || role === "STAGE2_MATERIALS") {
+  if (
+    role === "STAGE1_ARTICLE" ||
+    role === "STAGE1_MATERIALS" ||
+    role === "STAGE2_ARTICLE" ||
+    role === "STAGE2_MATERIALS" ||
+    role === "PCIRR_PAGE"
+  ) {
     return role
   }
-  // "OTHER" is ambiguous — only trust it as a real "PCI RR page" tag if an
-  // admin actually set it through this page.
+  // "OTHER" is ambiguous — only trust it as a deliberate tag if an admin
+  // actually set it through this page (see roleConfirmed doc comment).
   if (role === "OTHER" && roleConfirmed) return role
   return "skip"
 }

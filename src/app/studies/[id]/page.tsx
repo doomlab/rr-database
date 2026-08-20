@@ -1,3 +1,4 @@
+import { Fragment } from "react"
 import { notFound } from "next/navigation"
 import { Navbar } from "../../components/Navbar"
 import { FavoriteButton } from "../../components/FavoriteButton"
@@ -12,7 +13,8 @@ const ROLE_LABELS: Record<string, string> = {
   STAGE1_MATERIALS: "Stage 1 materials",
   STAGE2_ARTICLE: "Stage 2 article",
   STAGE2_MATERIALS: "Stage 2 materials",
-  OTHER: "Record",
+  PCIRR_PAGE: "PCI RR page",
+  OTHER: "Other",
 }
 
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }) {
@@ -124,26 +126,59 @@ export default async function StudyDetailPage({
             </div>
           )}
 
-          <div className="divide-y divide-base-200">
-            {study.papers.map(({ paper, role }) => (
-              <PaperRecordSection
-                key={paper.id}
-                paper={paper}
-                roleLabel={ROLE_LABELS[role] ?? role}
-                citationData={citationDataByPaperId.get(paper.id)!}
-                isAdmin={isAdmin}
-                hasOpenAlexApiKey={hasOpenAlexApiKey}
-                userId={userId}
-                isReported={reportedIds.has(paper.id)}
-                keywordBasePath="/"
-                suggestEditHref={
-                  userId
-                    ? `/papers/${paper.id}/suggest-edit`
-                    : `/login?next=/papers/${paper.id}/suggest-edit`
-                }
-              />
-            ))}
-          </div>
+          {study.papers.length > 1 ? (
+            <div className="tabs">
+              {study.papers.map(({ paper, role }, idx) => (
+                <Fragment key={paper.id}>
+                  <input
+                    type="radio"
+                    name={`study-${study.id}-tabs`}
+                    className="tab text-base font-medium"
+                    aria-label={ROLE_LABELS[role] ?? role}
+                    defaultChecked={idx === 0}
+                  />
+                  <div className="tab-content">
+                    <PaperRecordSection
+                      paper={paper}
+                      roleLabel={ROLE_LABELS[role] ?? role}
+                      citationData={citationDataByPaperId.get(paper.id)!}
+                      isAdmin={isAdmin}
+                      hasOpenAlexApiKey={hasOpenAlexApiKey}
+                      userId={userId}
+                      isReported={reportedIds.has(paper.id)}
+                      keywordBasePath="/"
+                      suggestEditHref={
+                        userId
+                          ? `/papers/${paper.id}/suggest-edit`
+                          : `/login?next=/papers/${paper.id}/suggest-edit`
+                      }
+                    />
+                  </div>
+                </Fragment>
+              ))}
+            </div>
+          ) : (
+            <div className="divide-y divide-base-200">
+              {study.papers.map(({ paper, role }) => (
+                <PaperRecordSection
+                  key={paper.id}
+                  paper={paper}
+                  roleLabel={ROLE_LABELS[role] ?? role}
+                  citationData={citationDataByPaperId.get(paper.id)!}
+                  isAdmin={isAdmin}
+                  hasOpenAlexApiKey={hasOpenAlexApiKey}
+                  userId={userId}
+                  isReported={reportedIds.has(paper.id)}
+                  keywordBasePath="/"
+                  suggestEditHref={
+                    userId
+                      ? `/papers/${paper.id}/suggest-edit`
+                      : `/login?next=/papers/${paper.id}/suggest-edit`
+                  }
+                />
+              ))}
+            </div>
+          )}
         </div>
       </div>
     </div>
