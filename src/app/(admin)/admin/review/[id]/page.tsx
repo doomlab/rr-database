@@ -116,11 +116,20 @@ export default async function ReviewDetailPage({
           <Row label="Item type" value={paper.itemType ?? undefined} />
           <Row label="Stage" value={paper.stage ?? undefined} />
           <Row label="Bias level" value={paper.biasLevel ?? undefined} />
+          <Row label="Tags" value={paper.tags.length > 0 ? paper.tags.join(", ") : undefined} />
         </Section>
 
         {paper.abstract && (
           <Section title="Abstract">
             <p className="text-base-content/70 leading-relaxed">{paper.abstract}</p>
+          </Section>
+        )}
+
+        {paper.zoteroNotes && (
+          <Section title="Notes (from Zotero)">
+            <p className="text-base-content/70 leading-relaxed whitespace-pre-line">
+              {paper.zoteroNotes}
+            </p>
           </Section>
         )}
       </div>
