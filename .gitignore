@@ -2,6 +2,7 @@
 node_modules/
 .next/
 .env.local
+.env.docker
 db/dev.db
 next-env.d.ts
 

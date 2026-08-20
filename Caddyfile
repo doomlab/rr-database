@@ -1,0 +1,11 @@
+{
+    email {$LETSENCRYPT_EMAIL}
+}
+
+{$APP_DOMAIN} {
+    reverse_proxy app:3000
+}
+
+{$PGADMIN_DOMAIN} {
+    reverse_proxy pgadmin:80
+}
