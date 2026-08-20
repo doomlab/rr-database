@@ -62,26 +62,23 @@ export default async function LinkDuplicatesPage({
   )
 }
 
-async function SearchResults({ q }: { q: string }) {
-  const matches = await db.paper.findMany({
-    where: {
-      OR: [
-        { title: { contains: q, mode: "insensitive" } },
-        { doi: { contains: q, mode: "insensitive" } },
-        { authors: { some: { author: { name: { contains: q, mode: "insensitive" } } } } },
-      ],
-    },
+// Builds groups from actual current Study membership rather than re-running
+// title clustering — used once we already know which papers matter (a
+// search hit, or a paper someone has acted on via this page), so it
+// reflects the real, current link state even after papers have been fully
+// merged into a shared multi-paper Study.
+async function groupsForPaperIds(paperIds: number[]): Promise<LinkablePaper[][]> {
+  if (paperIds.length === 0) return []
+
+  const papers = await db.paper.findMany({
+    where: { id: { in: paperIds } },
     select: { id: true, studyPaper: { select: { studyId: true } } },
   })
 
-  if (matches.length === 0) {
-    return <p className="text-base-content/40">No papers match "{q}".</p>
-  }
-
   const studyIds = Array.from(
-    new Set(matches.map((p) => p.studyPaper?.studyId).filter((id): id is number => id != null))
+    new Set(papers.map((p) => p.studyPaper?.studyId).filter((id): id is number => id != null))
   )
-  const soloPaperIds = matches.filter((p) => !p.studyPaper).map((p) => p.id)
+  const soloPaperIds = papers.filter((p) => !p.studyPaper).map((p) => p.id)
 
   const [studies, soloPapers] = await Promise.all([
     db.study.findMany({
@@ -91,10 +88,29 @@ async function SearchResults({ q }: { q: string }) {
     db.paper.findMany({ where: { id: { in: soloPaperIds } }, include: paperInclude }),
   ])
 
-  const groups: LinkablePaper[][] = [
+  return [
     ...studies.map((s) => s.papers.map((sp) => toLinkable(sp.paper, sp.role))),
     ...soloPapers.map((p) => [toLinkable(p, null)]),
   ]
+}
+
+async function SearchResults({ q }: { q: string }) {
+  const matches = await db.paper.findMany({
+    where: {
+      OR: [
+        { title: { contains: q, mode: "insensitive" } },
+        { doi: { contains: q, mode: "insensitive" } },
+        { authors: { some: { author: { name: { contains: q, mode: "insensitive" } } } } },
+      ],
+    },
+    select: { id: true },
+  })
+
+  if (matches.length === 0) {
+    return <p className="text-base-content/40">No papers match "{q}".</p>
+  }
+
+  const groups = await groupsForPaperIds(matches.map((p) => p.id))
 
   return (
     <div className="flex flex-col gap-6">
@@ -106,29 +122,39 @@ async function SearchResults({ q }: { q: string }) {
 }
 
 async function AutoDetectedGroups({ page, tab }: { page: number; tab: "needs-review" | "reviewed" }) {
-  const papers = await db.paper.findMany({
-    where: { status: { in: [...LINK_ELIGIBLE_STATUSES] }, canonicalPaperId: null },
-    include: {
-      ...paperInclude,
-      studyPaper: {
-        select: { role: true, study: { select: { _count: { select: { papers: true } } } } },
+  const [eligiblePapers, touchedHistory] = await Promise.all([
+    db.paper.findMany({
+      where: { status: { in: [...LINK_ELIGIBLE_STATUSES] }, canonicalPaperId: null },
+      include: {
+        ...paperInclude,
+        studyPaper: {
+          select: { role: true, study: { select: { _count: { select: { papers: true } } } } },
+        },
       },
-      // A paper only counts as "reviewed" once someone has actually acted on
-      // it through this page — not just because it carries the "OTHER"
-      // fallback role that ~every paper already got from the old Zotero
-      // import, which would otherwise make almost everything look reviewed.
-      editHistory: { where: { source: "link" }, select: { id: true }, take: 1 },
-    },
-    orderBy: { title: "asc" },
-  })
+      orderBy: { title: "asc" },
+    }),
+    // A paper only counts as "reviewed" once someone has actually acted on it
+    // through this page — not just because it carries the "OTHER" fallback
+    // role ~every paper already got from the old Zotero import, which would
+    // otherwise make almost everything look reviewed. Looked up on every
+    // paper ever touched here (not just still-eligible ones), since linking
+    // a full pair moves both papers into a real multi-paper Study and drops
+    // them out of the eligible/unlinked pool entirely.
+    db.paperEditHistory.findMany({
+      where: { source: "link" },
+      select: { paperId: true },
+      distinct: ["paperId"],
+    }),
+  ])
 
-  const eligible = papers.filter(isLinkEligible)
+  const touchedIds = new Set(touchedHistory.map((h) => h.paperId))
+  const eligible = eligiblePapers.filter(isLinkEligible).filter((p) => !touchedIds.has(p.id))
   const linkable = eligible.map((p) => toLinkable(p, p.studyPaper?.role ?? null))
-  const reviewedIds = new Set(eligible.filter((p) => p.editHistory.length > 0).map((p) => p.id))
 
-  const allGroups = clusterPapersByTitle(linkable)
-  const needsReviewGroups = allGroups.filter((g) => !g.some((p) => reviewedIds.has(p.id)))
-  const reviewedGroups = allGroups.filter((g) => g.some((p) => reviewedIds.has(p.id)))
+  // minGroupSize 1 so untouched papers with no title match still show up as
+  // their own single-paper card, with a way to link them manually.
+  const needsReviewGroups = clusterPapersByTitle(linkable, 1)
+  const reviewedGroups = await groupsForPaperIds(Array.from(touchedIds))
   const groups = tab === "reviewed" ? reviewedGroups : needsReviewGroups
 
   const totalPages = Math.ceil(groups.length / GROUPS_PER_PAGE)
@@ -148,7 +174,7 @@ async function AutoDetectedGroups({ page, tab }: { page: number; tab: "needs-rev
 
       {groups.length === 0 ? (
         <p className="text-base-content/40">
-          {tab === "reviewed" ? "No already-tagged groups found." : "No duplicate-looking groups found."}
+          {tab === "reviewed" ? "No already-tagged groups found." : "Nothing left to review."}
         </p>
       ) : (
         <>

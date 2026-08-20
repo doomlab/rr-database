@@ -4,6 +4,7 @@ import { useMutation } from "@blitzjs/rpc"
 import { useRouter } from "next/navigation"
 import { useMemo, useState } from "react"
 import linkDuplicateGroup from "../../mutations/linkDuplicateGroup"
+import { LinkWithExistingForm } from "./LinkWithExistingForm"
 
 export type LinkablePaper = {
   id: number
@@ -171,11 +172,13 @@ export function DuplicateGroupCard({ papers }: { papers: LinkablePaper[] }) {
                     value={choice}
                     onChange={(e) => setChoice(paper.id, e.target.value as Choice)}
                   >
-                    {ROLE_OPTIONS.map((opt) => (
-                      <option key={opt.value} value={opt.value}>
-                        {opt.label}
-                      </option>
-                    ))}
+                    {ROLE_OPTIONS.filter((opt) => opt.value !== "duplicate" || papers.length > 1).map(
+                      (opt) => (
+                        <option key={opt.value} value={opt.value}>
+                          {opt.label}
+                        </option>
+                      )
+                    )}
                   </select>
 
                   {choice === "duplicate" && (
@@ -216,6 +219,8 @@ export function DuplicateGroupCard({ papers }: { papers: LinkablePaper[] }) {
           </button>
           {error && <span className="text-base text-error">{error}</span>}
         </div>
+
+        {papers.length === 1 && <LinkWithExistingForm paperId={papers[0]!.id} />}
         </>
         )}
       </div>

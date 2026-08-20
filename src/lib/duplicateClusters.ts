@@ -54,7 +54,14 @@ export function isLinkEligible(paper: LinkEligibilityPaper): boolean {
   return !paper.studyPaper || paper.studyPaper.study._count.papers <= 1
 }
 
-export function clusterPapersByTitle<T extends ClusterablePaper>(papers: T[]): T[][] {
+// minGroupSize: 2 (default) returns only title-matched groups, like before.
+// Pass 1 to also get back every leftover paper that didn't match anyone
+// else, each as its own singleton group — used to surface "no automatic
+// match found" papers so they can still be linked manually.
+export function clusterPapersByTitle<T extends ClusterablePaper>(
+  papers: T[],
+  minGroupSize: number = 2
+): T[][] {
   const words = new Map<number, Set<string>>()
   const wordIndex = new Map<string, number[]>()
 
@@ -107,6 +114,6 @@ export function clusterPapersByTitle<T extends ClusterablePaper>(papers: T[]): T
   }
 
   return Array.from(groups.values())
-    .filter((g) => g.length >= 2)
+    .filter((g) => g.length >= minGroupSize)
     .sort((a, b) => b.length - a.length)
 }
