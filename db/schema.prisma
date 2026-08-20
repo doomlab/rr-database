@@ -166,6 +166,14 @@ model Paper {
   registrationPlatform String? // "OSF" / "figshare" / "Zenodo" / etc., if known
   biasLevel            String?
 
+  // Open science practices — detected by scanning the PDF text (pdfUrl) for
+  // links near "data/code/materials availability" language. Null means
+  // either never scanned, or scanned and nothing found.
+  openDataUrl                    String?
+  openCodeUrl                    String?
+  openMaterialsUrl               String?
+  openSciencePracticesScannedAt  DateTime?
+
   // Source-tracking / provenance
   openalexId              String? @unique
   zoteroKeyProduction     String? @unique

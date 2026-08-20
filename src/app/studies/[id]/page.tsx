@@ -91,6 +91,8 @@ export default async function StudyDetailPage({
   const hasStage1 = study.papers.some(
     ({ role }) => role === "STAGE1_ARTICLE" || role === "STAGE1_MATERIALS"
   )
+  const stage2Count = study.papers.filter(({ role }) => role === "STAGE2_ARTICLE").length
+  const isProgrammatic = stage2Count > 1
 
   return (
     <div className="min-h-screen bg-base-100 flex flex-col">
@@ -113,7 +115,7 @@ export default async function StudyDetailPage({
             </div>
           </div>
 
-          {(study.registrationUrl || study.biasLevel || !hasStage1) && (
+          {(study.registrationUrl || study.biasLevel || !hasStage1 || isProgrammatic) && (
             <div className="flex flex-wrap gap-2 mb-8">
               {study.registrationUrl && (
                 <a
@@ -127,6 +129,9 @@ export default async function StudyDetailPage({
               )}
               {study.biasLevel && <span className="badge badge-info">{study.biasLevel}</span>}
               {!hasStage1 && <span className="badge badge-warning">No Stage 1 found</span>}
+              {isProgrammatic && (
+                <span className="badge badge-secondary">Programmatic ({stage2Count} Stage 2 manuscripts)</span>
+              )}
             </div>
           )}
 

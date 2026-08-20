@@ -30,6 +30,9 @@ type RecordPaper = {
   biasLevel: string | null
   openalexId: string | null
   zoteroNotes: string | null
+  openDataUrl: string | null
+  openCodeUrl: string | null
+  openMaterialsUrl: string | null
   authors: { author: { name: string } }[]
   extraction: {
     needsReview: boolean
@@ -134,6 +137,36 @@ export function PaperRecordSection({
               className="btn btn-outline btn-md text-base"
             >
               View registration{paper.registrationPlatform ? ` (${paper.registrationPlatform})` : ""}
+            </a>
+          )}
+          {paper.openDataUrl && (
+            <a
+              href={paper.openDataUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="btn btn-outline btn-md text-base"
+            >
+              Open data
+            </a>
+          )}
+          {paper.openCodeUrl && (
+            <a
+              href={paper.openCodeUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="btn btn-outline btn-md text-base"
+            >
+              Open code
+            </a>
+          )}
+          {paper.openMaterialsUrl && (
+            <a
+              href={paper.openMaterialsUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="btn btn-outline btn-md text-base"
+            >
+              Open materials
             </a>
           )}
           {isAdmin && (

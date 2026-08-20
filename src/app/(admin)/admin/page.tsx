@@ -8,6 +8,7 @@ import { RunCard } from "../components/RunCard"
 import { RunImportButton } from "../components/RunImportButton"
 import { DiscoverOpenAlexYearButton } from "../components/DiscoverOpenAlexYearButton"
 import { DiscoverOpenAlexRecentButton } from "../components/DiscoverOpenAlexRecentButton"
+import { ScanOpenSciencePracticesButton } from "../components/ScanOpenSciencePracticesButton"
 
 // Registered reports as a format only really got going around 2013.
 const EARLIEST_RR_YEAR = 2013
@@ -32,6 +33,8 @@ export default async function AdminHomePage() {
     yearRunHistory,
     reviewCount,
     linkGroupCount,
+    openScienceScanRun,
+    unscannedWithPdfCount,
   ] = await Promise.all([
     isSuperAdmin ? lastZoteroRun("[production]") : Promise.resolve(null),
     isSuperAdmin ? lastZoteroRun("[stagingCollections]") : Promise.resolve(null),
@@ -40,6 +43,14 @@ export default async function AdminHomePage() {
     openAlexYearRunHistory(),
     db.paper.count({ where: { status: "PENDING_REVIEW", canonicalPaperId: null } }),
     countLinkNeedsReviewGroups(),
+    lastPipelineRun("ENRICH", "[open-science-scan]"),
+    db.paper.count({
+      where: {
+        pdfUrl: { not: null },
+        openSciencePracticesScannedAt: null,
+        status: { in: ["IMPORTED", "APPROVED"] },
+      },
+    }),
   ])
 
   return (
@@ -137,6 +148,21 @@ export default async function AdminHomePage() {
           <a href="/admin/link" className="btn btn-primary btn-sm text-base">
             Go to link papers
           </a>
+        </WorkflowCard>
+
+        <WorkflowCard
+          title="Detect open science practices"
+          description="Scans the PDF text of confirmed papers for links near data/code/materials-availability language, and preregistration links if one isn't already on file. Only ever fills in blank fields — never overwrites a link you or another source already found. Safe to re-run; it only looks at papers it hasn't scanned yet."
+          badge={unscannedWithPdfCount}
+        >
+          <RunCard
+            title="Scan for data, code, materials, and preregistration links"
+            description="Looks at every confirmed paper with a PDF that hasn't been scanned yet. Detection is a simple keyword/link search, not exhaustive — treat results as a starting point, not a guarantee."
+            run={openScienceScanRun}
+            nested
+          >
+            <ScanOpenSciencePracticesButton />
+          </RunCard>
         </WorkflowCard>
       </div>
     </div>
