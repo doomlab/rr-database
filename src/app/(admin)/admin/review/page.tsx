@@ -24,6 +24,11 @@ export default async function ReviewQueuePage({
             { title: { contains: q, mode: "insensitive" as const } },
             { abstract: { contains: q, mode: "insensitive" as const } },
             { doi: { contains: q, mode: "insensitive" as const } },
+            {
+              authors: {
+                some: { author: { name: { contains: q, mode: "insensitive" as const } } },
+              },
+            },
           ],
         }
       : {}),

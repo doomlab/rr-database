@@ -24,6 +24,15 @@ export default resolver.pipe(
       },
     })
 
+    await db.paperEditHistory.create({
+      data: {
+        paperId,
+        userId,
+        source: "review",
+        summary: decision === "APPROVED" ? "Approved" : "Rejected",
+      },
+    })
+
     if (decision === "APPROVED") {
       // Same invariant the Zotero import maintains: every confirmed paper
       // gets an extraction placeholder so the coding queue can see it.
