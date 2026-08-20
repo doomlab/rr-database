@@ -22,6 +22,7 @@ const ROLE_OPTIONS = [
   { value: "STAGE1_MATERIALS", label: "Stage 1 materials" },
   { value: "STAGE2_ARTICLE", label: "Stage 2 article" },
   { value: "STAGE2_MATERIALS", label: "Stage 2 materials" },
+  { value: "OTHER", label: "PCI RR page" },
   { value: "unlink", label: "Unlink from study" },
   { value: "duplicate", label: "Duplicate of…" },
 ] as const
@@ -33,7 +34,8 @@ function defaultChoiceFor(role: LinkablePaper["currentRole"]): Choice {
     role === "STAGE1_ARTICLE" ||
     role === "STAGE1_MATERIALS" ||
     role === "STAGE2_ARTICLE" ||
-    role === "STAGE2_MATERIALS"
+    role === "STAGE2_MATERIALS" ||
+    role === "OTHER"
   ) {
     return role
   }
@@ -55,6 +57,7 @@ export function DuplicateGroupCard({ papers }: { papers: LinkablePaper[] }) {
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [done, setDone] = useState(false)
+  const [open, setOpen] = useState(false)
 
   const setChoice = (paperId: number, choice: Choice) => {
     setChoices((prev) => ({ ...prev, [paperId]: choice }))
@@ -102,24 +105,48 @@ export function DuplicateGroupCard({ papers }: { papers: LinkablePaper[] }) {
   return (
     <div className="card bg-base-200 shadow-sm w-full">
       <div className="card-body gap-4">
-        <p className="text-base text-base-content/60">
-          {papers.length} paper{papers.length === 1 ? "" : "s"} in this group
-        </p>
+        <button
+          type="button"
+          onClick={() => setOpen((v) => !v)}
+          className="flex items-start gap-3 text-left"
+        >
+          <span
+            className={`text-xl leading-tight text-base-content/50 transition-transform shrink-0 ${
+              open ? "rotate-90" : ""
+            }`}
+          >
+            ›
+          </span>
+          <div>
+            <h3 className="text-xl font-semibold leading-snug">{papers[0]!.title}</h3>
+            <p className="text-base text-base-content/60 mt-1">
+              {papers.length} paper{papers.length === 1 ? "" : "s"} in this group
+            </p>
+          </div>
+        </button>
 
+        {open && (
+        <>
         <div className="flex flex-col divide-y divide-base-300">
           {papers.map((paper) => {
             const choice = choices[paper.id] ?? defaults[paper.id]!
             return (
               <div key={paper.id} className="py-4 flex flex-col md:flex-row md:items-start gap-3">
                 <div className="flex-1 min-w-0">
-                  <p className="font-medium leading-snug">{paper.title}</p>
+                  <a
+                    href={`/papers/${paper.id}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="font-medium leading-snug link link-hover"
+                  >
+                    #{paper.id} — {paper.title}
+                  </a>
                   <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-base-content/50 mt-1">
                     {paper.authors.length > 0 && (
                       <span>{paper.authors.map((pa) => pa.author.name).join(", ")}</span>
                     )}
                     {paper.year && <span>· {paper.year}</span>}
                     {paper.venue && <span className="italic">· {paper.venue}</span>}
-                    <span className="badge badge-sm badge-outline">{paper.status}</span>
                     {defaultChoiceFor(paper.currentRole) !== "skip" && (
                       <span className="badge badge-sm badge-ghost">
                         currently {ROLE_OPTIONS.find((o) => o.value === paper.currentRole)?.label}
@@ -189,6 +216,8 @@ export function DuplicateGroupCard({ papers }: { papers: LinkablePaper[] }) {
           </button>
           {error && <span className="text-base text-error">{error}</span>}
         </div>
+        </>
+        )}
       </div>
     </div>
   )

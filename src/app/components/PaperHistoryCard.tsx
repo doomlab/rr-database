@@ -5,6 +5,7 @@ const SOURCE_LABELS: Record<string, string> = {
   crossref: "Pulled data from Crossref",
   manual: "Edited",
   review: "Reviewed",
+  link: "Linking",
 }
 
 export type PaperHistoryEntry = {

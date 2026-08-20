@@ -34,14 +34,26 @@ function toLinkable(
   }
 }
 
+const ROLE_VALUES = new Set([
+  "STAGE1_ARTICLE",
+  "STAGE1_MATERIALS",
+  "STAGE2_ARTICLE",
+  "STAGE2_MATERIALS",
+])
+
+function groupNeedsReview(group: LinkablePaper[]): boolean {
+  return !group.some((p) => p.currentRole && ROLE_VALUES.has(p.currentRole))
+}
+
 export default async function LinkDuplicatesPage({
   searchParams,
 }: {
-  searchParams: Promise<{ q?: string; page?: string }>
+  searchParams: Promise<{ q?: string; page?: string; tab?: string }>
 }) {
-  const { q: qParam, page: pageParam } = await searchParams
+  const { q: qParam, page: pageParam, tab: tabParam } = await searchParams
   const q = qParam?.trim() || undefined
   const page = Math.max(1, parseInt(pageParam ?? "1", 10) || 1)
+  const tab = tabParam === "reviewed" ? "reviewed" : "needs-review"
 
   return (
     <div>
@@ -56,7 +68,7 @@ export default async function LinkDuplicatesPage({
 
       <SearchAndKeywordFilter action="/admin/link" q={q} />
 
-      {q ? <SearchResults q={q} /> : <AutoDetectedGroups page={page} />}
+      {q ? <SearchResults q={q} /> : <AutoDetectedGroups page={page} tab={tab} />}
     </div>
   )
 }
@@ -104,7 +116,7 @@ async function SearchResults({ q }: { q: string }) {
   )
 }
 
-async function AutoDetectedGroups({ page }: { page: number }) {
+async function AutoDetectedGroups({ page, tab }: { page: number; tab: "needs-review" | "reviewed" }) {
   const papers = await db.paper.findMany({
     where: { status: { in: [...LINK_ELIGIBLE_STATUSES] }, canonicalPaperId: null },
     include: {
@@ -119,24 +131,40 @@ async function AutoDetectedGroups({ page }: { page: number }) {
   const eligible = papers.filter(isLinkEligible)
   const linkable = eligible.map((p) => toLinkable(p, p.studyPaper?.role ?? null))
 
-  const groups = clusterPapersByTitle(linkable)
+  const allGroups = clusterPapersByTitle(linkable)
+  const needsReviewGroups = allGroups.filter(groupNeedsReview)
+  const reviewedGroups = allGroups.filter((g) => !groupNeedsReview(g))
+  const groups = tab === "reviewed" ? reviewedGroups : needsReviewGroups
 
   const totalPages = Math.ceil(groups.length / GROUPS_PER_PAGE)
   const pageGroups = groups.slice((page - 1) * GROUPS_PER_PAGE, page * GROUPS_PER_PAGE)
-  const buildHref = (p: number) => `/admin/link?page=${p}`
-
-  if (groups.length === 0) {
-    return <p className="text-base-content/40">No duplicate-looking groups found.</p>
-  }
+  const buildHref = (p: number) => `/admin/link?tab=${tab}&page=${p}`
 
   return (
     <>
-      <div className="flex flex-col gap-6">
-        {pageGroups.map((group) => (
-          <DuplicateGroupCard key={group.map((p) => p.id).join("-")} papers={group} />
-        ))}
+      <div className="tabs tabs-boxed w-fit mb-6">
+        <a href="/admin/link?tab=needs-review" className={`tab ${tab === "needs-review" ? "tab-active" : ""}`}>
+          Needs review ({needsReviewGroups.length})
+        </a>
+        <a href="/admin/link?tab=reviewed" className={`tab ${tab === "reviewed" ? "tab-active" : ""}`}>
+          Already tagged ({reviewedGroups.length})
+        </a>
       </div>
-      <Pagination page={page} totalPages={totalPages} buildHref={buildHref} />
+
+      {groups.length === 0 ? (
+        <p className="text-base-content/40">
+          {tab === "reviewed" ? "No already-tagged groups found." : "No duplicate-looking groups found."}
+        </p>
+      ) : (
+        <>
+          <div className="flex flex-col gap-6">
+            {pageGroups.map((group) => (
+              <DuplicateGroupCard key={group.map((p) => p.id).join("-")} papers={group} />
+            ))}
+          </div>
+          <Pagination page={page} totalPages={totalPages} buildHref={buildHref} />
+        </>
+      )}
     </>
   )
 }

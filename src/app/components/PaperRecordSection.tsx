@@ -8,6 +8,7 @@ import { Row, humanizeItemType, capitalize } from "./PaperFields"
 type RecordPaper = {
   id: number
   doi: string | null
+  url: string | null
   pdfUrl: string | null
   openAccess: boolean | null
   openAccessStatus: string | null
@@ -107,6 +108,16 @@ export function PaperRecordSection({
               className="btn btn-secondary btn-md text-base"
             >
               {paper.openAccess ? "Open access PDF" : "View PDF"}
+            </a>
+          )}
+          {paper.url && (
+            <a
+              href={paper.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="btn btn-outline btn-md text-base"
+            >
+              Go to page
             </a>
           )}
           {isAdmin && (

@@ -2,7 +2,13 @@ import { resolver } from "@blitzjs/rpc"
 import { z } from "zod"
 import db from "db"
 
-const ROLE_VALUES = ["STAGE1_ARTICLE", "STAGE1_MATERIALS", "STAGE2_ARTICLE", "STAGE2_MATERIALS"] as const
+const ROLE_VALUES = [
+  "STAGE1_ARTICLE",
+  "STAGE1_MATERIALS",
+  "STAGE2_ARTICLE",
+  "STAGE2_MATERIALS",
+  "OTHER",
+] as const
 
 const Assignment = z.discriminatedUnion("action", [
   z.object({ action: z.literal("role"), paperId: z.number(), role: z.enum(ROLE_VALUES) }),
@@ -13,6 +19,14 @@ const Assignment = z.discriminatedUnion("action", [
 const LinkDuplicateGroup = z.object({
   assignments: z.array(Assignment).min(1),
 })
+
+const ROLE_LABELS: Record<(typeof ROLE_VALUES)[number], string> = {
+  STAGE1_ARTICLE: "Stage 1 article",
+  STAGE1_MATERIALS: "Stage 1 materials",
+  STAGE2_ARTICLE: "Stage 2 article",
+  STAGE2_MATERIALS: "Stage 2 materials",
+  OTHER: "PCI RR page",
+}
 
 // Deletes a paper's current StudyPaper link (if any) and, if that leaves its
 // old Study with no papers left, deletes the now-empty Study too. Most
@@ -78,6 +92,15 @@ export default resolver.pipe(
             update: {},
           })
         }
+
+        await db.paperEditHistory.create({
+          data: {
+            paperId: a.paperId,
+            userId,
+            source: "link",
+            summary: `Linked as ${ROLE_LABELS[a.role]}`,
+          },
+        })
       }
 
       if (staleStudyIds.length > 0) {
@@ -91,10 +114,21 @@ export default resolver.pipe(
         where: { id: a.paperId },
         data: { status: "DUPLICATE", canonicalPaperId: a.duplicateOfPaperId },
       })
+      await db.paperEditHistory.create({
+        data: {
+          paperId: a.paperId,
+          userId,
+          source: "link",
+          summary: `Marked as a duplicate of paper #${a.duplicateOfPaperId}`,
+        },
+      })
     }
 
     for (const a of unlinked) {
       await detachFromCurrentStudy(a.paperId)
+      await db.paperEditHistory.create({
+        data: { paperId: a.paperId, userId, source: "link", summary: "Unlinked from study" },
+      })
     }
 
     return { success: true }
