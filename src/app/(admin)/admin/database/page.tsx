@@ -27,14 +27,14 @@ export default async function DatabasePage() {
       <h1 className="text-2xl font-semibold mb-1">Database</h1>
       <p className="text-base-content/60 mb-8">
         Pull data in from Zotero. The production pull is safe to run any number of times —
-        staging should only need to run once, unless it needs to be redone. Both can take a few
-        minutes — the page will refresh with the result when done.
+        staging should only need to run once, unless it needs to be redone. Staying on this page
+        isn't required; check back and refresh to see the result.
       </p>
 
       <div className="flex flex-col gap-6">
         <RunCard
           title="Pull production Zotero library"
-          description="Re-syncs every item in the production library as IMPORTED (already-confirmed) papers. Safe to re-run any time."
+          description="Re-syncs every item in the production library as IMPORTED (already-confirmed) papers, including their manually-added tags, stage (from Stage 1/Stage 2 tags), and Related-item links (auto-linked into Studies). Safe to re-run any time — with thousands of items, a full pull can take a while."
           run={productionRun}
         >
           <RunImportButton target="production" label="Pull from Zotero" />

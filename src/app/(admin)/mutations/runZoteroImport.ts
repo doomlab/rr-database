@@ -23,8 +23,11 @@ export default resolver.pipe(
     try {
       let output: string
       if (target === "production") {
-        const { imported, skipped } = await importProductionLibrary()
-        output = `[production] Upserted ${imported} paper(s), skipped ${skipped} non-bibliographic item(s).`
+        const { imported, skipped, studyLinks } = await importProductionLibrary()
+        output =
+          `[production] Upserted ${imported} paper(s), skipped ${skipped} non-bibliographic item(s). ` +
+          `Study links: ${studyLinks.linked} newly linked, ${studyLinks.alreadyLinked} already linked` +
+          (studyLinks.conflicts > 0 ? `, ${studyLinks.conflicts} conflict(s) need manual review.` : ".")
       } else {
         const totals = await importStagingCollections()
         const parts = Object.entries(totals).map(([name, count]) => `${name}: ${count}`)

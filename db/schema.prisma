@@ -150,6 +150,10 @@ model Paper {
   citationsFrom PaperCitation[]
 
   // RR-specific metadata
+  // Manually-added Zotero tags only (tag.type === 1 is Zotero's own
+  // automatic/imported tags — e.g. MeSH keywords — and is excluded); this is
+  // what the coders actually applied, tag normalization for `stage` aside.
+  tags                 String[] @default([])
   stage                Stage?
   registrationUrl      String? // preregistration link (OSF, figshare, Zenodo, etc.);
   // used to match this paper's stage counterpart when linking into a Study
@@ -171,6 +175,10 @@ model Paper {
   // papers belong together in a Study, and for pushing the same relation
   // back onto Zotero items when syncing.
   zoteroRelations         Json?
+  // Child note items attached to this record in Zotero (coders' free-text
+  // annotations — e.g. "no open data despite claiming it"), HTML-stripped
+  // and joined if there's more than one. Re-synced on every production pull.
+  zoteroNotes             String?
 
   // Dedup / review state
   status         PaperStatus @default(DISCOVERED)
