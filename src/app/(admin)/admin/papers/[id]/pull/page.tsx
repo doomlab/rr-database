@@ -79,12 +79,14 @@ export default async function PullDataPage({
     openAccessStatus: paper.openAccessStatus,
     citedByCount: paper.citedByCount,
     openalexId: paper.openalexId,
+    keywords: paper.keywords.join(", "),
   }
 
   const initial: Record<FieldKey, string | number | boolean | null> = { ...current }
   for (const key of Object.keys(current) as FieldKey[]) {
     const fetchedValue = (fetched as any)[key]
-    if (fetchedValue != null) initial[key] = fetchedValue
+    if (fetchedValue == null) continue
+    initial[key] = key === "keywords" ? (fetchedValue as string[]).join(", ") : fetchedValue
   }
 
   return (

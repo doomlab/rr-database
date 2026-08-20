@@ -24,6 +24,7 @@ export type FieldKey =
   | "openAccessStatus"
   | "citedByCount"
   | "openalexId"
+  | "keywords"
 
 type FieldType = "text" | "textarea" | "number" | "boolean"
 
@@ -44,6 +45,7 @@ const FIELDS: { key: FieldKey; label: string; type: FieldType }[] = [
   { key: "openAccessStatus", label: "Open access status", type: "text" },
   { key: "citedByCount", label: "Cited by count", type: "number" },
   { key: "openalexId", label: "OpenAlex ID", type: "text" },
+  { key: "keywords", label: "Keywords (comma-separated)", type: "text" },
   { key: "abstract", label: "Abstract", type: "textarea" },
 ]
 
@@ -95,6 +97,10 @@ export function PaperEditForm({
         citedByCount:
           values.citedByCount === "" || values.citedByCount == null ? null : Number(values.citedByCount),
         openalexId: emptyToNull(values.openalexId),
+        keywords: String(values.keywords ?? "")
+          .split(",")
+          .map((k) => k.trim().toLowerCase())
+          .filter(Boolean),
       })
       router.push(backHref as Route)
       router.refresh()

@@ -32,6 +32,7 @@ export default resolver.pipe(
           venue: paper.venue ?? fields.venue,
           abstract: paper.abstract ?? fields.abstract,
           openalexId: paper.openalexId ?? fields.openalexId,
+          keywords: paper.keywords.length > 0 ? paper.keywords : fields.keywords ?? paper.keywords,
           openAlexFetchedAt: new Date(),
         },
       }),

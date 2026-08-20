@@ -18,10 +18,11 @@ function primaryPaper(papers: { role: string; paper: any }[]) {
 export default async function Home({
   searchParams,
 }: {
-  searchParams: Promise<{ q?: string; page?: string }>
+  searchParams: Promise<{ q?: string; keyword?: string; page?: string }>
 }) {
   const params = await searchParams
   const q = params.q?.trim() || undefined
+  const keyword = params.keyword?.trim().toLowerCase() || undefined
   const page = Math.max(1, parseInt(params.page ?? "1", 10) || 1)
   const skip = (page - 1) * PAGE_SIZE
 
@@ -45,6 +46,22 @@ export default async function Home({
                       { abstract: { contains: q, mode: "insensitive" as const } },
                       { doi: { contains: q, mode: "insensitive" as const } },
                     ],
+                  },
+                },
+              },
+            },
+          ],
+        }
+      : {}),
+    ...(keyword
+      ? {
+          AND: [
+            {
+              papers: {
+                some: {
+                  paper: {
+                    status: { in: CONFIRMED_STATUSES },
+                    keywords: { has: keyword },
                   },
                 },
               },

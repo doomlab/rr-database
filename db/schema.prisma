@@ -155,6 +155,10 @@ model Paper {
   // automatic/imported tags — e.g. MeSH keywords — and is excluded); this is
   // what the coders actually applied, tag normalization for `stage` aside.
   tags                 String[] @default([])
+  // OpenAlex's own topical keywords for this work, lowercased at fetch time.
+  // Distinct from `tags` (coder-applied) — shown as clickable filters so
+  // readers can browse other papers sharing a keyword.
+  keywords             String[] @default([])
   stage                Stage?
   registrationUrl      String? // preregistration link (OSF, figshare, Zenodo, etc.);
   // used to match this paper's stage counterpart when linking into a Study

@@ -23,6 +23,7 @@ const SavePaperEdit = z.object({
   openAccessStatus: z.string().nullable(),
   citedByCount: z.number().nullable(),
   openalexId: z.string().nullable(),
+  keywords: z.array(z.string().toLowerCase().trim()),
 })
 
 export default resolver.pipe(
