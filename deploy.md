@@ -97,6 +97,34 @@ docker compose exec -T db psql -U <POSTGRES_USER> <POSTGRES_DB> < backup.sql
 Set up a cron job calling the dump command on a schedule for real backups —
 the above is a manual snapshot only.
 
+## One-time data migrations (`pipeline/*.py`)
+
+The Python scripts in `pipeline/` (Zotero imports, etc.) aren't part of the
+`app` image — they run in a separate one-off `pipeline` service, defined
+under the `tools` [Compose profile](https://docs.docker.com/compose/how-tos/profiles/)
+so it never starts with a normal `up`. It builds from `Dockerfile.pipeline`
+(plain Python + `requirements.txt`) and connects to the same `db` container
+over the internal network, so it needs no extra configuration beyond the
+`.env`/`.env.local` you already set up.
+
+Run a script with:
+
+```bash
+docker compose --env-file .env.docker --profile tools run --rm pipeline \
+  python pipeline/import_staging_collections.py --dry-run
+```
+
+Drop `--dry-run` once the counts look right. `--rm` throws the container away
+after it exits — nothing persists beyond what the script wrote to the
+database.
+
+`import_staging_collections.py` is the one-time staging-library import: it
+reads the Zotero staging library's status subcollections directly (1 – To
+Check, 2 – To Tag, 4 – Do Not Add — 3 and 5 are intentionally skipped) and
+sets each paper's status accordingly instead of dumping everything in as
+`PENDING_REVIEW` the way `import_zotero.py --library staging` did. See the
+docstring at the top of that file for the full mapping.
+
 ## Useful commands
 
 ```bash

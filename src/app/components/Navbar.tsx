@@ -9,6 +9,7 @@ export async function Navbar() {
   const userId = ctx.session.userId
   const role = ctx.session.role
   const isAdmin = role === "ADMIN" || role === "SUPER_ADMIN"
+  const isSuperAdmin = role === "SUPER_ADMIN"
 
   const [reviewCount, reportsCount, suggestionsCount, metadataCount, extractionCount] = isAdmin
     ? await Promise.all([
@@ -100,6 +101,11 @@ export async function Navbar() {
                   <li>
                     <Link href="/admin/api-keys">API keys</Link>
                   </li>
+                  {isSuperAdmin && (
+                    <li>
+                      <Link href="/admin/database">Database</Link>
+                    </li>
+                  )}
                 </ul>
               </div>
             )}

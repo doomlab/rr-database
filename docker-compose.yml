@@ -24,6 +24,23 @@ services:
     networks:
       - internal
 
+  # One-off Python scripts (pipeline/*.py) — not a long-running service.
+  # Run with: docker compose --profile tools run --rm pipeline python pipeline/<script>.py
+  pipeline:
+    build:
+      context: .
+      dockerfile: Dockerfile.pipeline
+    profiles: ["tools"]
+    env_file:
+      - .env
+      - .env.local
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
+    depends_on:
+      - db
+    networks:
+      - internal
+
   pgadmin:
     image: dpage/pgadmin4:latest
     restart: unless-stopped

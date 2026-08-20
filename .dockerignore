@@ -8,6 +8,5 @@ node_modules
 *.log1
 data
 doc
-pipeline
 .github
 tsconfig.tsbuildinfo
