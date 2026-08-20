@@ -29,6 +29,12 @@ model User {
   tokens         Token[]
   sessions       Session[]
 
+  // Personal API keys, optionally contributed by the user, so pipeline calls
+  // (OpenAlex enrichment, Groq LLM calls) can round-robin across multiple
+  // keys instead of hammering a single shared one.
+  openAlexApiKey String?
+  groqApiKey     String?
+
   reviewedPapers  Paper[]         @relation("PaperReviewedBy")
   pipelineRuns    PipelineRun[]   @relation("PipelineRunStartedBy")
   codedExtractions PaperExtraction[] @relation("ExtractionCodedBy")

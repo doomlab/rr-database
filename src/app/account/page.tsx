@@ -14,7 +14,7 @@ export default async function AccountPage() {
 
   const user = await db.user.findFirst({
     where: { id: userId },
-    select: { name: true, email: true },
+    select: { name: true, email: true, openAlexApiKey: true, groqApiKey: true },
   })
 
   return (
@@ -26,7 +26,12 @@ export default async function AccountPage() {
           <h1 className="text-2xl font-bold leading-snug mb-1">Account</h1>
           <p className="text-base-content/60 mb-8">Update your profile details.</p>
 
-          <AccountForm initialName={user?.name ?? ""} email={user?.email ?? ""} />
+          <AccountForm
+            initialName={user?.name ?? ""}
+            email={user?.email ?? ""}
+            hasOpenAlexApiKey={!!user?.openAlexApiKey}
+            hasGroqApiKey={!!user?.groqApiKey}
+          />
         </div>
       </div>
     </div>

@@ -30,7 +30,10 @@ cp .env.docker.example .env.docker
 ```
 
 - `.env` — Zotero API credentials (see `README.md` for how to get a key).
-- `.env.local` — `SESSION_SECRET_KEY` (generate with `openssl rand -base64 32`).
+- `.env.local` — `SESSION_SECRET_KEY` and `API_KEY_ENCRYPTION_KEY` (each
+  generated with `openssl rand -base64 32`). `API_KEY_ENCRYPTION_KEY`
+  encrypts user-contributed OpenAlex/Groq keys at rest — losing or rotating
+  it makes previously saved keys undecryptable, so back it up somewhere safe.
   Leave `DATABASE_URL` as-is; docker-compose overrides it with the Postgres
   container's connection string.
 - `.env.docker` — Postgres credentials, pgAdmin login, and the two domains

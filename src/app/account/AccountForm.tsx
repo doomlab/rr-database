@@ -7,10 +7,23 @@ import updateProfile from "../(dashboard)/mutations/updateProfile"
 type AccountFormProps = {
   initialName: string
   email: string
+  hasOpenAlexApiKey: boolean
+  hasGroqApiKey: boolean
 }
 
-export function AccountForm({ initialName, email }: AccountFormProps) {
+export function AccountForm({
+  initialName,
+  email,
+  hasOpenAlexApiKey,
+  hasGroqApiKey,
+}: AccountFormProps) {
   const [name, setName] = useState(initialName)
+  const [openAlexApiKey, setOpenAlexApiKey] = useState("")
+  const [groqApiKey, setGroqApiKey] = useState("")
+  const [removeOpenAlex, setRemoveOpenAlex] = useState(false)
+  const [removeGroq, setRemoveGroq] = useState(false)
+  const [hasOpenAlex, setHasOpenAlex] = useState(hasOpenAlexApiKey)
+  const [hasGroq, setHasGroq] = useState(hasGroqApiKey)
   const [error, setError] = useState<string | null>(null)
   const [saved, setSaved] = useState(false)
   const [submit, submitState] = useMutation(updateProfile)
@@ -22,7 +35,17 @@ export function AccountForm({ initialName, email }: AccountFormProps) {
     setSaved(false)
 
     try {
-      await submit({ name })
+      const result = await submit({
+        name,
+        openAlexApiKey: removeOpenAlex ? "" : openAlexApiKey || undefined,
+        groqApiKey: removeGroq ? "" : groqApiKey || undefined,
+      })
+      setHasOpenAlex(result.hasOpenAlexApiKey)
+      setHasGroq(result.hasGroqApiKey)
+      setOpenAlexApiKey("")
+      setGroqApiKey("")
+      setRemoveOpenAlex(false)
+      setRemoveGroq(false)
       setSaved(true)
     } catch (e: any) {
       setError(e.message ?? "Update failed")
@@ -48,6 +71,78 @@ export function AccountForm({ initialName, email }: AccountFormProps) {
           onChange={(e) => setName(e.target.value)}
           maxLength={200}
         />
+      </div>
+
+      <div className="divider my-0" />
+
+      <p className="text-sm text-base-content/60 -mb-1">
+        Optional — contribute your own API keys so we can spread enrichment calls (OpenAlex
+        lookups, Groq LLM calls) across more than one key instead of hitting a single shared rate
+        limit. Keys are encrypted at rest and only ever used server-side to make these calls on
+        the app's behalf.
+      </p>
+
+      <div>
+        <label className="label py-1">
+          <span className="label-text font-medium">OpenAlex API key</span>
+        </label>
+        <input
+          type="password"
+          autoComplete="off"
+          className="input input-bordered w-full"
+          placeholder={hasOpenAlex ? "•••••••••• (saved — leave blank to keep)" : ""}
+          value={openAlexApiKey}
+          onChange={(e) => {
+            setOpenAlexApiKey(e.target.value)
+            if (e.target.value) setRemoveOpenAlex(false)
+          }}
+          maxLength={200}
+        />
+        {hasOpenAlex && (
+          <label className="label py-1 cursor-pointer justify-start gap-2">
+            <input
+              type="checkbox"
+              className="checkbox checkbox-xs"
+              checked={removeOpenAlex}
+              onChange={(e) => {
+                setRemoveOpenAlex(e.target.checked)
+                if (e.target.checked) setOpenAlexApiKey("")
+              }}
+            />
+            <span className="label-text text-xs">Remove saved key</span>
+          </label>
+        )}
+      </div>
+      <div>
+        <label className="label py-1">
+          <span className="label-text font-medium">Groq API key</span>
+        </label>
+        <input
+          type="password"
+          autoComplete="off"
+          className="input input-bordered w-full"
+          placeholder={hasGroq ? "•••••••••• (saved — leave blank to keep)" : ""}
+          value={groqApiKey}
+          onChange={(e) => {
+            setGroqApiKey(e.target.value)
+            if (e.target.value) setRemoveGroq(false)
+          }}
+          maxLength={200}
+        />
+        {hasGroq && (
+          <label className="label py-1 cursor-pointer justify-start gap-2">
+            <input
+              type="checkbox"
+              className="checkbox checkbox-xs"
+              checked={removeGroq}
+              onChange={(e) => {
+                setRemoveGroq(e.target.checked)
+                if (e.target.checked) setGroqApiKey("")
+              }}
+            />
+            <span className="label-text text-xs">Remove saved key</span>
+          </label>
+        )}
       </div>
 
       {error && <p className="text-sm text-error">{error}</p>}
