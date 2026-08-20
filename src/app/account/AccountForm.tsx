@@ -60,10 +60,10 @@ export function AccountForm({
   }
 
   return (
-    <form onSubmit={handleSubmit} className="flex flex-col gap-4 max-w-md">
-      <div>
-        <label className="label py-1">
-          <span className="label-text font-medium">Email</span>
+    <form onSubmit={handleSubmit} className="flex flex-col max-w-md">
+      <div className="m-2">
+        <label className="label mb-2">
+          <span className="label-text font-medium text-lg">Email</span>
         </label>
         <input
           type="email"
@@ -73,10 +73,10 @@ export function AccountForm({
           maxLength={200}
         />
       </div>
-      <div className="flex gap-3">
+      <div className="flex gap-3 m-2">
         <div className="flex-1">
-          <label className="label py-1">
-            <span className="label-text font-medium">First name</span>
+          <label className="label mb-2">
+            <span className="label-text font-medium text-lg">First name</span>
           </label>
           <input
             type="text"
@@ -87,8 +87,8 @@ export function AccountForm({
           />
         </div>
         <div className="flex-1">
-          <label className="label py-1">
-            <span className="label-text font-medium">Last name</span>
+          <label className="label mb-2">
+            <span className="label-text font-medium text-lg">Last name</span>
           </label>
           <input
             type="text"
@@ -100,18 +100,18 @@ export function AccountForm({
         </div>
       </div>
 
-      <div className="divider my-0" />
+      <div className="divider my-2" />
 
-      <p className="text-base text-base-content/60 -mb-1">
+      <p className="text-base text-base-content/60 m-2">
         Optional — contribute your own API keys so we can spread enrichment calls (OpenAlex
         lookups, Groq LLM calls) across more than one key instead of hitting a single shared rate
         limit. Keys are encrypted at rest and only ever used server-side to make these calls on
         the app's behalf.
       </p>
 
-      <div>
-        <label className="label py-1">
-          <span className="label-text font-medium">OpenAlex API key</span>
+      <div className="m-2">
+        <label className="label mb-2">
+          <span className="label-text font-medium text-lg">OpenAlex API key</span>
         </label>
         <PasswordInput
           autoComplete="off"
@@ -124,23 +124,23 @@ export function AccountForm({
           maxLength={200}
         />
         {hasOpenAlex && (
-          <label className="label py-1 cursor-pointer justify-start gap-2">
+          <label className="label mt-2 cursor-pointer justify-start gap-2">
             <input
               type="checkbox"
-              className="checkbox checkbox-xs"
+              className="checkbox checkbox-sm"
               checked={removeOpenAlex}
               onChange={(e) => {
                 setRemoveOpenAlex(e.target.checked)
                 if (e.target.checked) setOpenAlexApiKey("")
               }}
             />
-            <span className="label-text text-xs">Remove saved key</span>
+            <span className="label-text text-base">Remove saved key</span>
           </label>
         )}
       </div>
-      <div>
-        <label className="label py-1">
-          <span className="label-text font-medium">Groq API key</span>
+      <div className="m-2">
+        <label className="label mb-2">
+          <span className="label-text font-medium text-lg">Groq API key</span>
         </label>
         <PasswordInput
           autoComplete="off"
@@ -153,25 +153,25 @@ export function AccountForm({
           maxLength={200}
         />
         {hasGroq && (
-          <label className="label py-1 cursor-pointer justify-start gap-2">
+          <label className="label mt-2 cursor-pointer justify-start gap-2">
             <input
               type="checkbox"
-              className="checkbox checkbox-xs"
+              className="checkbox checkbox-sm"
               checked={removeGroq}
               onChange={(e) => {
                 setRemoveGroq(e.target.checked)
                 if (e.target.checked) setGroqApiKey("")
               }}
             />
-            <span className="label-text text-xs">Remove saved key</span>
+            <span className="label-text text-base">Remove saved key</span>
           </label>
         )}
       </div>
 
-      {error && <p className="text-base text-error">{error}</p>}
-      {saved && <p className="text-base text-success">Saved.</p>}
+      {error && <p className="text-base text-error m-2">{error}</p>}
+      {saved && <p className="text-base text-success m-2">Saved.</p>}
 
-      <div className="flex gap-2 pt-2">
+      <div className="flex gap-2 m-2">
         <button type="submit" className="btn btn-primary btn-md text-base" disabled={isSubmitting}>
           {isSubmitting ? <span className="loading loading-spinner loading-sm" /> : "Save"}
         </button>
