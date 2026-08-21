@@ -18,8 +18,24 @@ const SEARCH_TERMS = [
   "preregistered research",
 ]
 
+// Many clinical-trial protocol papers (mostly JMIR-family journals) carry the
+// boilerplate line "INTERNATIONAL REGISTERED REPORT IDENTIFIER (IRRID): RR..."
+// in their abstract. That phrase contains "registered report" and matches our
+// search even though it has nothing to do with the Registered Reports
+// publishing format. OpenAlex search filters don't support `!` negation, so
+// we can't exclude this at the API level — instead we treat a work as a real
+// match only if its title actually contains one of our terms, or its abstract
+// doesn't contain the IRRID boilerplate.
+const IRRID_BOILERPLATE = "international registered report identifier"
+
 function searchQuery(): string {
-  return SEARCH_TERMS.map((t) => `"${t}"`).join(" OR ")
+  return SEARCH_TERMS.map((t) => `"${t}"`).join("|")
+}
+
+function isLikelyMatch(title: string | null | undefined, abstract: string | null): boolean {
+  const titleLower = (title ?? "").toLowerCase()
+  if (SEARCH_TERMS.some((t) => titleLower.includes(t))) return true
+  return !(abstract ?? "").toLowerCase().includes(IRRID_BOILERPLATE)
 }
 
 function reconstructAbstract(invertedIndex: Record<string, number[]> | null | undefined): string | null {
@@ -39,19 +55,24 @@ async function fetchWorks(fromDate: string, toDate: string): Promise<any[]> {
 
   for (let page = 0; page < MAX_PAGES; page++) {
     const url = new URL("https://api.openalex.org/works")
-    url.searchParams.set("search", searchQuery())
-    url.searchParams.set("filter", `from_publication_date:${fromDate},to_publication_date:${toDate}`)
+    url.searchParams.set(
+      "filter",
+      `from_publication_date:${fromDate},to_publication_date:${toDate},title_and_abstract.search:${searchQuery()}`
+    )
     url.searchParams.set("per_page", String(PER_PAGE))
     url.searchParams.set("cursor", cursor)
 
     const res = await fetch(await withOpenAlexApiKey(url.toString()), { headers: HEADERS })
     if (!res.ok) throw new Error(`OpenAlex search failed (${res.status})`)
     const data = await res.json()
-    const batch: any[] = data.results ?? []
+    const rawBatch: any[] = data.results ?? []
+    const batch = rawBatch.filter((w: any) =>
+      isLikelyMatch(w.title, reconstructAbstract(w.abstract_inverted_index))
+    )
     works.push(...batch)
 
     const nextCursor = data.meta?.next_cursor
-    if (!nextCursor || batch.length === 0) break
+    if (!nextCursor || rawBatch.length === 0) break
     cursor = nextCursor
     await new Promise((resolve) => setTimeout(resolve, 150))
   }
