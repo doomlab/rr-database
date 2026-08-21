@@ -151,6 +151,7 @@ export default async function StudyDetailPage({
                     <PaperRecordSection
                       paper={paper}
                       roleLabel={ROLE_LABELS[role] ?? role}
+                      currentRole={role}
                       citationData={citationDataByPaperId.get(paper.id)!}
                       isAdmin={isAdmin}
                       hasOpenAlexApiKey={hasOpenAlexApiKey}
@@ -174,6 +175,7 @@ export default async function StudyDetailPage({
                   key={paper.id}
                   paper={paper}
                   roleLabel={ROLE_LABELS[role] ?? role}
+                  currentRole={role}
                   citationData={citationDataByPaperId.get(paper.id)!}
                   isAdmin={isAdmin}
                   hasOpenAlexApiKey={hasOpenAlexApiKey}
