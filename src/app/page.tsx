@@ -152,6 +152,13 @@ export default async function Home({
                   )
                   const hasStage2 = study.papers.some((p) => p.role === "STAGE2_ARTICLE")
                   const hasBothStages = hasStage1 && hasStage2
+                  const stageBadge = hasBothStages
+                    ? { label: "stage 1 + 2", color: "badge-primary" }
+                    : hasStage1
+                      ? { label: "stage 1", color: "badge-info" }
+                      : hasStage2
+                        ? { label: "stage 2", color: "badge-accent" }
+                        : null
                   return (
                     <li
                       key={study.id}
@@ -161,9 +168,9 @@ export default async function Home({
                         <div className="min-w-0">
                           <div className="flex items-center gap-2 mb-1">
                             <h2 className="font-semibold text-base leading-snug">{paper.title}</h2>
-                            {hasBothStages && (
-                              <span className="badge badge-primary badge-sm shrink-0">
-                                stage 1 + 2
+                            {stageBadge && (
+                              <span className={`badge ${stageBadge.color} badge-sm shrink-0`}>
+                                {stageBadge.label}
                               </span>
                             )}
                           </div>
