@@ -1,14 +1,22 @@
 import db, { Prisma, PaperStatus, StudyPaperRole } from "db"
+import { OA_STATUS_OPTIONS } from "src/lib/openAccessStatus"
 
 export const CONFIRMED_STATUSES: PaperStatus[] = [PaperStatus.IMPORTED, PaperStatus.APPROVED]
-const STAGE1_ROLES: StudyPaperRole[] = [StudyPaperRole.STAGE1_ARTICLE, StudyPaperRole.STAGE1_MATERIALS]
-const STAGE2_ROLES: StudyPaperRole[] = [StudyPaperRole.STAGE2_ARTICLE]
+export const STAGE1_ROLES: StudyPaperRole[] = [StudyPaperRole.STAGE1_ARTICLE, StudyPaperRole.STAGE1_MATERIALS]
+export const STAGE2_ROLES: StudyPaperRole[] = [StudyPaperRole.STAGE2_ARTICLE, StudyPaperRole.STAGE2_MATERIALS]
+export const MATERIALS_ROLES: StudyPaperRole[] = [
+  StudyPaperRole.STAGE1_MATERIALS,
+  StudyPaperRole.STAGE2_MATERIALS,
+]
+const OA_STATUS_VALUES = OA_STATUS_OPTIONS.map((o) => o.value)
 
 export type StudyFilterSearchParams = {
   q?: string
   keyword?: string
   stage?: string
-  openAccess?: string
+  materials?: string
+  verified?: string
+  oaStatus?: string
   venue?: string
   yearFrom?: string
   yearTo?: string
@@ -31,11 +39,14 @@ export function parseStudyFilterParams(params: StudyFilterSearchParams) {
         .filter(Boolean)
     : []
   const stage = params.stage === "1" || params.stage === "2" || params.stage === "both" ? params.stage : undefined
-  const openAccess = params.openAccess === "yes" || params.openAccess === "no" ? params.openAccess : undefined
+  const materials = params.materials === "yes" ? "yes" : undefined
+  const verified = params.verified === "yes" ? "yes" : undefined
+  const oaStatusRaw = params.oaStatus?.trim().toLowerCase() || undefined
+  const oaStatus = oaStatusRaw && OA_STATUS_VALUES.includes(oaStatusRaw) ? oaStatusRaw : undefined
   const yearFrom = params.yearFrom?.trim() || undefined
   const yearTo = params.yearTo?.trim() || undefined
 
-  return { q, keyword, keywords, venue, venues, stage, openAccess, yearFrom, yearTo }
+  return { q, keyword, keywords, venue, venues, stage, materials, verified, oaStatus, yearFrom, yearTo }
 }
 
 export type ParsedStudyFilters = ReturnType<typeof parseStudyFilterParams>
@@ -48,7 +59,9 @@ export function parseStudyFilterQueryString(query: string) {
     q: sp.get("q") ?? undefined,
     keyword: sp.get("keyword") ?? undefined,
     stage: sp.get("stage") ?? undefined,
-    openAccess: sp.get("openAccess") ?? undefined,
+    materials: sp.get("materials") ?? undefined,
+    verified: sp.get("verified") ?? undefined,
+    oaStatus: sp.get("oaStatus") ?? undefined,
     venue: sp.get("venue") ?? undefined,
     yearFrom: sp.get("yearFrom") ?? undefined,
     yearTo: sp.get("yearTo") ?? undefined,
@@ -56,14 +69,18 @@ export function parseStudyFilterQueryString(query: string) {
 }
 
 const STAGE_LABELS: Record<string, string> = { "1": "Stage 1", "2": "Stage 2", both: "Stage 1 + 2" }
-const OPEN_ACCESS_LABELS: Record<string, string> = { yes: "Open access", no: "Not open access" }
+const OA_STATUS_LABELS: Record<string, string> = Object.fromEntries(
+  OA_STATUS_OPTIONS.map((o) => [o.value, o.label])
+)
 
 // Human-readable chips summarizing a saved search's criteria for display.
 export function describeStudyFilters(filters: ParsedStudyFilters): string[] {
   const chips: string[] = []
   if (filters.q) chips.push(`"${filters.q}"`)
   if (filters.stage) chips.push(STAGE_LABELS[filters.stage] ?? filters.stage)
-  if (filters.openAccess) chips.push(OPEN_ACCESS_LABELS[filters.openAccess] ?? filters.openAccess)
+  if (filters.materials) chips.push("Materials")
+  if (filters.verified) chips.push("Verified metadata")
+  if (filters.oaStatus) chips.push(OA_STATUS_LABELS[filters.oaStatus] ?? filters.oaStatus)
   if (filters.yearFrom || filters.yearTo) chips.push(`${filters.yearFrom ?? "…"}–${filters.yearTo ?? "…"}`)
   filters.keywords.forEach((k) => chips.push(k))
   filters.venues.forEach((v) => chips.push(v))
@@ -71,7 +88,7 @@ export function describeStudyFilters(filters: ParsedStudyFilters): string[] {
 }
 
 export async function buildStudyWhere(filters: ParsedStudyFilters) {
-  const { q, keywords, venues, stage, openAccess, yearFrom, yearTo } = filters
+  const { q, keywords, venues, stage, materials, verified, oaStatus, yearFrom, yearTo } = filters
 
   // Prisma's array filters only support exact-element matching, so a substring
   // match on keywords needs a raw pre-pass to resolve which papers qualify.
@@ -158,12 +175,29 @@ export async function buildStudyWhere(filters: ParsedStudyFilters) {
           },
         ]
       : []),
-    ...(openAccess
+    ...(oaStatus
       ? [
           {
             papers: {
               some: {
-                paper: { status: { in: CONFIRMED_STATUSES }, openAccess: openAccess === "yes" },
+                paper: {
+                  status: { in: CONFIRMED_STATUSES },
+                  openAccessStatus: { equals: oaStatus, mode: "insensitive" as const },
+                },
+              },
+            },
+          },
+        ]
+      : []),
+    ...(materials
+      ? [{ papers: { some: { role: { in: MATERIALS_ROLES } } } }]
+      : []),
+    ...(verified
+      ? [
+          {
+            papers: {
+              some: {
+                paper: { status: { in: CONFIRMED_STATUSES }, metadataVerifiedAt: { not: null } },
               },
             },
           },

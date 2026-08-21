@@ -1,6 +1,16 @@
 import { NextRequest } from "next/server"
 import db from "db"
-import { parseStudyFilterParams, buildStudyWhere, CONFIRMED_STATUSES } from "src/lib/studyFilters"
+import {
+  parseStudyFilterQueryString,
+  buildStudyWhere,
+  CONFIRMED_STATUSES,
+  STAGE1_ROLES,
+  STAGE2_ROLES,
+  MATERIALS_ROLES,
+} from "src/lib/studyFilters"
+import { OA_STATUS_OPTIONS } from "src/lib/openAccessStatus"
+
+const OA_STATUS_LABELS: Record<string, string> = Object.fromEntries(OA_STATUS_OPTIONS.map((o) => [o.value, o.label]))
 
 function primaryPaper(papers: { role: string; paper: any }[]) {
   return (
@@ -16,16 +26,7 @@ function csvCell(value: string | number | null | undefined): string {
 }
 
 export async function GET(request: NextRequest) {
-  const sp = request.nextUrl.searchParams
-  const filters = parseStudyFilterParams({
-    q: sp.get("q") ?? undefined,
-    keyword: sp.get("keyword") ?? undefined,
-    stage: sp.get("stage") ?? undefined,
-    openAccess: sp.get("openAccess") ?? undefined,
-    venue: sp.get("venue") ?? undefined,
-    yearFrom: sp.get("yearFrom") ?? undefined,
-    yearTo: sp.get("yearTo") ?? undefined,
-  })
+  const filters = parseStudyFilterQueryString(request.nextUrl.searchParams.toString())
   const studyWhere = await buildStudyWhere(filters)
 
   const studies = await db.study.findMany({
@@ -51,7 +52,9 @@ export async function GET(request: NextRequest) {
     "DOI",
     "URL",
     "Stage",
-    "Open access",
+    "Materials",
+    "Open access status",
+    "Metadata verified",
     "Keywords",
     "Database link",
   ]
@@ -60,11 +63,13 @@ export async function GET(request: NextRequest) {
     .map((study) => {
       const paper = primaryPaper(study.papers)
       if (!paper) return null
-      const hasStage1 = study.papers.some(
-        (p) => p.role === "STAGE1_ARTICLE" || p.role === "STAGE1_MATERIALS"
-      )
-      const hasStage2 = study.papers.some((p) => p.role === "STAGE2_ARTICLE")
+      const hasStage1 = study.papers.some((p) => (STAGE1_ROLES as string[]).includes(p.role))
+      const hasStage2 = study.papers.some((p) => (STAGE2_ROLES as string[]).includes(p.role))
+      const hasMaterials = study.papers.some((p) => (MATERIALS_ROLES as string[]).includes(p.role))
       const stageLabel = hasStage1 && hasStage2 ? "Stage 1 + 2" : hasStage1 ? "Stage 1" : hasStage2 ? "Stage 2" : ""
+      const oaStatusLabel = paper.openAccessStatus
+        ? OA_STATUS_LABELS[paper.openAccessStatus.toLowerCase()] ?? paper.openAccessStatus
+        : ""
       const authors = paper.authors.map((pa: any) => pa.author.name).join("; ")
       const keywords = (paper.keywords ?? []).join("; ")
       const url = `${request.nextUrl.origin}/studies/${study.id}`
@@ -77,7 +82,9 @@ export async function GET(request: NextRequest) {
         csvCell(paper.doi),
         csvCell(paper.url),
         csvCell(stageLabel),
-        csvCell(paper.openAccess == null ? "" : paper.openAccess ? "Yes" : "No"),
+        csvCell(hasMaterials ? "Yes" : "No"),
+        csvCell(oaStatusLabel),
+        csvCell(paper.metadataVerifiedAt ? "Yes" : "No"),
         csvCell(keywords),
         csvCell(url),
       ].join(",")

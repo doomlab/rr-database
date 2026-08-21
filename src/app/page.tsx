@@ -6,7 +6,19 @@ import { SearchAndKeywordFilter } from "./components/SearchAndKeywordFilter"
 import { SavedSearchBar } from "./components/SavedSearchBar"
 import { getBlitzContext } from "./blitz-server"
 import db from "db"
-import { parseStudyFilterParams, buildStudyWhere, CONFIRMED_STATUSES } from "src/lib/studyFilters"
+import {
+  parseStudyFilterParams,
+  buildStudyWhere,
+  CONFIRMED_STATUSES,
+  STAGE1_ROLES,
+  STAGE2_ROLES,
+  MATERIALS_ROLES,
+} from "src/lib/studyFilters"
+import { OA_STATUS_OPTIONS } from "src/lib/openAccessStatus"
+
+const OA_STATUS_BADGE_LABELS: Record<string, string> = Object.fromEntries(
+  OA_STATUS_OPTIONS.map((o) => [o.value, o.label])
+)
 
 const PAGE_SIZE = 50
 
@@ -25,7 +37,9 @@ export default async function Home({
     q?: string
     keyword?: string
     stage?: string
-    openAccess?: string
+    materials?: string
+    verified?: string
+    oaStatus?: string
     venue?: string
     yearFrom?: string
     yearTo?: string
@@ -34,7 +48,7 @@ export default async function Home({
 }) {
   const params = await searchParams
   const filters = parseStudyFilterParams(params)
-  const { q, keyword, venue, stage, openAccess, yearFrom, yearTo } = filters
+  const { q, keyword, venue, stage, materials, verified, oaStatus, yearFrom, yearTo } = filters
   const page = Math.max(1, parseInt(params.page ?? "1", 10) || 1)
   const skip = (page - 1) * PAGE_SIZE
 
@@ -88,7 +102,9 @@ export default async function Home({
     if (keyword) sp.set("keyword", keyword)
     if (venue) sp.set("venue", venue)
     if (stage) sp.set("stage", stage)
-    if (openAccess) sp.set("openAccess", openAccess)
+    if (materials) sp.set("materials", materials)
+    if (verified) sp.set("verified", verified)
+    if (oaStatus) sp.set("oaStatus", oaStatus)
     if (yearFrom) sp.set("yearFrom", yearFrom)
     if (yearTo) sp.set("yearTo", yearTo)
     return sp.toString()
@@ -115,9 +131,11 @@ export default async function Home({
             q={q}
             keyword={keyword}
             stage={stage}
+            materials={materials}
+            verified={verified}
             showStageFilter
             showAdvancedFilters
-            openAccess={openAccess}
+            oaStatus={oaStatus}
             venue={venue}
             yearFrom={yearFrom}
             yearTo={yearTo}
@@ -157,10 +175,9 @@ export default async function Home({
                 {studies.map((study) => {
                   const paper = primaryPaper(study.papers)
                   if (!paper) return null
-                  const hasStage1 = study.papers.some(
-                    (p) => p.role === "STAGE1_ARTICLE" || p.role === "STAGE1_MATERIALS"
-                  )
-                  const hasStage2 = study.papers.some((p) => p.role === "STAGE2_ARTICLE")
+                  const hasStage1 = study.papers.some((p) => (STAGE1_ROLES as string[]).includes(p.role))
+                  const hasStage2 = study.papers.some((p) => (STAGE2_ROLES as string[]).includes(p.role))
+                  const hasMaterials = study.papers.some((p) => (MATERIALS_ROLES as string[]).includes(p.role))
                   const hasBothStages = hasStage1 && hasStage2
                   const stageBadge = hasBothStages
                     ? { label: "stage 1 + 2", color: "badge-primary" }
@@ -169,6 +186,10 @@ export default async function Home({
                       : hasStage2
                         ? { label: "stage 2", color: "badge-accent" }
                         : null
+                  const oaStatusLabel = paper.openAccessStatus
+                    ? OA_STATUS_BADGE_LABELS[paper.openAccessStatus.toLowerCase()] ?? paper.openAccessStatus
+                    : null
+                  const isVerified = !!paper.metadataVerifiedAt
                   return (
                     <li
                       key={study.id}
@@ -182,6 +203,15 @@ export default async function Home({
                               <span className={`badge ${stageBadge.color} badge-sm shrink-0`}>
                                 {stageBadge.label}
                               </span>
+                            )}
+                            {hasMaterials && (
+                              <span className="badge badge-neutral badge-sm shrink-0">materials</span>
+                            )}
+                            {oaStatusLabel && (
+                              <span className="badge badge-success badge-sm shrink-0">{oaStatusLabel}</span>
+                            )}
+                            {isVerified && (
+                              <span className="badge badge-secondary badge-sm shrink-0">verified</span>
                             )}
                           </div>
                           {paper.abstract && (

@@ -1,4 +1,5 @@
 import { MultiValueFilter } from "./MultiValueFilter"
+import { OA_STATUS_OPTIONS } from "src/lib/openAccessStatus"
 
 const STAGE_OPTIONS: { value: string; label: string; color: string }[] = [
   { value: "1", label: "Stage 1", color: "badge-info" },
@@ -6,71 +7,61 @@ const STAGE_OPTIONS: { value: string; label: string; color: string }[] = [
   { value: "both", label: "Stage 1 + 2", color: "badge-primary" },
 ]
 
-const OPEN_ACCESS_OPTIONS: { value: string; label: string }[] = [
-  { value: "yes", label: "Open access" },
-  { value: "no", label: "Not open access" },
-]
+type FilterParams = {
+  q?: string
+  keyword?: string
+  venue?: string
+  stage?: string
+  materials?: string
+  verified?: string
+  oaStatus?: string
+  yearFrom?: string
+  yearTo?: string
+}
 
 export function SearchAndKeywordFilter({
   action,
   q,
   keyword,
   stage,
+  materials,
+  verified,
   showStageFilter = false,
   showAdvancedFilters = false,
-  openAccess,
+  oaStatus,
   venue,
   yearFrom,
   yearTo,
-}: {
+}: FilterParams & {
   action: string
-  q?: string
-  keyword?: string
-  stage?: string
   showStageFilter?: boolean
   showAdvancedFilters?: boolean
-  openAccess?: string
-  venue?: string
-  yearFrom?: string
-  yearTo?: string
 }) {
   const keywords = keyword ? keyword.split(",").filter(Boolean) : []
   const venues = venue ? venue.split(",").filter(Boolean) : []
+  const current: FilterParams = { q, keyword, venue, stage, materials, verified, oaStatus, yearFrom, yearTo }
 
-  const hrefFor = (next: { stage?: string; openAccess?: string }) => {
+  const hrefFor = (overrides: FilterParams) => {
+    const merged = { ...current, ...overrides }
     const sp = new URLSearchParams()
-    if (q) sp.set("q", q)
-    if (keyword) sp.set("keyword", keyword)
-    if (venue) sp.set("venue", venue)
-    if (yearFrom) sp.set("yearFrom", yearFrom)
-    if (yearTo) sp.set("yearTo", yearTo)
-    const nextStage = "stage" in next ? next.stage : stage
-    const nextOpenAccess = "openAccess" in next ? next.openAccess : openAccess
-    if (nextStage) sp.set("stage", nextStage)
-    if (nextOpenAccess) sp.set("openAccess", nextOpenAccess)
-    return sp.toString() ? `${action}?${sp.toString()}` : action
-  }
-
-  // Drop one key from the current filter set — used by the removable summary chips.
-  const hrefWithout = (omit: "stage" | "openAccess" | "keyword" | "venue" | "year") => {
-    const sp = new URLSearchParams()
-    if (q) sp.set("q", q)
-    if (omit !== "keyword" && keyword) sp.set("keyword", keyword)
-    if (omit !== "venue" && venue) sp.set("venue", venue)
-    if (omit !== "year" && yearFrom) sp.set("yearFrom", yearFrom)
-    if (omit !== "year" && yearTo) sp.set("yearTo", yearTo)
-    if (omit !== "stage" && stage) sp.set("stage", stage)
-    if (omit !== "openAccess" && openAccess) sp.set("openAccess", openAccess)
+    Object.entries(merged).forEach(([key, value]) => {
+      if (value) sp.set(key, value)
+    })
     return sp.toString() ? `${action}?${sp.toString()}` : action
   }
 
   const stageLabel = STAGE_OPTIONS.find((o) => o.value === stage)?.label
-  const openAccessLabel = OPEN_ACCESS_OPTIONS.find((o) => o.value === openAccess)?.label
-  const yearLabel =
-    yearFrom || yearTo ? `${yearFrom ?? "…"}–${yearTo ?? "…"}` : undefined
+  const oaStatusLabel = OA_STATUS_OPTIONS.find((o) => o.value === oaStatus)?.label
+  const yearLabel = yearFrom || yearTo ? `${yearFrom ?? "…"}–${yearTo ?? "…"}` : undefined
 
   const activeCount =
-    (stage ? 1 : 0) + (openAccess ? 1 : 0) + keywords.length + venues.length + (yearFrom || yearTo ? 1 : 0)
+    (stage ? 1 : 0) +
+    (materials ? 1 : 0) +
+    (verified ? 1 : 0) +
+    (oaStatus ? 1 : 0) +
+    keywords.length +
+    venues.length +
+    (yearFrom || yearTo ? 1 : 0)
   const hasActiveFilters = activeCount > 0
 
   return (
@@ -79,7 +70,9 @@ export function SearchAndKeywordFilter({
         {keyword && <input type="hidden" name="keyword" value={keyword} />}
         {venue && <input type="hidden" name="venue" value={venue} />}
         {stage && <input type="hidden" name="stage" value={stage} />}
-        {openAccess && <input type="hidden" name="openAccess" value={openAccess} />}
+        {materials && <input type="hidden" name="materials" value={materials} />}
+        {verified && <input type="hidden" name="verified" value={verified} />}
+        {oaStatus && <input type="hidden" name="oaStatus" value={oaStatus} />}
         <input
           type="text"
           name="q"
@@ -99,7 +92,7 @@ export function SearchAndKeywordFilter({
 
           <div className="mt-3 p-4 bg-base-200/50 rounded-lg flex flex-col gap-4">
             <div className="flex flex-wrap items-center gap-2">
-              <span className="text-base text-base-content/50 w-20 shrink-0">Stage</span>
+              <span className="text-base text-base-content/50 w-24 shrink-0">Stage</span>
               <a href={hrefFor({ stage: undefined })} className={`badge ${!stage ? "badge-neutral" : "badge-outline"}`}>
                 All
               </a>
@@ -112,15 +105,27 @@ export function SearchAndKeywordFilter({
                   {opt.label}
                 </a>
               ))}
+              <a
+                href={hrefFor({ materials: materials ? undefined : "yes" })}
+                className={`badge ${materials ? "badge-neutral" : "badge-outline"}`}
+              >
+                Has materials
+              </a>
             </div>
 
             <div className="flex flex-wrap items-center gap-2">
-              <span className="text-base text-base-content/50 w-20 shrink-0">Access</span>
-              {OPEN_ACCESS_OPTIONS.map((opt) => (
+              <span className="text-base text-base-content/50 w-24 shrink-0">Open access</span>
+              <a
+                href={hrefFor({ oaStatus: undefined })}
+                className={`badge ${!oaStatus ? "badge-neutral" : "badge-outline"}`}
+              >
+                All
+              </a>
+              {OA_STATUS_OPTIONS.map((opt) => (
                 <a
                   key={opt.value}
-                  href={hrefFor({ openAccess: openAccess === opt.value ? undefined : opt.value })}
-                  className={`badge ${openAccess === opt.value ? "badge-success" : "badge-outline"}`}
+                  href={hrefFor({ oaStatus: oaStatus === opt.value ? undefined : opt.value })}
+                  className={`badge ${oaStatus === opt.value ? "badge-success" : "badge-outline"}`}
                 >
                   {opt.label}
                 </a>
@@ -128,12 +133,24 @@ export function SearchAndKeywordFilter({
             </div>
 
             <div className="flex flex-wrap items-center gap-2">
-              <span className="text-base text-base-content/50 w-20 shrink-0">Year</span>
+              <span className="text-base text-base-content/50 w-24 shrink-0">Metadata</span>
+              <a
+                href={hrefFor({ verified: verified ? undefined : "yes" })}
+                className={`badge ${verified ? "badge-secondary" : "badge-outline"}`}
+              >
+                Verified only
+              </a>
+            </div>
+
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="text-base text-base-content/50 w-24 shrink-0">Year</span>
               <form action={action} method="get" className="flex items-center gap-2">
                 {keyword && <input type="hidden" name="keyword" value={keyword} />}
                 {venue && <input type="hidden" name="venue" value={venue} />}
                 {stage && <input type="hidden" name="stage" value={stage} />}
-                {openAccess && <input type="hidden" name="openAccess" value={openAccess} />}
+                {materials && <input type="hidden" name="materials" value={materials} />}
+                {verified && <input type="hidden" name="verified" value={verified} />}
+                {oaStatus && <input type="hidden" name="oaStatus" value={oaStatus} />}
                 {q && <input type="hidden" name="q" value={q} />}
                 <input
                   type="number"
@@ -157,7 +174,7 @@ export function SearchAndKeywordFilter({
             </div>
 
             <div className="flex flex-wrap items-start gap-2">
-              <span className="text-base text-base-content/50 w-20 shrink-0 pt-1.5">Keywords</span>
+              <span className="text-base text-base-content/50 w-24 shrink-0 pt-1.5">Keywords</span>
               <MultiValueFilter
                 label=""
                 placeholder="Search keywords…"
@@ -168,7 +185,7 @@ export function SearchAndKeywordFilter({
             </div>
 
             <div className="flex flex-wrap items-start gap-2">
-              <span className="text-base text-base-content/50 w-20 shrink-0 pt-1.5">Venue</span>
+              <span className="text-base text-base-content/50 w-24 shrink-0 pt-1.5">Venue</span>
               <MultiValueFilter
                 label=""
                 placeholder="Search venues…"
@@ -186,37 +203,38 @@ export function SearchAndKeywordFilter({
           {stageLabel && (
             <span className="badge badge-lg gap-1">
               {stageLabel}
-              <a href={hrefWithout("stage")} aria-label="Clear stage filter">✕</a>
+              <a href={hrefFor({ stage: undefined })} aria-label="Clear stage filter">✕</a>
             </span>
           )}
-          {openAccessLabel && (
+          {materials && (
             <span className="badge badge-lg gap-1">
-              {openAccessLabel}
-              <a href={hrefWithout("openAccess")} aria-label="Clear access filter">✕</a>
+              Has materials
+              <a href={hrefFor({ materials: undefined })} aria-label="Clear materials filter">✕</a>
+            </span>
+          )}
+          {oaStatusLabel && (
+            <span className="badge badge-lg gap-1">
+              {oaStatusLabel}
+              <a href={hrefFor({ oaStatus: undefined })} aria-label="Clear open access filter">✕</a>
+            </span>
+          )}
+          {verified && (
+            <span className="badge badge-lg gap-1">
+              Verified metadata
+              <a href={hrefFor({ verified: undefined })} aria-label="Clear verified filter">✕</a>
             </span>
           )}
           {yearLabel && (
             <span className="badge badge-lg gap-1">
               {yearLabel}
-              <a href={hrefWithout("year")} aria-label="Clear year filter">✕</a>
+              <a href={hrefFor({ yearFrom: undefined, yearTo: undefined })} aria-label="Clear year filter">✕</a>
             </span>
           )}
           {keywords.map((kw) => (
             <span key={kw} className="badge badge-lg gap-1">
               {kw}
               <a
-                href={(() => {
-                  const remaining = keywords.filter((k) => k !== kw)
-                  const sp = new URLSearchParams()
-                  if (q) sp.set("q", q)
-                  if (venue) sp.set("venue", venue)
-                  if (yearFrom) sp.set("yearFrom", yearFrom)
-                  if (yearTo) sp.set("yearTo", yearTo)
-                  if (stage) sp.set("stage", stage)
-                  if (openAccess) sp.set("openAccess", openAccess)
-                  if (remaining.length > 0) sp.set("keyword", remaining.join(","))
-                  return sp.toString() ? `${action}?${sp.toString()}` : action
-                })()}
+                href={hrefFor({ keyword: keywords.filter((k) => k !== kw).join(",") || undefined })}
                 aria-label={`Remove keyword ${kw}`}
               >
                 ✕
@@ -227,18 +245,7 @@ export function SearchAndKeywordFilter({
             <span key={v} className="badge badge-lg gap-1">
               {v}
               <a
-                href={(() => {
-                  const remaining = venues.filter((x) => x !== v)
-                  const sp = new URLSearchParams()
-                  if (q) sp.set("q", q)
-                  if (keyword) sp.set("keyword", keyword)
-                  if (yearFrom) sp.set("yearFrom", yearFrom)
-                  if (yearTo) sp.set("yearTo", yearTo)
-                  if (stage) sp.set("stage", stage)
-                  if (openAccess) sp.set("openAccess", openAccess)
-                  if (remaining.length > 0) sp.set("venue", remaining.join(","))
-                  return sp.toString() ? `${action}?${sp.toString()}` : action
-                })()}
+                href={hrefFor({ venue: venues.filter((x) => x !== v).join(",") || undefined })}
                 aria-label={`Remove venue ${v}`}
               >
                 ✕
@@ -256,16 +263,7 @@ export function SearchAndKeywordFilter({
           <span className="text-base text-base-content/50">Filtering by keyword:</span>
           <span className="badge badge-primary gap-1">
             {keyword}
-            <a
-              href={(() => {
-                const sp = new URLSearchParams()
-                if (q) sp.set("q", q)
-                if (stage) sp.set("stage", stage)
-                return sp.toString() ? `${action}?${sp.toString()}` : action
-              })()}
-              className="ml-1"
-              aria-label="Clear keyword filter"
-            >
+            <a href={hrefFor({ keyword: undefined })} className="ml-1" aria-label="Clear keyword filter">
               ✕
             </a>
           </span>
