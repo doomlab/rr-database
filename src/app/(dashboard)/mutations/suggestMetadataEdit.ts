@@ -2,10 +2,12 @@ import { resolver } from "@blitzjs/rpc"
 import { z } from "zod"
 import db from "db"
 
+const AuthorInput = z.object({ id: z.number().nullable(), name: z.string() })
+
 const SuggestMetadataEdit = z.object({
   paperId: z.number(),
   title: z.string().nullable(),
-  authors: z.array(z.string()),
+  authors: z.array(AuthorInput),
   doi: z.string().nullable(),
   abstract: z.string().nullable(),
   year: z.number().nullable(),
@@ -60,10 +62,15 @@ export default resolver.pipe(
 
         await tx.paperAuthor.deleteMany({ where: { paperId } })
         let position = 0
-        for (const rawName of authors) {
-          const name = rawName.trim()
+        for (const a of authors) {
+          const name = a.name.trim()
           if (!name) continue
-          const author = await tx.author.upsert({ where: { name }, create: { name }, update: {} })
+          // A picked id (from a rename, or an explicit "link to existing
+          // author") updates that Author row in place so its ORCID/OpenAlex
+          // link carries over instead of being orphaned.
+          const author = a.id
+            ? await tx.author.update({ where: { id: a.id }, data: { name } })
+            : await tx.author.upsert({ where: { name }, create: { name }, update: {} })
           await tx.paperAuthor.create({ data: { paperId, authorId: author.id, position } })
           position++
         }

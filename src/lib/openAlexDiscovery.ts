@@ -108,10 +108,18 @@ export async function discoverOpenAlexCandidates(
       },
     })
 
-    const authorNames = (w.authorships ?? [])
-      .map((a: any) => a.author?.display_name)
-      .filter((n: unknown): n is string => !!n)
-    await upsertAuthors(paper.id, authorNames)
+    const authorInputs = (w.authorships ?? [])
+      .map((a: any) => {
+        const name = a.author?.display_name
+        if (!name) return null
+        return {
+          name,
+          orcid: a.author?.orcid ?? null,
+          openalexAuthorId: a.author?.id ? String(a.author.id).replace("https://openalex.org/", "") : null,
+        }
+      })
+      .filter((a: unknown): a is { name: string; orcid: string | null; openalexAuthorId: string | null } => !!a)
+    await upsertAuthors(paper.id, authorInputs)
 
     if (doi) existingDois.add(doi)
     existingOpenAlexIds.add(openalexId)

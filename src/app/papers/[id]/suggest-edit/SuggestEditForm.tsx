@@ -6,10 +6,10 @@ import type { Route } from "next"
 import { useState } from "react"
 import suggestMetadataEdit from "../../../(dashboard)/mutations/suggestMetadataEdit"
 import { OpenAccessStatusField } from "../../../components/OpenAccessStatusField"
+import { AuthorsEditField, type AuthorRow } from "../../../components/AuthorsEditField"
 
 type FieldKey =
   | "title"
-  | "authors"
   | "doi"
   | "url"
   | "pdfUrl"
@@ -41,12 +41,6 @@ type FieldType = "text" | "textarea" | "number" | "boolean"
 
 const FIELDS: { key: FieldKey; label: string; type: FieldType; hint?: string }[] = [
   { key: "title", label: "Title", type: "text" },
-  {
-    key: "authors",
-    label: "Authors (comma-separated, in order)",
-    type: "text",
-    hint: "Fix misspelled or garbled author names here — this replaces the paper's author list.",
-  },
   { key: "doi", label: "DOI", type: "text" },
   {
     key: "url",
@@ -91,16 +85,19 @@ type FormValues = Record<FieldKey, string | number | boolean | null>
 export function SuggestEditForm({
   paperId,
   initial,
+  initialAuthors,
   backHref,
   isAdmin,
 }: {
   paperId: number
   initial: Initial
+  initialAuthors: AuthorRow[]
   backHref: string
   isAdmin: boolean
 }) {
   const router = useRouter()
   const [values, setValues] = useState<FormValues>(initial)
+  const [authors, setAuthors] = useState<AuthorRow[]>(initialAuthors)
   const [note, setNote] = useState("")
   const [error, setError] = useState<string | null>(null)
   const [submit, submitState] = useMutation(suggestMetadataEdit)
@@ -144,7 +141,9 @@ export function SuggestEditForm({
         zoteroNotes: emptyToNull(values.zoteroNotes),
         tags: splitList(values.tags),
         keywords: splitList(values.keywords).map((k) => k.toLowerCase()),
-        authors: splitList(values.authors),
+        authors: authors
+          .map((a) => ({ id: a.id, name: a.name.trim() }))
+          .filter((a) => a.name !== ""),
         note: emptyToNull(note),
         markVerified,
       })
@@ -157,6 +156,7 @@ export function SuggestEditForm({
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-4 max-w-3xl">
+      <AuthorsEditField authors={authors} onChange={setAuthors} />
       {FIELDS.map(({ key, label, type, hint }) => {
         if (key === "openAccessStatus") {
           return (

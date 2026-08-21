@@ -78,17 +78,21 @@ export default resolver.pipe(
         }).filter(([, v]) => v !== null && v !== undefined)
       )
 
+      const authorList = authors as unknown as { id: number | null; name: string }[]
+
       await db.$transaction(async (tx) => {
         if (Object.keys(updates).length > 0) {
           await tx.paper.update({ where: { id: suggestion.paperId }, data: updates })
         }
-        if (authors.length > 0) {
+        if (authorList.length > 0) {
           await tx.paperAuthor.deleteMany({ where: { paperId: suggestion.paperId } })
           let position = 0
-          for (const rawName of authors) {
-            const name = rawName.trim()
+          for (const a of authorList) {
+            const name = a.name.trim()
             if (!name) continue
-            const author = await tx.author.upsert({ where: { name }, create: { name }, update: {} })
+            const author = a.id
+              ? await tx.author.update({ where: { id: a.id }, data: { name } })
+              : await tx.author.upsert({ where: { name }, create: { name }, update: {} })
             await tx.paperAuthor.create({ data: { paperId: suggestion.paperId, authorId: author.id, position } })
             position++
           }

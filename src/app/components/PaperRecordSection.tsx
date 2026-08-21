@@ -6,6 +6,7 @@ import { AdminEnrichPanel } from "../(admin)/components/AdminEnrichPanel"
 import { JmirBadgeButton } from "../(admin)/components/JmirBadgeButton"
 import { ScanPaperPdfButton } from "../(admin)/components/ScanPaperPdfButton"
 import { Row, humanizeItemType, capitalize } from "./PaperFields"
+import { AuthorList } from "./AuthorList"
 
 type RecordPaper = {
   id: number
@@ -39,7 +40,7 @@ type RecordPaper = {
   openSciencePracticesScannedAt: Date | null
   metadataVerifiedAt: Date | null
   metadataVerifiedBy: { name: string | null; email: string } | null
-  authors: { author: { name: string } }[]
+  authors: { author: { name: string; orcid: string | null; openalexAuthorId: string | null } }[]
   extraction: {
     needsReview: boolean
     confidence: number | null
@@ -204,9 +205,13 @@ export function PaperRecordSection({
       )}
 
       <div className="space-y-1.5 text-base">
-        {paper.authors.length > 0 && (
-          <Row label="Authors" value={paper.authors.map((pa) => pa.author.name).join(", ")} />
-        )}
+        <AuthorList
+          authors={paper.authors.map((pa) => ({
+            name: pa.author.name,
+            orcid: pa.author.orcid,
+            openalexAuthorId: pa.author.openalexAuthorId,
+          }))}
+        />
         <Row label="Year" value={paper.year?.toString()} />
         <Row label="Venue" value={paper.venue ?? undefined} italic />
         <Row label="Publisher" value={paper.publisher ?? undefined} />

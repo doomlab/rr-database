@@ -73,8 +73,14 @@ export default async function SuggestEditPage({
     zoteroNotes: paper.zoteroNotes,
     tags: paper.tags.join(", "),
     keywords: paper.keywords.join(", "),
-    authors: paper.authors.map((pa) => pa.author.name).join(", "),
   }
+
+  const initialAuthors = paper.authors.map((pa) => ({
+    id: pa.author.id,
+    name: pa.author.name,
+    orcid: pa.author.orcid,
+    openalexAuthorId: pa.author.openalexAuthorId,
+  }))
 
   return (
     <div className="min-h-screen bg-base-100 flex flex-col">
@@ -95,7 +101,13 @@ export default async function SuggestEditPage({
               : "Your suggestion will be reviewed by an admin before it's applied."}
           </p>
 
-          <SuggestEditForm paperId={paper.id} initial={initial} backHref={backHref} isAdmin={isAdmin} />
+          <SuggestEditForm
+            paperId={paper.id}
+            initial={initial}
+            initialAuthors={initialAuthors}
+            backHref={backHref}
+            isAdmin={isAdmin}
+          />
         </div>
       </div>
     </div>

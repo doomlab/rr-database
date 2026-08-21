@@ -6,6 +6,7 @@ import type { Route } from "next"
 import { useState } from "react"
 import savePaperEdit from "../../../../mutations/savePaperEdit"
 import { OpenAccessStatusField } from "../../../../../components/OpenAccessStatusField"
+import { AuthorsEditField, type AuthorRow } from "../../../../../components/AuthorsEditField"
 
 export type FieldKey =
   | "title"
@@ -66,15 +67,18 @@ export function PaperEditForm({
   paperId,
   source,
   initial,
+  initialAuthors,
   backHref,
 }: {
   paperId: number
   source: "openalex" | "crossref"
   initial: FormValues
+  initialAuthors: AuthorRow[]
   backHref: string
 }) {
   const router = useRouter()
   const [values, setValues] = useState<FormValues>(initial)
+  const [authors, setAuthors] = useState<AuthorRow[]>(initialAuthors)
   const [error, setError] = useState<string | null>(null)
   const [save, saveState] = useMutation(savePaperEdit)
   const isSaving = (saveState as any).isLoading

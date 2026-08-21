@@ -85,16 +85,29 @@ function extractAuthorNames(creators: any[] | undefined | null): string[] {
   return names
 }
 
-export async function upsertAuthors(paperId: number, authorNames: string[]) {
+export type AuthorInput =
+  | string
+  | { name: string; orcid?: string | null; openalexAuthorId?: string | null }
+
+export async function upsertAuthors(paperId: number, authorInputs: AuthorInput[]) {
   await db.paperAuthor.deleteMany({ where: { paperId } })
-  const deduped = [...new Set(authorNames)]
+  const normalized = authorInputs.map((a) => (typeof a === "string" ? { name: a } : a))
+  const seen = new Set<string>()
+  const deduped = normalized.filter((a) => {
+    if (seen.has(a.name)) return false
+    seen.add(a.name)
+    return true
+  })
 
   for (let position = 0; position < deduped.length; position++) {
-    const name = deduped[position]!
+    const { name, orcid, openalexAuthorId } = deduped[position]!
     const author = await db.author.upsert({
       where: { name },
-      update: {},
-      create: { name },
+      update: {
+        ...(orcid ? { orcid } : {}),
+        ...(openalexAuthorId ? { openalexAuthorId } : {}),
+      },
+      create: { name, orcid: orcid ?? null, openalexAuthorId: openalexAuthorId ?? null },
     })
     await db.paperAuthor.create({ data: { paperId, authorId: author.id, position } })
   }

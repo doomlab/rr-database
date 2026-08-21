@@ -347,6 +347,12 @@ model Author {
   id   Int    @id @default(autoincrement())
   name String @unique
 
+  // Filled in from OpenAlex authorship data when available (discovery pull,
+  // etc.) — never hand-typed. orcid is stored as the full profile URL
+  // (https://orcid.org/...), matching how OpenAlex returns it.
+  orcid            String?
+  openalexAuthorId String? @unique
+
   papers PaperAuthor[]
 }
 
@@ -476,7 +482,10 @@ model MetadataEditSuggestion {
   zoteroNotes           String?
   tags                  String[] @default([])
   keywords              String[] @default([])
-  authors               String[] @default([])
+  // {id: number|null, name: string}[] — id links back to the existing
+  // Author row so an approved rename updates it in place instead of
+  // re-upserting by name (which would orphan its ORCID/OpenAlex link).
+  authors               Json     @default("[]")
   note      String?
 
   resolved Boolean @default(false)
