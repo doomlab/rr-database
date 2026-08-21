@@ -68,53 +68,33 @@ export async function scanPdfText(pdfUrl: string): Promise<string> {
   }
 }
 
-export async function scanOpenSciencePractices(): Promise<{
-  scanned: number
-  found: number
-  failed: number
-}> {
-  const papers = await db.paper.findMany({
-    where: {
-      pdfUrl: { not: null },
-      openSciencePracticesScannedAt: null,
-      status: { in: ["IMPORTED", "APPROVED"] },
-    },
-    select: { id: true, pdfUrl: true, registrationUrl: true },
+// Scans one paper's PDF on demand — deliberately not a batch job, since
+// fetching + parsing a PDF is slow and we don't want this running over
+// hundreds of papers automatically. Triggered from a button on that paper's
+// own view page.
+export async function scanOpenSciencePracticesForPaper(paperId: number): Promise<{ found: boolean }> {
+  const paper = await db.paper.findUnique({
+    where: { id: paperId },
+    select: { pdfUrl: true, registrationUrl: true },
   })
+  if (!paper?.pdfUrl) throw new Error("This paper has no PDF to scan.")
 
-  let scanned = 0
-  let found = 0
-  let failed = 0
+  const text = await scanPdfText(paper.pdfUrl)
+  const result = classifyLinks(text)
 
-  for (const paper of papers) {
-    try {
-      const text = await scanPdfText(paper.pdfUrl!)
-      const result = classifyLinks(text)
-
-      const data: Record<string, unknown> = { openSciencePracticesScannedAt: new Date() }
-      if (result.openDataUrl) data.openDataUrl = result.openDataUrl
-      if (result.openCodeUrl) data.openCodeUrl = result.openCodeUrl
-      if (result.openMaterialsUrl) data.openMaterialsUrl = result.openMaterialsUrl
-      // Only fill registrationUrl if this paper doesn't already have one —
-      // never overwrite a real, already-known registration link.
-      if (result.registrationUrl && !paper.registrationUrl) {
-        data.registrationUrl = result.registrationUrl
-      }
-
-      await db.paper.update({ where: { id: paper.id }, data })
-
-      scanned++
-      if (result.openDataUrl || result.openCodeUrl || result.openMaterialsUrl || result.registrationUrl) {
-        found++
-      }
-    } catch {
-      failed++
-      await db.paper.update({
-        where: { id: paper.id },
-        data: { openSciencePracticesScannedAt: new Date() },
-      })
-    }
+  const data: Record<string, unknown> = { openSciencePracticesScannedAt: new Date() }
+  if (result.openDataUrl) data.openDataUrl = result.openDataUrl
+  if (result.openCodeUrl) data.openCodeUrl = result.openCodeUrl
+  if (result.openMaterialsUrl) data.openMaterialsUrl = result.openMaterialsUrl
+  // Only fill registrationUrl if this paper doesn't already have one — never
+  // overwrite a real, already-known registration link.
+  if (result.registrationUrl && !paper.registrationUrl) {
+    data.registrationUrl = result.registrationUrl
   }
 
-  return { scanned, found, failed }
+  await db.paper.update({ where: { id: paperId }, data })
+
+  return {
+    found: !!(result.openDataUrl || result.openCodeUrl || result.openMaterialsUrl || result.registrationUrl),
+  }
 }

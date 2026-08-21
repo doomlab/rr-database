@@ -8,7 +8,6 @@ import { RunCard } from "../components/RunCard"
 import { RunImportButton } from "../components/RunImportButton"
 import { DiscoverOpenAlexYearButton } from "../components/DiscoverOpenAlexYearButton"
 import { DiscoverOpenAlexRecentButton } from "../components/DiscoverOpenAlexRecentButton"
-import { ScanOpenSciencePracticesButton } from "../components/ScanOpenSciencePracticesButton"
 
 // Registered reports as a format only really got going around 2013.
 const EARLIEST_RR_YEAR = 2013
@@ -33,8 +32,7 @@ export default async function AdminHomePage() {
     yearRunHistory,
     reviewCount,
     linkGroupCount,
-    openScienceScanRun,
-    unscannedWithPdfCount,
+    metadataReviewCount,
   ] = await Promise.all([
     isSuperAdmin ? lastZoteroRun("[production]") : Promise.resolve(null),
     isSuperAdmin ? lastZoteroRun("[stagingCollections]") : Promise.resolve(null),
@@ -43,12 +41,11 @@ export default async function AdminHomePage() {
     openAlexYearRunHistory(),
     db.paper.count({ where: { status: "PENDING_REVIEW", canonicalPaperId: null } }),
     countLinkNeedsReviewGroups(),
-    lastPipelineRun("ENRICH", "[open-science-scan]"),
     db.paper.count({
       where: {
-        pdfUrl: { not: null },
-        openSciencePracticesScannedAt: null,
-        status: { in: ["IMPORTED", "APPROVED"] },
+        canonicalPaperId: null,
+        metadataVerifiedAt: null,
+        OR: [{ openSciencePracticesScannedAt: { not: null } }, { jmirBadgeCheckedAt: { not: null } }],
       },
     }),
   ])
@@ -151,18 +148,13 @@ export default async function AdminHomePage() {
         </WorkflowCard>
 
         <WorkflowCard
-          title="Detect open science practices"
-          description="Scans the PDF text of confirmed papers for links near data/code/materials-availability language, and preregistration links if one isn't already on file. Only ever fills in blank fields — never overwrites a link you or another source already found. Safe to re-run; it only looks at papers it hasn't scanned yet."
-          badge={unscannedWithPdfCount}
+          title="Metadata review"
+          description="Open science links and JMIR badge info are detected/entered one paper at a time from that paper's own page (look for the scan/badge buttons there) — this is where you confirm the results are correct. Papers show up here once something's been auto-filled, and drop off once you mark them verified."
+          badge={metadataReviewCount}
         >
-          <RunCard
-            title="Scan for data, code, materials, and preregistration links"
-            description="Looks at every confirmed paper with a PDF that hasn't been scanned yet. Detection is a simple keyword/link search, not exhaustive — treat results as a starting point, not a guarantee."
-            run={openScienceScanRun}
-            nested
-          >
-            <ScanOpenSciencePracticesButton />
-          </RunCard>
+          <a href="/admin/metadata-review" className="btn btn-primary btn-sm text-base">
+            Go to metadata review
+          </a>
         </WorkflowCard>
       </div>
     </div>

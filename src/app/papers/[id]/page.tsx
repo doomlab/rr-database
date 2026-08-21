@@ -35,6 +35,7 @@ export default async function PaperDetailPage({ params }: { params: Promise<{ id
         include: { user: { select: { name: true, email: true } } },
         orderBy: { createdAt: "desc" },
       },
+      metadataVerifiedBy: { select: { name: true, email: true } },
     },
   })
 

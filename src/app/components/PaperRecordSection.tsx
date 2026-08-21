@@ -4,6 +4,8 @@ import { CollapsibleSection } from "./CollapsibleSection"
 import { CitationCard, type CitationEntry } from "./CitationCard"
 import { AdminEnrichPanel } from "../(admin)/components/AdminEnrichPanel"
 import { JmirBadgeButton } from "../(admin)/components/JmirBadgeButton"
+import { ScanPaperPdfButton } from "../(admin)/components/ScanPaperPdfButton"
+import { VerifyMetadataButton } from "../(admin)/components/VerifyMetadataButton"
 import { Row, humanizeItemType, capitalize } from "./PaperFields"
 
 type RecordPaper = {
@@ -35,6 +37,9 @@ type RecordPaper = {
   openCodeUrl: string | null
   openMaterialsUrl: string | null
   jmirBadgeCheckedAt: Date | null
+  openSciencePracticesScannedAt: Date | null
+  metadataVerifiedAt: Date | null
+  metadataVerifiedBy: { name: string | null; email: string } | null
   authors: { author: { name: string } }[]
   extraction: {
     needsReview: boolean
@@ -174,6 +179,9 @@ export function PaperRecordSection({
           {isAdmin && paper.doi?.startsWith("10.2196/") && (
             <JmirBadgeButton paperId={paper.id} alreadyChecked={!!paper.jmirBadgeCheckedAt} />
           )}
+          {isAdmin && paper.pdfUrl && !paper.openSciencePracticesScannedAt && (
+            <ScanPaperPdfButton paperId={paper.id} />
+          )}
           {isAdmin && (
             <AdminEnrichPanel
               paperId={paper.id}
@@ -187,6 +195,20 @@ export function PaperRecordSection({
         </div>
         <ReportButton paperId={paper.id} initialReported={isReported} isLoggedIn={!!userId} />
       </div>
+
+      {isAdmin && (paper.openSciencePracticesScannedAt || paper.jmirBadgeCheckedAt) && (
+        <div className="mb-3">
+          {paper.metadataVerifiedAt ? (
+            <p className="text-base text-success">
+              Metadata verified by{" "}
+              {paper.metadataVerifiedBy?.name ?? paper.metadataVerifiedBy?.email ?? "someone"} on{" "}
+              {paper.metadataVerifiedAt.toLocaleDateString()}
+            </p>
+          ) : (
+            <VerifyMetadataButton paperId={paper.id} />
+          )}
+        </div>
+      )}
 
       <div className="space-y-1.5 text-base">
         {paper.authors.length > 0 && (

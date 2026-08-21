@@ -12,17 +12,34 @@ export async function Navbar() {
   const isAdmin = role === "ADMIN" || role === "SUPER_ADMIN"
   const isSuperAdmin = role === "SUPER_ADMIN"
 
-  const [reviewCount, reportsCount, suggestionsCount, metadataCount, extractionCount, linkGroupCount] =
-    isAdmin
-      ? await Promise.all([
-          db.paper.count({ where: { status: "PENDING_REVIEW" } }),
-          db.paperReport.count({ where: { resolved: false } }),
-          db.articleSuggestion.count({ where: { resolved: false } }),
-          db.metadataEditSuggestion.count({ where: { resolved: false } }),
-          db.extractionEditSuggestion.count({ where: { resolved: false } }),
-          countLinkNeedsReviewGroups(),
-        ])
-      : [0, 0, 0, 0, 0, 0]
+  const [
+    reviewCount,
+    reportsCount,
+    suggestionsCount,
+    metadataCount,
+    extractionCount,
+    linkGroupCount,
+    metadataReviewCount,
+  ] = isAdmin
+    ? await Promise.all([
+        db.paper.count({ where: { status: "PENDING_REVIEW" } }),
+        db.paperReport.count({ where: { resolved: false } }),
+        db.articleSuggestion.count({ where: { resolved: false } }),
+        db.metadataEditSuggestion.count({ where: { resolved: false } }),
+        db.extractionEditSuggestion.count({ where: { resolved: false } }),
+        countLinkNeedsReviewGroups(),
+        db.paper.count({
+          where: {
+            canonicalPaperId: null,
+            metadataVerifiedAt: null,
+            OR: [
+              { openSciencePracticesScannedAt: { not: null } },
+              { jmirBadgeCheckedAt: { not: null } },
+            ],
+          },
+        }),
+      ])
+    : [0, 0, 0, 0, 0, 0, 0]
 
   return (
     <div className="navbar bg-base-200 px-6 shadow-sm sticky top-0 z-50">
@@ -82,6 +99,14 @@ export async function Navbar() {
                       <span>Link papers</span>
                       {linkGroupCount > 0 && (
                         <span className="badge badge-warning badge-sm">{linkGroupCount}</span>
+                      )}
+                    </Link>
+                  </li>
+                  <li>
+                    <Link href="/admin/metadata-review" className="flex justify-between">
+                      <span>Metadata review</span>
+                      {metadataReviewCount > 0 && (
+                        <span className="badge badge-warning badge-sm">{metadataReviewCount}</span>
                       )}
                     </Link>
                   </li>

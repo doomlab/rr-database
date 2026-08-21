@@ -42,6 +42,7 @@ export default async function ReviewDetailPage({
         include: { user: { select: { name: true, email: true } } },
         orderBy: { createdAt: "desc" },
       },
+      metadataVerifiedBy: { select: { name: true, email: true } },
     },
   })
 

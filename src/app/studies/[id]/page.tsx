@@ -58,6 +58,7 @@ export default async function StudyDetailPage({
                 include: { user: { select: { name: true, email: true } } },
                 orderBy: { createdAt: "desc" },
               },
+              metadataVerifiedBy: { select: { name: true, email: true } },
             },
           },
         },

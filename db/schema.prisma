@@ -36,6 +36,7 @@ model User {
   groqApiKey     String?
 
   reviewedPapers  Paper[]         @relation("PaperReviewedBy")
+  verifiedMetadataPapers Paper[]  @relation("PaperMetadataVerifiedBy")
   pipelineRuns    PipelineRun[]   @relation("PipelineRunStartedBy")
   codedExtractions PaperExtraction[] @relation("ExtractionCodedBy")
   verifiedExtractions PaperExtraction[] @relation("ExtractionVerifiedBy")
@@ -181,6 +182,13 @@ model Paper {
   jmirBadgeType           String?
   jmirBadgeCounterpartDoi String?
   jmirBadgeCheckedAt      DateTime?
+
+  // A single "someone looked at this paper's auto-filled metadata (open
+  // science links, JMIR badge, etc.) and confirmed it's correct" flag —
+  // covers everything at once rather than tracking each source separately.
+  metadataVerifiedById Int?
+  metadataVerifiedBy   User?     @relation("PaperMetadataVerifiedBy", fields: [metadataVerifiedById], references: [id])
+  metadataVerifiedAt   DateTime?
 
   // Source-tracking / provenance
   openalexId              String? @unique
