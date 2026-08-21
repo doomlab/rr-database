@@ -47,12 +47,6 @@ export default async function StudyDetailPage({
           paper: {
             include: {
               authors: { include: { author: true }, orderBy: { position: "asc" } },
-              extraction: {
-                include: {
-                  codedBy: { select: { name: true, email: true } },
-                  verifiedBy: { select: { name: true, email: true } },
-                },
-              },
               citationsFrom: { orderBy: { year: "desc" } },
               editHistory: {
                 include: { user: { select: { name: true, email: true } } },

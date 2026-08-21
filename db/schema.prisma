@@ -37,14 +37,11 @@ model User {
   reviewedPapers  Paper[]         @relation("PaperReviewedBy")
   verifiedMetadataPapers Paper[]  @relation("PaperMetadataVerifiedBy")
   pipelineRuns    PipelineRun[]   @relation("PipelineRunStartedBy")
-  codedExtractions PaperExtraction[] @relation("ExtractionCodedBy")
-  verifiedExtractions PaperExtraction[] @relation("ExtractionVerifiedBy")
   favoriteStudies StudyFavorite[]
   favoritePapers  PaperFavorite[]
 
   articleSuggestions       ArticleSuggestion[]
   metadataEditSuggestions  MetadataEditSuggestion[]
-  extractionEditSuggestions ExtractionEditSuggestion[]
   paperReports             PaperReport[]
   paperEditHistory         PaperEditHistory[]
   savedSearches            SavedSearch[]
@@ -229,11 +226,9 @@ model Paper {
   zoteroSyncStatus ZoteroSyncStatus @default(NOT_SYNCED)
   lastSyncedAt     DateTime?
 
-  extraction PaperExtraction?
   studyPaper StudyPaper?
 
   metadataEdits   MetadataEditSuggestion[]
-  extractionEdits ExtractionEditSuggestion[]
   reports         PaperReport[]
   editHistory     PaperEditHistory[]
   favorites       PaperFavorite[]
@@ -332,31 +327,6 @@ model SavedSearch {
   query  String
 
   @@index([userId])
-}
-
-// Manually (or LLM-assisted) coded information that can't be pulled from
-// bibliographic metadata alone. Field-level schema for extractedData is
-// intentionally not fixed yet — coding scheme is still being defined.
-model PaperExtraction {
-  id        Int      @id @default(autoincrement())
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  paperId Int   @unique
-  paper   Paper @relation(fields: [paperId], references: [id])
-
-  extractedData Json
-
-  needsReview Boolean @default(true)
-  confidence  Float?
-
-  codedById Int?
-  codedBy   User?     @relation("ExtractionCodedBy", fields: [codedById], references: [id])
-  codedAt   DateTime?
-
-  verifiedById Int?
-  verifiedBy   User?     @relation("ExtractionVerifiedBy", fields: [verifiedById], references: [id])
-  verifiedAt   DateTime?
 }
 
 model Author {
@@ -505,26 +475,6 @@ model MetadataEditSuggestion {
   // re-upserting by name (which would orphan its ORCID/OpenAlex link).
   authors               Json     @default("[]")
   note      String?
-
-  resolved Boolean @default(false)
-
-  @@unique([userId, paperId])
-}
-
-// Suggest a correction to a Paper's coded extraction data. Mirrors
-// PaperExtraction.extractedData's flexible-JSON shape until the coding
-// scheme is fixed into real columns.
-model ExtractionEditSuggestion {
-  id        Int      @id @default(autoincrement())
-  createdAt DateTime @default(now())
-
-  paperId Int
-  paper   Paper @relation(fields: [paperId], references: [id], onDelete: Cascade)
-  userId  Int
-  user    User  @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  suggestedData Json
-  note          String?
 
   resolved Boolean @default(false)
 

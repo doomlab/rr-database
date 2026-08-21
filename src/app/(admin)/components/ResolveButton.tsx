@@ -6,13 +6,11 @@ import { useState } from "react"
 import resolveReport from "../mutations/resolveReport"
 import resolveSuggestion from "../mutations/resolveSuggestion"
 import resolveMetadataEdit from "../mutations/resolveMetadataEdit"
-import resolveExtractionEdit from "../mutations/resolveExtractionEdit"
 
 const MUTATIONS = {
   report: resolveReport,
   suggestion: resolveSuggestion,
   metadataEdit: resolveMetadataEdit,
-  extractionEdit: resolveExtractionEdit,
 } as const
 
 export function ResolveButton({

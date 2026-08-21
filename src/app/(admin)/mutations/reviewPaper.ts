@@ -34,14 +34,6 @@ export default resolver.pipe(
     })
 
     if (decision === "APPROVED") {
-      // Same invariant the Zotero import maintains: every confirmed paper
-      // gets an extraction placeholder so the coding queue can see it.
-      await db.paperExtraction.upsert({
-        where: { paperId },
-        create: { paperId, extractedData: {}, needsReview: true },
-        update: {},
-      })
-
       // The main browse page is Study-centric — a confirmed paper with no
       // Study membership at all is invisible there. Give it a solo Study so
       // it shows up immediately; it stays eligible to be merged into a

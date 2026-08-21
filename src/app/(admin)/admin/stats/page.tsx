@@ -33,14 +33,10 @@ export default async function AdminStatsPage() {
     statusCounts,
     totalStudies,
     linkedStudies,
-    totalExtractions,
-    needsReviewExtractions,
-    verifiedExtractions,
     reviewCount,
     reportsCount,
     suggestionsCount,
     metadataCount,
-    extractionCount,
     linkGroupCount,
   ] = await Promise.all([
     db.paper.groupBy({ by: ["status"], _count: true }),
@@ -50,14 +46,10 @@ export default async function AdminStatsPage() {
     db.study
       .findMany({ select: { _count: { select: { papers: true } } } })
       .then((sizes) => sizes.filter((s) => s._count.papers >= 2).length),
-    db.paperExtraction.count(),
-    db.paperExtraction.count({ where: { needsReview: true } }),
-    db.paperExtraction.count({ where: { verifiedById: { not: null } } }),
     db.paper.count({ where: { status: "PENDING_REVIEW" } }),
     db.paperReport.count({ where: { resolved: false } }),
     db.articleSuggestion.count({ where: { resolved: false } }),
     db.metadataEditSuggestion.count({ where: { resolved: false } }),
-    db.extractionEditSuggestion.count({ where: { resolved: false } }),
     countLinkNeedsReviewGroups(),
   ])
 
@@ -69,7 +61,7 @@ export default async function AdminStatsPage() {
       <h1 className="text-2xl font-semibold mb-1">Stats</h1>
       <p className="text-base text-base-content/60 mb-8">
         A snapshot of where the database stands — how many papers are at each stage, how much
-        Stage 1/Stage 2 linking and coding is left, and what's waiting in each admin queue.
+        Stage 1/Stage 2 linking is left, and what's waiting in each admin queue.
       </p>
 
       <div className="flex flex-col gap-8">
@@ -108,15 +100,6 @@ export default async function AdminStatsPage() {
         </section>
 
         <section>
-          <h2 className="text-lg font-semibold mb-3">Coding progress</h2>
-          <div className="stats stats-vertical sm:stats-horizontal shadow w-full flex-wrap bg-base-200">
-            <StatCard label="Extraction records" value={totalExtractions} />
-            <StatCard label="Needs review" value={needsReviewExtractions} />
-            <StatCard label="Verified" value={verifiedExtractions} />
-          </div>
-        </section>
-
-        <section>
           <h2 className="text-lg font-semibold mb-3">Admin queues</h2>
           <div className="stats stats-vertical sm:stats-horizontal shadow w-full flex-wrap bg-base-200">
             <StatCard label="Review queue" value={reviewCount} />
@@ -124,7 +107,6 @@ export default async function AdminStatsPage() {
             <StatCard label="User reports" value={reportsCount} />
             <StatCard label="Article suggestions" value={suggestionsCount} />
             <StatCard label="Metadata edits" value={metadataCount} href="/admin/metadata" />
-            <StatCard label="Extraction edits" value={extractionCount} href="/admin/extraction" />
           </div>
         </section>
       </div>

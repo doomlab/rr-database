@@ -70,11 +70,6 @@ export default resolver.pipe(
         where: { id: paperId },
         data: { status: "APPROVED", reviewedById: userId, reviewedAt: new Date() },
       })
-      await db.paperExtraction.upsert({
-        where: { paperId },
-        create: { paperId, extractedData: {}, needsReview: true },
-        update: {},
-      })
     }
 
     await db.paperEditHistory.create({

@@ -41,13 +41,6 @@ type RecordPaper = {
   metadataVerifiedAt: Date | null
   metadataVerifiedBy: { name: string | null; email: string } | null
   authors: { author: { name: string; orcid: string | null; openalexAuthorId: string | null } }[]
-  extraction: {
-    needsReview: boolean
-    confidence: number | null
-    extractedData: unknown
-    codedBy: { name: string | null; email: string } | null
-    verifiedBy: { name: string | null; email: string } | null
-  } | null
   editHistory: {
     id: number
     createdAt: Date
@@ -289,34 +282,6 @@ export function PaperRecordSection({
             <p className="text-base-content/70 leading-relaxed whitespace-pre-line">
               {paper.zoteroNotes}
             </p>
-          </CollapsibleSection>
-        </div>
-      )}
-
-      {paper.extraction && (
-        <div className="mt-4">
-          <CollapsibleSection title="Coded data">
-            <div className="space-y-2">
-              <p className="text-base text-base-content/50">
-                {paper.extraction.needsReview ? "Needs review" : "Reviewed"}
-                {paper.extraction.confidence != null &&
-                  ` · confidence ${(paper.extraction.confidence * 100).toFixed(0)}%`}
-                {paper.extraction.codedBy &&
-                  ` · coded by ${paper.extraction.codedBy.name ?? paper.extraction.codedBy.email}`}
-                {paper.extraction.verifiedBy &&
-                  ` · verified by ${
-                    paper.extraction.verifiedBy.name ?? paper.extraction.verifiedBy.email
-                  }`}
-              </p>
-              <div className="space-y-1">
-                {Object.entries(paper.extraction.extractedData as Record<string, unknown>).map(
-                  ([key, value]) =>
-                    value == null || value === "" ? null : (
-                      <Row key={key} label={key} value={String(value)} />
-                    )
-                )}
-              </div>
-            </div>
           </CollapsibleSection>
         </div>
       )}

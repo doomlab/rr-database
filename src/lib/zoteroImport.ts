@@ -113,14 +113,6 @@ export async function upsertAuthors(paperId: number, authorInputs: AuthorInput[]
   }
 }
 
-export async function ensureExtractionPlaceholder(paperId: number) {
-  const existing = await db.paperExtraction.findUnique({ where: { paperId } })
-  if (existing) return
-  await db.paperExtraction.create({
-    data: { paperId, extractedData: {}, needsReview: true },
-  })
-}
-
 type KeyColumn = "zoteroKeyProduction" | "zoteroKeyStaging"
 
 function stripHtml(html: string): string {
@@ -369,7 +361,6 @@ export async function importProductionLibrary(): Promise<{
       skipped++
     } else {
       imported++
-      await ensureExtractionPlaceholder(paperId)
     }
   }
 
@@ -446,7 +437,6 @@ export async function importStagingCollections(): Promise<Record<string, number>
       )
       if (paperId !== null) {
         count++
-        if (status === "IMPORTED") await ensureExtractionPlaceholder(paperId)
       }
     }
     totals[found.name] = count
