@@ -11,7 +11,7 @@ const STOPWORDS = new Set([
   "study", "studies", "analysis", "effect", "effects", "using", "based",
 ])
 
-function normalizeTitle(title: string): string {
+export function normalizeTitle(title: string): string {
   return title
     .toLowerCase()
     .replace(/[^a-z0-9\s]/g, " ")
@@ -19,7 +19,7 @@ function normalizeTitle(title: string): string {
     .trim()
 }
 
-function significantWords(normalized: string): Set<string> {
+export function significantWords(normalized: string): Set<string> {
   return new Set(normalized.split(" ").filter((w) => w.length >= 4 && !STOPWORDS.has(w)))
 }
 
@@ -132,6 +132,28 @@ export function clusterPapersByTitle<T extends ClusterablePaper>(
   return Array.from(groups.values())
     .filter((g) => g.length >= minGroupSize)
     .sort((a, b) => b.length - a.length)
+}
+
+// Finds the single best title match for `title` among `candidates`, if any
+// candidate clears the same short-title-aware threshold used by
+// clusterPapersByTitle. Returns null if nothing clears the threshold, or if
+// the top two candidates are too close to call (ambiguous match).
+export function bestTitleMatch<T extends ClusterablePaper>(title: string, candidates: T[]): T | null {
+  const targetWords = significantWords(normalizeTitle(title))
+  if (targetWords.size === 0) return null
+
+  const scored = candidates
+    .map((c) => ({
+      candidate: c,
+      score: diceCoefficient(targetWords, significantWords(normalizeTitle(c.title))),
+      threshold: requiredThreshold(targetWords.size, significantWords(normalizeTitle(c.title)).size),
+    }))
+    .filter((s) => s.score >= s.threshold)
+    .sort((a, b) => b.score - a.score)
+
+  if (scored.length === 0) return null
+  if (scored.length > 1 && scored[1]!.score >= scored[0]!.score - 0.05) return null
+  return scored[0]!.candidate
 }
 
 // Single source of truth for "how many things need attention on the Link

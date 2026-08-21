@@ -5,7 +5,10 @@ export const STUDY_PAPER_ROLE_OPTIONS = [
   { value: "STAGE1_MATERIALS", label: "Stage 1 materials" },
   { value: "STAGE2_ARTICLE", label: "Stage 2 article" },
   { value: "STAGE2_MATERIALS", label: "Stage 2 materials" },
-  { value: "PCIRR_PAGE", label: "PCI RR page" },
+  { value: "PCIRR_PAGE", label: "PCI RR recommendation" },
+  { value: "PCIRR_REVIEW", label: "PCI RR review" },
+  { value: "PCIRR_AUTHOR_RESPONSE", label: "PCI RR author response" },
+  { value: "PCIRR_DECISION", label: "PCI RR decision" },
   { value: "OTHER", label: "Other" },
 ] as const
 

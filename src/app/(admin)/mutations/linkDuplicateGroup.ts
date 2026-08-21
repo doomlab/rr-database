@@ -8,6 +8,9 @@ const ROLE_VALUES = [
   "STAGE2_ARTICLE",
   "STAGE2_MATERIALS",
   "PCIRR_PAGE",
+  "PCIRR_REVIEW",
+  "PCIRR_AUTHOR_RESPONSE",
+  "PCIRR_DECISION",
   "OTHER",
 ] as const
 
@@ -26,7 +29,10 @@ const ROLE_LABELS: Record<(typeof ROLE_VALUES)[number], string> = {
   STAGE1_MATERIALS: "Stage 1 materials",
   STAGE2_ARTICLE: "Stage 2 article",
   STAGE2_MATERIALS: "Stage 2 materials",
-  PCIRR_PAGE: "PCI RR page",
+  PCIRR_PAGE: "PCI RR recommendation",
+  PCIRR_REVIEW: "PCI RR review",
+  PCIRR_AUTHOR_RESPONSE: "PCI RR author response",
+  PCIRR_DECISION: "PCI RR decision",
   OTHER: "Other",
 }
 

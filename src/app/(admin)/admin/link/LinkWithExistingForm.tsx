@@ -5,15 +5,9 @@ import { useRouter } from "next/navigation"
 import { useState } from "react"
 import linkPaperWithExisting from "../../mutations/linkPaperWithExisting"
 import searchPapersToLink from "../../mutations/searchPapersToLink"
+import { STUDY_PAPER_ROLE_OPTIONS } from "src/lib/studyPaperRoles"
 
-const ROLE_OPTIONS = [
-  { value: "STAGE1_ARTICLE", label: "Stage 1 article" },
-  { value: "STAGE1_MATERIALS", label: "Stage 1 materials" },
-  { value: "STAGE2_ARTICLE", label: "Stage 2 article" },
-  { value: "STAGE2_MATERIALS", label: "Stage 2 materials" },
-  { value: "PCIRR_PAGE", label: "PCI RR page" },
-  { value: "OTHER", label: "Other" },
-] as const
+const ROLE_OPTIONS = STUDY_PAPER_ROLE_OPTIONS
 
 type Role = (typeof ROLE_OPTIONS)[number]["value"]
 type PaperResult = { id: number; title: string; year: number | null; doi: string | null }

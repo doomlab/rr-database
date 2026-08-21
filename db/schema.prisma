@@ -284,7 +284,10 @@ enum StudyPaperRole {
   STAGE1_MATERIALS
   STAGE2_ARTICLE
   STAGE2_MATERIALS
-  PCIRR_PAGE
+  PCIRR_PAGE // the recommendation text itself — DOI has no .rev/.ar/.d suffix
+  PCIRR_REVIEW // DOI ends .rev<n>
+  PCIRR_AUTHOR_RESPONSE // DOI ends .ar<n>
+  PCIRR_DECISION // DOI ends .d<n>
   OTHER
 }
 

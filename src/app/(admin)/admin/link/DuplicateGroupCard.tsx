@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation"
 import { useMemo, useState } from "react"
 import linkDuplicateGroup from "../../mutations/linkDuplicateGroup"
 import { LinkWithExistingForm } from "./LinkWithExistingForm"
+import { STUDY_PAPER_ROLE_OPTIONS, STUDY_PAPER_ROLE_VALUES } from "src/lib/studyPaperRoles"
 
 export type LinkablePaper = {
   id: number
@@ -13,14 +14,7 @@ export type LinkablePaper = {
   venue: string | null
   doi: string | null
   status: string
-  currentRole:
-    | "STAGE1_ARTICLE"
-    | "STAGE1_MATERIALS"
-    | "STAGE2_ARTICLE"
-    | "STAGE2_MATERIALS"
-    | "PCIRR_PAGE"
-    | "OTHER"
-    | null
+  currentRole: (typeof STUDY_PAPER_ROLE_VALUES)[number] | null
   // Whether currentRole was actually set by an admin through this page
   // (tracked via edit history) rather than being the generic "OTHER"
   // fallback almost every paper got from the old Zotero import — without
@@ -31,12 +25,7 @@ export type LinkablePaper = {
 
 const ROLE_OPTIONS = [
   { value: "skip", label: "Leave as-is" },
-  { value: "STAGE1_ARTICLE", label: "Stage 1 article" },
-  { value: "STAGE1_MATERIALS", label: "Stage 1 materials" },
-  { value: "STAGE2_ARTICLE", label: "Stage 2 article" },
-  { value: "STAGE2_MATERIALS", label: "Stage 2 materials" },
-  { value: "PCIRR_PAGE", label: "PCI RR page" },
-  { value: "OTHER", label: "Other" },
+  ...STUDY_PAPER_ROLE_OPTIONS,
   { value: "unlink", label: "Unlink from study" },
   { value: "duplicate", label: "Duplicate of…" },
 ] as const
@@ -44,13 +33,7 @@ const ROLE_OPTIONS = [
 type Choice = (typeof ROLE_OPTIONS)[number]["value"]
 
 function defaultChoiceFor(role: LinkablePaper["currentRole"], roleConfirmed: boolean): Choice {
-  if (
-    role === "STAGE1_ARTICLE" ||
-    role === "STAGE1_MATERIALS" ||
-    role === "STAGE2_ARTICLE" ||
-    role === "STAGE2_MATERIALS" ||
-    role === "PCIRR_PAGE"
-  ) {
+  if (role != null && role !== "OTHER") {
     return role
   }
   // "OTHER" is ambiguous — only trust it as a deliberate tag if an admin

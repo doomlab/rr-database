@@ -1,6 +1,8 @@
 import db from "db"
 import { withOpenAlexApiKey } from "./openAlexApiKey"
 import { upsertAuthors } from "./zoteroImport"
+import { detectPcirrDocument, findMatchingPaper, isPcirrWork } from "./pcirr"
+import { STUDY_PAPER_ROLE_LABELS } from "./studyPaperRoles"
 
 const HEADERS = { "User-Agent": "mailto:buchananlab@gmail.com" }
 const PER_PAGE = 200
@@ -82,7 +84,8 @@ async function fetchWorks(fromDate: string, toDate: string): Promise<any[]> {
 
 export async function discoverOpenAlexCandidates(
   fromDate: string,
-  toDate: string
+  toDate: string,
+  userId: number
 ): Promise<{ found: number; created: number; skipped: number }> {
   const works = await fetchWorks(fromDate, toDate)
 
@@ -110,13 +113,17 @@ export async function discoverOpenAlexCandidates(
       continue
     }
 
+    const venue = w.primary_location?.source?.display_name ?? null
+    const isPcirr = isPcirrWork(doi, venue)
+    const pcirrDoc = isPcirr ? detectPcirrDocument(w.title) : null
+
     const paper = await db.paper.create({
       data: {
         title: w.title,
         doi,
         abstract: reconstructAbstract(w.abstract_inverted_index),
         year: w.publication_year ?? null,
-        venue: w.primary_location?.source?.display_name ?? null,
+        venue,
         url: w.primary_location?.landing_page_url ?? null,
         openalexId,
         citedByCount: w.cited_by_count ?? null,
@@ -125,7 +132,8 @@ export async function discoverOpenAlexCandidates(
         pdfUrl: w.best_oa_location?.pdf_url ?? w.open_access?.oa_url ?? null,
         itemType: w.type ?? null,
         status: "PENDING_REVIEW",
-        discoveredVia: ["OPENALEX"],
+        discoveredVia: isPcirr ? ["OPENALEX", "PCIRR"] : ["OPENALEX"],
+        pcirrMetadata: pcirrDoc ? { role: pcirrDoc.role, strippedTitle: pcirrDoc.strippedTitle } : undefined,
       },
     })
 
@@ -141,6 +149,30 @@ export async function discoverOpenAlexCandidates(
       })
       .filter((a: unknown): a is { name: string; orcid: string | null; openalexAuthorId: string | null } => !!a)
     await upsertAuthors(paper.id, authorInputs)
+
+    // A PCI RR review/author-response/decision/recommendation is a document
+    // *about* an existing study, not a new candidate paper — if we can
+    // confidently match it to the original article already in the database,
+    // link it straight into that study with the right role instead of
+    // leaving it to be manually linked later.
+    if (pcirrDoc) {
+      const match = await findMatchingPaper(pcirrDoc.strippedTitle)
+      if (match) {
+        const studyId = match.studyPaper?.studyId ?? (await db.study.create({ data: {} })).id
+        if (!match.studyPaper) {
+          await db.studyPaper.create({ data: { studyId, paperId: match.id, role: "OTHER" } })
+        }
+        await db.studyPaper.create({ data: { studyId, paperId: paper.id, role: pcirrDoc.role } })
+        await db.paperEditHistory.create({
+          data: {
+            paperId: paper.id,
+            userId,
+            source: "openalex",
+            summary: `Auto-linked as ${STUDY_PAPER_ROLE_LABELS[pcirrDoc.role]} with paper #${match.id} ("${match.title}") by title match`,
+          },
+        })
+      }
+    }
 
     if (doi) existingDois.add(doi)
     existingOpenAlexIds.add(openalexId)

@@ -13,7 +13,10 @@ const ROLE_LABELS: Record<string, string> = {
   STAGE1_MATERIALS: "Stage 1 materials",
   STAGE2_ARTICLE: "Stage 2 article",
   STAGE2_MATERIALS: "Stage 2 materials",
-  PCIRR_PAGE: "PCI RR page",
+  PCIRR_PAGE: "PCI RR recommendation",
+  PCIRR_REVIEW: "PCI RR review",
+  PCIRR_AUTHOR_RESPONSE: "PCI RR author response",
+  PCIRR_DECISION: "PCI RR decision",
   OTHER: "Other",
 }
 

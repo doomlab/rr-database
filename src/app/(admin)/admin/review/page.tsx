@@ -2,6 +2,7 @@ import db from "db"
 import { Pagination } from "../../../components/Pagination"
 import { SearchAndKeywordFilter } from "../../../components/SearchAndKeywordFilter"
 import { clusterPapersByTitle } from "src/lib/duplicateClusters"
+import { STUDY_PAPER_ROLE_LABELS } from "src/lib/studyPaperRoles"
 import { BulkRejectButton } from "./BulkRejectButton"
 
 const PAGE_SIZE = 50
@@ -40,7 +41,10 @@ export default async function ReviewQueuePage({
   const [papers, totalPapers] = await Promise.all([
     db.paper.findMany({
       where,
-      include: { authors: { include: { author: true }, orderBy: { position: "asc" } } },
+      include: {
+        authors: { include: { author: true }, orderBy: { position: "asc" } },
+        studyPaper: { select: { studyId: true } },
+      },
       orderBy: [{ modelScore: "desc" }, { createdAt: "desc" }],
       skip,
       take: PAGE_SIZE,
@@ -133,6 +137,27 @@ export default async function ReviewQueuePage({
                               <h2 className="font-semibold text-base leading-snug mb-1">
                                 {paper.title}
                               </h2>
+                              {(() => {
+                                const pcirrRole = (paper.pcirrMetadata as { role?: string } | null)
+                                  ?.role
+                                if (!pcirrRole) return null
+                                const label = STUDY_PAPER_ROLE_LABELS[pcirrRole] ?? pcirrRole
+                                return (
+                                  <div className="mb-2">
+                                    <span className="badge badge-info">{label}</span>
+                                    {paper.studyPaper && (
+                                      <a
+                                        href={`/studies/${paper.studyPaper.studyId}`}
+                                        target="_blank"
+                                        rel="noreferrer"
+                                        className="link link-primary text-base ml-2"
+                                      >
+                                        auto-linked to study #{paper.studyPaper.studyId}
+                                      </a>
+                                    )}
+                                  </div>
+                                )
+                              })()}
                               {paper.abstract && (
                                 <p className="text-base text-base-content/60 mb-2 line-clamp-2">
                                   {paper.abstract}
