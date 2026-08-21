@@ -16,8 +16,14 @@ const ROLE_OPTIONS = [
 
 type Role = (typeof ROLE_OPTIONS)[number]["value"]
 
-export function LinkWithExistingForm({ paperId }: { paperId: number }) {
-  const [targetId, setTargetId] = useState("")
+export function LinkWithExistingForm({
+  paperId,
+  suggestion,
+}: {
+  paperId: number
+  suggestion?: { id: number; title: string } | null
+}) {
+  const [targetId, setTargetId] = useState(suggestion ? String(suggestion.id) : "")
   const [role, setRole] = useState<Role>("STAGE1_ARTICLE")
   const [link, { isPending }] = useMutation(linkPaperWithExisting)
   const router = useRouter()
@@ -42,7 +48,14 @@ export function LinkWithExistingForm({ paperId }: { paperId: number }) {
   }
 
   return (
-    <div className="flex flex-wrap items-center gap-2">
+    <div className="flex flex-col gap-2">
+      {suggestion && (
+        <p className="text-base text-info">
+          This paper cites #{suggestion.id} ("{suggestion.title}"), already in the database — maybe
+          its Stage 1/2 counterpart?
+        </p>
+      )}
+      <div className="flex flex-wrap items-center gap-2">
       <span className="text-base text-base-content/50">No title match found — link with paper #</span>
       <input
         type="number"
@@ -68,6 +81,7 @@ export function LinkWithExistingForm({ paperId }: { paperId: number }) {
       </button>
       {success && <span className="text-base text-success">{success}</span>}
       {error && <span className="text-base text-error">{error}</span>}
+      </div>
     </div>
   )
 }

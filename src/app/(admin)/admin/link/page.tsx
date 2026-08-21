@@ -183,6 +183,34 @@ async function AutoDetectedGroups({ page, tab }: { page: number; tab: "needs-rev
   const pageGroups = groups.slice((page - 1) * GROUPS_PER_PAGE, page * GROUPS_PER_PAGE)
   const buildHref = (p: number) => `/admin/link?tab=${tab}&page=${p}`
 
+  // For solo papers with no title match, check whether they cite a paper
+  // already in our database by DOI — Stage 2 registered reports almost
+  // always cite their own Stage 1 protocol as a reference, so this catches
+  // pairs whose titles are too different to cluster automatically.
+  const soloPaperIds =
+    tab === "needs-review" ? pageGroups.filter((g) => g.length === 1).map((g) => g[0]!.id) : []
+  const suggestionByPaperId = new Map<number, { id: number; title: string }>()
+  if (soloPaperIds.length > 0) {
+    const citations = await db.paperCitation.findMany({
+      where: { citingPaperId: { in: soloPaperIds }, doi: { not: null } },
+      select: { citingPaperId: true, doi: true },
+    })
+    const citedDois = Array.from(new Set(citations.map((c) => c.doi!)))
+    if (citedDois.length > 0) {
+      const matches = await db.paper.findMany({
+        where: { doi: { in: citedDois } },
+        select: { id: true, doi: true, title: true },
+      })
+      const byDoi = new Map(matches.map((p) => [p.doi!, p]))
+      for (const c of citations) {
+        const match = byDoi.get(c.doi!)
+        if (match && match.id !== c.citingPaperId && !suggestionByPaperId.has(c.citingPaperId)) {
+          suggestionByPaperId.set(c.citingPaperId, { id: match.id, title: match.title })
+        }
+      }
+    }
+  }
+
   return (
     <>
       <div className="tabs tabs-boxed w-fit mb-6">
@@ -202,7 +230,11 @@ async function AutoDetectedGroups({ page, tab }: { page: number; tab: "needs-rev
         <>
           <div className="flex flex-col gap-6">
             {pageGroups.map((group) => (
-              <DuplicateGroupCard key={group.map((p) => p.id).join("-")} papers={group} />
+              <DuplicateGroupCard
+                key={group.map((p) => p.id).join("-")}
+                papers={group}
+                suggestedLink={group.length === 1 ? suggestionByPaperId.get(group[0]!.id) ?? null : null}
+              />
             ))}
           </div>
           <Pagination page={page} totalPages={totalPages} buildHref={buildHref} />

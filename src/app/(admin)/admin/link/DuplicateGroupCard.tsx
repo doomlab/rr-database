@@ -59,7 +59,13 @@ function defaultChoiceFor(role: LinkablePaper["currentRole"], roleConfirmed: boo
   return "skip"
 }
 
-export function DuplicateGroupCard({ papers }: { papers: LinkablePaper[] }) {
+export function DuplicateGroupCard({
+  papers,
+  suggestedLink,
+}: {
+  papers: LinkablePaper[]
+  suggestedLink?: { id: number; title: string } | null
+}) {
   const defaults = useMemo(
     () =>
       Object.fromEntries(
@@ -236,7 +242,9 @@ export function DuplicateGroupCard({ papers }: { papers: LinkablePaper[] }) {
           {error && <span className="text-base text-error">{error}</span>}
         </div>
 
-        {papers.length === 1 && <LinkWithExistingForm paperId={papers[0]!.id} />}
+        {papers.length === 1 && (
+          <LinkWithExistingForm paperId={papers[0]!.id} suggestion={suggestedLink ?? null} />
+        )}
         </>
         )}
       </div>

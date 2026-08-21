@@ -3,6 +3,7 @@ import { PaperHistoryCard } from "./PaperHistoryCard"
 import { CollapsibleSection } from "./CollapsibleSection"
 import { CitationCard, type CitationEntry } from "./CitationCard"
 import { AdminEnrichPanel } from "../(admin)/components/AdminEnrichPanel"
+import { JmirBadgeButton } from "../(admin)/components/JmirBadgeButton"
 import { Row, humanizeItemType, capitalize } from "./PaperFields"
 
 type RecordPaper = {
@@ -33,6 +34,7 @@ type RecordPaper = {
   openDataUrl: string | null
   openCodeUrl: string | null
   openMaterialsUrl: string | null
+  jmirBadgeCheckedAt: Date | null
   authors: { author: { name: string } }[]
   extraction: {
     needsReview: boolean
@@ -168,6 +170,9 @@ export function PaperRecordSection({
             >
               Open materials
             </a>
+          )}
+          {isAdmin && paper.doi?.startsWith("10.2196/") && (
+            <JmirBadgeButton paperId={paper.id} alreadyChecked={!!paper.jmirBadgeCheckedAt} />
           )}
           {isAdmin && (
             <AdminEnrichPanel
