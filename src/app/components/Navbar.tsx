@@ -51,6 +51,11 @@ export async function Navbar() {
                 <Link href="/favorites">★ My Favorites</Link>
               </li>
             )}
+            {userId && (
+              <li>
+                <Link href="/searches">My Searches</Link>
+              </li>
+            )}
           </ul>
         </div>
         {userId ? (

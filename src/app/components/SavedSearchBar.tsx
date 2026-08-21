@@ -39,7 +39,7 @@ export function SavedSearchBar({
     <div className="flex items-center gap-2">
       {savedSearches.length > 0 && (
         <div className="dropdown">
-          <button tabIndex={0} type="button" className="btn btn-outline btn-sm">
+          <button tabIndex={0} type="button" className="btn btn-secondary btn-sm">
             Saved searches
           </button>
           <ul
@@ -63,6 +63,11 @@ export function SavedSearchBar({
                 </div>
               </li>
             ))}
+            <li className="mt-1 pt-1 border-t border-base-300">
+              <a href="/searches" className="text-base text-base-content/60">
+                Manage all searches →
+              </a>
+            </li>
           </ul>
         </div>
       )}
@@ -81,12 +86,12 @@ export function SavedSearchBar({
           <button type="button" className="btn btn-primary btn-sm" disabled={isSaving} onClick={handleSave}>
             {isSaving ? <span className="loading loading-spinner loading-xs" /> : "Save"}
           </button>
-          <button type="button" className="btn btn-ghost btn-sm" onClick={() => setNaming(false)}>
+          <button type="button" className="btn btn-neutral btn-sm" onClick={() => setNaming(false)}>
             Cancel
           </button>
         </div>
       ) : (
-        <button type="button" className="btn btn-outline btn-sm" onClick={() => setNaming(true)}>
+        <button type="button" className="btn btn-accent btn-sm" onClick={() => setNaming(true)}>
           Save this search
         </button>
       )}

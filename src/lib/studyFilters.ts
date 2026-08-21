@@ -40,6 +40,36 @@ export function parseStudyFilterParams(params: StudyFilterSearchParams) {
 
 export type ParsedStudyFilters = ReturnType<typeof parseStudyFilterParams>
 
+// Turns a stored `?q=...&stage=1` query string back into filter params —
+// used when re-running a saved search server-side.
+export function parseStudyFilterQueryString(query: string) {
+  const sp = new URLSearchParams(query)
+  return parseStudyFilterParams({
+    q: sp.get("q") ?? undefined,
+    keyword: sp.get("keyword") ?? undefined,
+    stage: sp.get("stage") ?? undefined,
+    openAccess: sp.get("openAccess") ?? undefined,
+    venue: sp.get("venue") ?? undefined,
+    yearFrom: sp.get("yearFrom") ?? undefined,
+    yearTo: sp.get("yearTo") ?? undefined,
+  })
+}
+
+const STAGE_LABELS: Record<string, string> = { "1": "Stage 1", "2": "Stage 2", both: "Stage 1 + 2" }
+const OPEN_ACCESS_LABELS: Record<string, string> = { yes: "Open access", no: "Not open access" }
+
+// Human-readable chips summarizing a saved search's criteria for display.
+export function describeStudyFilters(filters: ParsedStudyFilters): string[] {
+  const chips: string[] = []
+  if (filters.q) chips.push(`"${filters.q}"`)
+  if (filters.stage) chips.push(STAGE_LABELS[filters.stage] ?? filters.stage)
+  if (filters.openAccess) chips.push(OPEN_ACCESS_LABELS[filters.openAccess] ?? filters.openAccess)
+  if (filters.yearFrom || filters.yearTo) chips.push(`${filters.yearFrom ?? "…"}–${filters.yearTo ?? "…"}`)
+  filters.keywords.forEach((k) => chips.push(k))
+  filters.venues.forEach((v) => chips.push(v))
+  return chips
+}
+
 export async function buildStudyWhere(filters: ParsedStudyFilters) {
   const { q, keywords, venues, stage, openAccess, yearFrom, yearTo } = filters
 
