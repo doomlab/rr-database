@@ -15,6 +15,21 @@ const FIELDS = [
   "pages",
   "publisher",
   "url",
+  "issn",
+  "language",
+  "itemType",
+  "pdfUrl",
+  "openAccess",
+  "openAccessStatus",
+  "citedByCount",
+  "openalexId",
+  "registrationUrl",
+  "registrationPlatform",
+  "biasLevel",
+  "openDataUrl",
+  "openCodeUrl",
+  "openMaterialsUrl",
+  "zoteroNotes",
 ] as const
 
 export default async function MetadataQueuePage({

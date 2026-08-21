@@ -16,11 +16,65 @@ export default resolver.pipe(
     })
 
     if (apply) {
-      const { title, doi, abstract, year, venue, volume, issue, pages, publisher, url } = suggestion
+      const {
+        title,
+        doi,
+        abstract,
+        year,
+        venue,
+        volume,
+        issue,
+        pages,
+        publisher,
+        url,
+        issn,
+        language,
+        itemType,
+        pdfUrl,
+        openAccess,
+        openAccessStatus,
+        citedByCount,
+        openalexId,
+        registrationUrl,
+        registrationPlatform,
+        biasLevel,
+        openDataUrl,
+        openCodeUrl,
+        openMaterialsUrl,
+        zoteroNotes,
+        tags,
+        keywords,
+      } = suggestion
       const updates = Object.fromEntries(
-        Object.entries({ title, doi, abstract, year, venue, volume, issue, pages, publisher, url }).filter(
-          ([, v]) => v !== null && v !== undefined
-        )
+        Object.entries({
+          title,
+          doi,
+          abstract,
+          year,
+          venue,
+          volume,
+          issue,
+          pages,
+          publisher,
+          url,
+          issn,
+          language,
+          itemType,
+          pdfUrl,
+          openAccess,
+          openAccessStatus,
+          citedByCount,
+          openalexId,
+          registrationUrl,
+          registrationPlatform,
+          biasLevel,
+          openDataUrl,
+          openCodeUrl,
+          openMaterialsUrl,
+          zoteroNotes,
+          ...(tags.length > 0 ? { tags } : {}),
+          ...(keywords.length > 0 ? { keywords } : {}),
+        }).filter(([, v]) => v !== null && v !== undefined)
       )
       if (Object.keys(updates).length > 0) {
         await db.paper.update({ where: { id: suggestion.paperId }, data: updates })

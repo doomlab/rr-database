@@ -9,32 +9,66 @@ import suggestMetadataEdit from "../../../(dashboard)/mutations/suggestMetadataE
 type FieldKey =
   | "title"
   | "doi"
-  | "abstract"
-  | "year"
+  | "url"
+  | "pdfUrl"
   | "venue"
+  | "publisher"
+  | "year"
   | "volume"
   | "issue"
   | "pages"
-  | "publisher"
-  | "url"
+  | "issn"
+  | "language"
+  | "itemType"
+  | "openAccess"
+  | "openAccessStatus"
+  | "citedByCount"
+  | "openalexId"
+  | "registrationUrl"
+  | "registrationPlatform"
+  | "biasLevel"
+  | "openDataUrl"
+  | "openCodeUrl"
+  | "openMaterialsUrl"
+  | "tags"
+  | "keywords"
+  | "abstract"
+  | "zoteroNotes"
 
-type FieldType = "text" | "textarea" | "number"
+type FieldType = "text" | "textarea" | "number" | "boolean"
 
 const FIELDS: { key: FieldKey; label: string; type: FieldType }[] = [
   { key: "title", label: "Title", type: "text" },
   { key: "doi", label: "DOI", type: "text" },
+  { key: "url", label: "URL", type: "text" },
+  { key: "pdfUrl", label: "PDF URL", type: "text" },
   { key: "venue", label: "Venue", type: "text" },
   { key: "publisher", label: "Publisher", type: "text" },
   { key: "year", label: "Year", type: "number" },
   { key: "volume", label: "Volume", type: "text" },
   { key: "issue", label: "Issue", type: "text" },
   { key: "pages", label: "Pages", type: "text" },
-  { key: "url", label: "URL", type: "text" },
+  { key: "issn", label: "ISSN", type: "text" },
+  { key: "language", label: "Language", type: "text" },
+  { key: "itemType", label: "Item type", type: "text" },
+  { key: "openAccess", label: "Open access", type: "boolean" },
+  { key: "openAccessStatus", label: "Open access status", type: "text" },
+  { key: "citedByCount", label: "Cited by count", type: "number" },
+  { key: "openalexId", label: "OpenAlex ID", type: "text" },
+  { key: "registrationUrl", label: "Registration URL", type: "text" },
+  { key: "registrationPlatform", label: "Registration platform", type: "text" },
+  { key: "biasLevel", label: "Bias level", type: "text" },
+  { key: "openDataUrl", label: "Open data URL", type: "text" },
+  { key: "openCodeUrl", label: "Open code URL", type: "text" },
+  { key: "openMaterialsUrl", label: "Open materials URL", type: "text" },
+  { key: "tags", label: "Tags (comma-separated)", type: "text" },
+  { key: "keywords", label: "Keywords (comma-separated)", type: "text" },
   { key: "abstract", label: "Abstract", type: "textarea" },
+  { key: "zoteroNotes", label: "Notes (from Zotero)", type: "textarea" },
 ]
 
-type Initial = Record<FieldKey, string | number | null>
-type FormValues = Record<FieldKey, string | number | null>
+type Initial = Record<FieldKey, string | number | boolean | null>
+type FormValues = Record<FieldKey, string | number | boolean | null>
 
 export function SuggestEditForm({
   paperId,
@@ -54,11 +88,11 @@ export function SuggestEditForm({
   const [submit, submitState] = useMutation(suggestMetadataEdit)
   const isSubmitting = (submitState as any).isLoading
 
-  const setField = (key: FieldKey, value: string) => {
+  const setField = (key: FieldKey, value: string | boolean | null) => {
     setValues((v) => ({ ...v, [key]: value }))
   }
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent, markVerified = false) => {
     e.preventDefault()
     setError(null)
     try {
@@ -74,7 +108,26 @@ export function SuggestEditForm({
         pages: emptyToNull(values.pages),
         publisher: emptyToNull(values.publisher),
         url: emptyToNull(values.url),
+        issn: emptyToNull(values.issn),
+        language: emptyToNull(values.language),
+        itemType: emptyToNull(values.itemType),
+        pdfUrl: emptyToNull(values.pdfUrl),
+        openAccess: typeof values.openAccess === "boolean" ? values.openAccess : null,
+        openAccessStatus: emptyToNull(values.openAccessStatus),
+        citedByCount:
+          values.citedByCount === "" || values.citedByCount == null ? null : Number(values.citedByCount),
+        openalexId: emptyToNull(values.openalexId),
+        registrationUrl: emptyToNull(values.registrationUrl),
+        registrationPlatform: emptyToNull(values.registrationPlatform),
+        biasLevel: emptyToNull(values.biasLevel),
+        openDataUrl: emptyToNull(values.openDataUrl),
+        openCodeUrl: emptyToNull(values.openCodeUrl),
+        openMaterialsUrl: emptyToNull(values.openMaterialsUrl),
+        zoteroNotes: emptyToNull(values.zoteroNotes),
+        tags: splitList(values.tags),
+        keywords: splitList(values.keywords).map((k) => k.toLowerCase()),
         note: emptyToNull(note),
+        markVerified,
       })
       router.push(backHref as Route)
       router.refresh()
@@ -97,6 +150,16 @@ export function SuggestEditForm({
               value={(values[key] as string) ?? ""}
               onChange={(e) => setField(key, e.target.value)}
             />
+          ) : type === "boolean" ? (
+            <select
+              className="select select-bordered w-full"
+              value={values[key] == null ? "" : String(values[key])}
+              onChange={(e) => setField(key, e.target.value === "" ? null : e.target.value === "true")}
+            >
+              <option value="">Unknown</option>
+              <option value="true">Yes</option>
+              <option value="false">No</option>
+            </select>
           ) : (
             <input
               type={type === "number" ? "number" : "text"}
@@ -130,11 +193,21 @@ export function SuggestEditForm({
           {isSubmitting ? (
             <span className="loading loading-spinner loading-sm" />
           ) : isAdmin ? (
-            "Save changes"
+            "Save"
           ) : (
             "Submit suggestion"
           )}
         </button>
+        {isAdmin && (
+          <button
+            type="button"
+            className="btn btn-success btn-md text-base"
+            disabled={isSubmitting}
+            onClick={(e) => handleSubmit(e, true)}
+          >
+            Save and mark verified
+          </button>
+        )}
         <a href={backHref} className="btn btn-secondary btn-md text-base">
           Cancel
         </a>
@@ -143,8 +216,15 @@ export function SuggestEditForm({
   )
 }
 
-function emptyToNull(value: string | number | null | undefined): string | null {
+function emptyToNull(value: string | number | boolean | null | undefined): string | null {
   if (value == null) return null
   const str = String(value).trim()
   return str === "" ? null : str
+}
+
+function splitList(value: string | number | boolean | null | undefined): string[] {
+  return String(value ?? "")
+    .split(",")
+    .map((v) => v.trim())
+    .filter(Boolean)
 }

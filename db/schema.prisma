@@ -459,6 +459,23 @@ model MetadataEditSuggestion {
   pages     String?
   publisher String?
   url       String?
+  issn                  String?
+  language              String?
+  itemType              String?
+  pdfUrl                String?
+  openAccess            Boolean?
+  openAccessStatus      String?
+  citedByCount          Int?
+  openalexId            String?
+  registrationUrl       String?
+  registrationPlatform  String?
+  biasLevel             String?
+  openDataUrl           String?
+  openCodeUrl           String?
+  openMaterialsUrl      String?
+  zoteroNotes           String?
+  tags                  String[] @default([])
+  keywords              String[] @default([])
   note      String?
 
   resolved Boolean @default(false)

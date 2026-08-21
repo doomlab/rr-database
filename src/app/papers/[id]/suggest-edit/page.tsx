@@ -10,8 +10,15 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
   return { title: paper ? `Suggest an edit — ${paper.title}` : "Suggest an edit" }
 }
 
-export default async function SuggestEditPage({ params }: { params: Promise<{ id: string }> }) {
+export default async function SuggestEditPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ id: string }>
+  searchParams: Promise<{ back?: string }>
+}) {
   const { id } = await params
+  const { back } = await searchParams
   const ctx = await getBlitzContext()
   const userId = ctx.session.userId as number | undefined
   const isAdmin = ctx.session.role === "ADMIN" || ctx.session.role === "SUPER_ADMIN"
@@ -29,11 +36,17 @@ export default async function SuggestEditPage({ params }: { params: Promise<{ id
   // study page 404s once none of its papers are IMPORTED/APPROVED.
   const isConfirmed = paper.status === "IMPORTED" || paper.status === "APPROVED"
   const backHref =
-    paper.studyPaper && isConfirmed ? `/studies/${paper.studyPaper.studyId}` : `/papers/${paper.id}`
+    back && isAdmin && back.startsWith("/")
+      ? back
+      : paper.studyPaper && isConfirmed
+        ? `/studies/${paper.studyPaper.studyId}`
+        : `/papers/${paper.id}`
 
   const initial = {
     title: paper.title,
     doi: paper.doi,
+    url: paper.url,
+    pdfUrl: paper.pdfUrl,
     abstract: paper.abstract,
     year: paper.year,
     venue: paper.venue,
@@ -41,7 +54,22 @@ export default async function SuggestEditPage({ params }: { params: Promise<{ id
     issue: paper.issue,
     pages: paper.pages,
     publisher: paper.publisher,
-    url: paper.url,
+    issn: paper.issn,
+    language: paper.language,
+    itemType: paper.itemType,
+    openAccess: paper.openAccess,
+    openAccessStatus: paper.openAccessStatus,
+    citedByCount: paper.citedByCount,
+    openalexId: paper.openalexId,
+    registrationUrl: paper.registrationUrl,
+    registrationPlatform: paper.registrationPlatform,
+    biasLevel: paper.biasLevel,
+    openDataUrl: paper.openDataUrl,
+    openCodeUrl: paper.openCodeUrl,
+    openMaterialsUrl: paper.openMaterialsUrl,
+    zoteroNotes: paper.zoteroNotes,
+    tags: paper.tags.join(", "),
+    keywords: paper.keywords.join(", "),
   }
 
   return (

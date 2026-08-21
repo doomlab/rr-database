@@ -14,18 +14,42 @@ const SuggestMetadataEdit = z.object({
   pages: z.string().nullable(),
   publisher: z.string().nullable(),
   url: z.string().nullable(),
+  issn: z.string().nullable(),
+  language: z.string().nullable(),
+  itemType: z.string().nullable(),
+  pdfUrl: z.string().nullable(),
+  openAccess: z.boolean().nullable(),
+  openAccessStatus: z.string().nullable(),
+  citedByCount: z.number().nullable(),
+  openalexId: z.string().nullable(),
+  registrationUrl: z.string().nullable(),
+  registrationPlatform: z.string().nullable(),
+  biasLevel: z.string().nullable(),
+  openDataUrl: z.string().nullable(),
+  openCodeUrl: z.string().nullable(),
+  openMaterialsUrl: z.string().nullable(),
+  zoteroNotes: z.string().nullable(),
+  tags: z.array(z.string()),
+  keywords: z.array(z.string()),
   note: z.string().max(1000).nullable(),
+  markVerified: z.boolean().optional(),
 })
 
 export default resolver.pipe(
   resolver.zod(SuggestMetadataEdit),
   resolver.authorize(),
-  async ({ paperId, note, ...fields }, ctx) => {
+  async ({ paperId, note, markVerified, ...fields }, ctx) => {
     const userId = ctx.session.userId as number
     const isAdmin = ctx.session.role === "ADMIN" || ctx.session.role === "SUPER_ADMIN"
 
     if (isAdmin) {
-      const updates = Object.fromEntries(Object.entries(fields).filter(([, v]) => v !== null))
+      const updates: Record<string, unknown> = Object.fromEntries(
+        Object.entries(fields).filter(([, v]) => v !== null)
+      )
+      if (markVerified) {
+        updates.metadataVerifiedById = userId
+        updates.metadataVerifiedAt = new Date()
+      }
       const [updated] = await db.$transaction([
         db.paper.update({ where: { id: paperId }, data: updates }),
         db.paperEditHistory.create({ data: { paperId, userId, source: "manual", summary: note ?? undefined } }),

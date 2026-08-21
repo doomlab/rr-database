@@ -42,11 +42,7 @@ export default async function AdminHomePage() {
     db.paper.count({ where: { status: "PENDING_REVIEW", canonicalPaperId: null } }),
     countLinkNeedsReviewGroups(),
     db.paper.count({
-      where: {
-        canonicalPaperId: null,
-        metadataVerifiedAt: null,
-        OR: [{ openSciencePracticesScannedAt: { not: null } }, { jmirBadgeCheckedAt: { not: null } }],
-      },
+      where: { canonicalPaperId: null, status: { in: ["IMPORTED", "APPROVED"] }, metadataVerifiedAt: null },
     }),
   ])
 
@@ -149,7 +145,7 @@ export default async function AdminHomePage() {
 
         <WorkflowCard
           title="Metadata review"
-          description="Open science links and JMIR badge info are detected/entered one paper at a time from that paper's own page (look for the scan/badge buttons there) — this is where you confirm the results are correct. Papers show up here once something's been auto-filled, and drop off once you mark them verified."
+          description="Confirm each confirmed paper's metadata is correct — tags, open science links, JMIR badge info, and anything else added or edited. Open science links and JMIR badge info are detected/entered one paper at a time from that paper's own page (look for the scan/badge buttons there)."
           badge={metadataReviewCount}
         >
           <a href="/admin/metadata-review" className="btn btn-primary btn-sm text-base">

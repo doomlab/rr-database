@@ -190,24 +190,19 @@ export function PaperRecordSection({
             />
           )}
           <a href={suggestEditHref} className="btn btn-warning btn-md text-base">
-            Suggest edit
+            {isAdmin ? "Edit metadata" : "Suggest edit"}
           </a>
+          {isAdmin && !paper.metadataVerifiedAt && <VerifyMetadataButton paperId={paper.id} />}
         </div>
         <ReportButton paperId={paper.id} initialReported={isReported} isLoggedIn={!!userId} />
       </div>
 
-      {isAdmin && (paper.openSciencePracticesScannedAt || paper.jmirBadgeCheckedAt) && (
-        <div className="mb-3">
-          {paper.metadataVerifiedAt ? (
-            <p className="text-base text-success">
-              Metadata verified by{" "}
-              {paper.metadataVerifiedBy?.name ?? paper.metadataVerifiedBy?.email ?? "someone"} on{" "}
-              {paper.metadataVerifiedAt.toLocaleDateString()}
-            </p>
-          ) : (
-            <VerifyMetadataButton paperId={paper.id} />
-          )}
-        </div>
+      {isAdmin && paper.metadataVerifiedAt && (
+        <p className="text-base text-success mb-3">
+          Metadata verified by{" "}
+          {paper.metadataVerifiedBy?.name ?? paper.metadataVerifiedBy?.email ?? "someone"} on{" "}
+          {paper.metadataVerifiedAt.toLocaleDateString()}
+        </p>
       )}
 
       <div className="space-y-1.5 text-base">

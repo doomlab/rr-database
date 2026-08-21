@@ -29,14 +29,7 @@ export async function Navbar() {
         db.extractionEditSuggestion.count({ where: { resolved: false } }),
         countLinkNeedsReviewGroups(),
         db.paper.count({
-          where: {
-            canonicalPaperId: null,
-            metadataVerifiedAt: null,
-            OR: [
-              { openSciencePracticesScannedAt: { not: null } },
-              { jmirBadgeCheckedAt: { not: null } },
-            ],
-          },
+          where: { canonicalPaperId: null, status: { in: ["IMPORTED", "APPROVED"] }, metadataVerifiedAt: null },
         }),
       ])
     : [0, 0, 0, 0, 0, 0, 0]
