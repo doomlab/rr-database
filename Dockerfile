@@ -5,8 +5,13 @@ WORKDIR /app
 # whole Node process on Alpine's musl libc, which silently exits the
 # container the moment login/signup hashes a password. Debian slim (glibc)
 # avoids that; do not switch this back to an alpine base.
-RUN apt-get update && apt-get install -y --no-install-recommends openssl ca-certificates \
+RUN apt-get update && apt-get install -y --no-install-recommends openssl ca-certificates python3 python3-pip \
     && rm -rf /var/lib/apt/lists/*
+# scholarly (unofficial Google Scholar client) is only used by
+# scripts/query_google_scholar.py, spawned as a subprocess from the "Pull
+# from Google Scholar" admin action — Debian bookworm's system Python is
+# externally managed, hence --break-system-packages.
+RUN pip3 install --no-cache-dir --break-system-packages scholarly
 
 FROM base AS deps
 COPY package.json package-lock.json ./
@@ -29,6 +34,7 @@ COPY --from=builder /app/db ./db
 COPY --from=builder /app/package.json ./package.json
 COPY --from=builder /app/next.config.js ./next.config.js
 COPY --from=builder /app/types.ts ./types.ts
+COPY --from=builder /app/scripts/query_google_scholar.py ./scripts/query_google_scholar.py
 
 EXPOSE 3000
 

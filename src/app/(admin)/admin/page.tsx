@@ -1,6 +1,11 @@
 import db from "db"
 import { getBlitzContext } from "src/app/blitz-server"
-import { lastZoteroRun, lastPipelineRun, openAlexYearRunHistory } from "src/lib/pipelineRuns"
+import {
+  lastZoteroRun,
+  lastPipelineRun,
+  openAlexYearRunHistory,
+  googleScholarYearRunHistory,
+} from "src/lib/pipelineRuns"
 import { userHasOpenAlexApiKey } from "src/lib/apiKeyPool"
 import { countLinkNeedsReviewGroups } from "src/lib/duplicateClusters"
 import { WorkflowCard } from "../components/WorkflowCard"
@@ -8,6 +13,7 @@ import { RunCard } from "../components/RunCard"
 import { RunImportButton } from "../components/RunImportButton"
 import { DiscoverOpenAlexYearButton } from "../components/DiscoverOpenAlexYearButton"
 import { DiscoverOpenAlexRecentButton } from "../components/DiscoverOpenAlexRecentButton"
+import { DiscoverGoogleScholarYearButton } from "../components/DiscoverGoogleScholarYearButton"
 import { RunAuthorMetaBackfillButton } from "../components/RunAuthorMetaBackfillButton"
 
 // Registered reports as a format only really got going around 2013.
@@ -30,8 +36,10 @@ export default async function AdminHomePage() {
     stagingCollectionsRun,
     openAlexYearRun,
     openAlexRecentRun,
+    googleScholarYearRun,
     authorMetaBackfillRun,
     yearRunHistory,
+    scholarYearRunHistory,
     reviewCount,
     linkGroupCount,
     metadataReviewCount,
@@ -42,8 +50,10 @@ export default async function AdminHomePage() {
     isSuperAdmin ? lastZoteroRun("[stagingCollections]") : Promise.resolve(null),
     lastPipelineRun("QUERY_OPENALEX", "[openalex:year:"),
     lastPipelineRun("QUERY_OPENALEX", "[openalex:recent]"),
+    lastPipelineRun("QUERY_GOOGLE_SCHOLAR", "[scholar:year:"),
     lastPipelineRun("ENRICH", "[author-meta-backfill]"),
     openAlexYearRunHistory(),
+    googleScholarYearRunHistory(),
     db.paper.count({ where: { status: "PENDING_REVIEW", canonicalPaperId: null } }),
     countLinkNeedsReviewGroups(),
     db.paper.count({
@@ -101,33 +111,44 @@ export default async function AdminHomePage() {
           title="Add new papers"
           description="Search external sources for new registered reports and bring candidates into the database as Pending review. Anything already in the database (matched by DOI or OpenAlex ID) is skipped automatically, so these are always safe to re-run. We're building this out one search at a time."
         >
-          {hasOpenAlexApiKey ? (
-            <div className="flex flex-col gap-4">
-              <RunCard
-                title="Pull a specific year"
-                description={`Searches OpenAlex for works matching "registered report", "preregistered report", "pre-registered report", or "preregistered research" published in the chosen year. Useful for a one-off backfill of an older year.`}
-                run={openAlexYearRun}
-                nested
-              >
-                <DiscoverOpenAlexYearButton years={years} runHistory={yearRunHistory} />
-              </RunCard>
+          <div className="flex flex-col gap-4">
+            {hasOpenAlexApiKey ? (
+              <>
+                <RunCard
+                  title="Pull a specific year"
+                  description={`Searches OpenAlex for works matching "registered report", "preregistered report", "pre-registered report", or "preregistered research" published in the chosen year. Useful for a one-off backfill of an older year.`}
+                  run={openAlexYearRun}
+                  nested
+                >
+                  <DiscoverOpenAlexYearButton years={years} runHistory={yearRunHistory} />
+                </RunCard>
 
-              <RunCard
-                title="Pull the last two years"
-                description="Runs the same search across the last two years, to catch anything newly indexed or backdated by OpenAlex since the last time this ran. This is the one to run routinely."
-                run={openAlexRecentRun}
-                nested
-              >
-                <DiscoverOpenAlexRecentButton />
-              </RunCard>
-            </div>
-          ) : (
-            <div className="tooltip" data-tip="Add an OpenAlex key on your Account page to enable searching">
-              <button type="button" className="btn btn-accent btn-sm text-base" disabled>
-                Search OpenAlex
-              </button>
-            </div>
-          )}
+                <RunCard
+                  title="Pull the last two years"
+                  description="Runs the same search across the last two years, to catch anything newly indexed or backdated by OpenAlex since the last time this ran. This is the one to run routinely."
+                  run={openAlexRecentRun}
+                  nested
+                >
+                  <DiscoverOpenAlexRecentButton />
+                </RunCard>
+              </>
+            ) : (
+              <div className="tooltip" data-tip="Add an OpenAlex key on your Account page to enable searching">
+                <button type="button" className="btn btn-accent btn-sm text-base" disabled>
+                  Search OpenAlex
+                </button>
+              </div>
+            )}
+
+            <RunCard
+              title="Pull a specific year from Google Scholar"
+              description={`Searches Google Scholar for the same RR phrases, restricted to the chosen year. This uses Scholar's unofficial search access (no official API exists), so each run is capped at 50 results (~5 pages) to stay under the radar — anything already in the database (by DOI or a close title match) is skipped automatically.`}
+              run={googleScholarYearRun}
+              nested
+            >
+              <DiscoverGoogleScholarYearButton years={years} runHistory={scholarYearRunHistory} />
+            </RunCard>
+          </div>
         </WorkflowCard>
 
         <WorkflowCard

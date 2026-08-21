@@ -5,8 +5,8 @@
 // under one source, so a "pull by year" run mixes actual Registered Report
 // articles in with PCI's own commentary on them.
 
-import db, { StudyPaperRole } from "db"
-import { bestTitleMatch, normalizeTitle, significantWords } from "./duplicateClusters"
+import { StudyPaperRole } from "db"
+import { findMatchingPaper } from "./duplicateClusters"
 
 export const PCIRR_SOURCE_NAME = "Peer Community In Registered Reports"
 export const PCIRR_DOI_PREFIX = "10.24072/pci.rr."
@@ -44,26 +44,3 @@ export function detectPcirrDocument(title: string): PcirrDocument | null {
   return null
 }
 
-// Looks for an existing paper whose title matches `strippedTitle` closely
-// enough to be confident it's the same underlying study — scoped to a small
-// candidate set (papers sharing a distinctive significant word) rather than
-// loading the whole table.
-export async function findMatchingPaper(
-  strippedTitle: string
-): Promise<{ id: number; title: string; studyPaper: { studyId: number } | null } | null> {
-  const words = Array.from(significantWords(normalizeTitle(strippedTitle)))
-    .sort((a, b) => b.length - a.length)
-    .slice(0, 3)
-  if (words.length === 0) return null
-
-  const candidates = await db.paper.findMany({
-    where: {
-      OR: words.map((w) => ({ title: { contains: w, mode: "insensitive" as const } })),
-      status: { notIn: ["REJECTED", "DUPLICATE"] },
-    },
-    select: { id: true, title: true, studyPaper: { select: { studyId: true } } },
-    take: 50,
-  })
-
-  return bestTitleMatch(strippedTitle, candidates)
-}

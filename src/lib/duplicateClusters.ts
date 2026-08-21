@@ -156,6 +156,32 @@ export function bestTitleMatch<T extends ClusterablePaper>(title: string, candid
   return scored[0]!.candidate
 }
 
+// Looks for an existing paper whose title matches `title` closely enough to
+// be confident it's the same underlying work — scoped to a small candidate
+// set (papers sharing a distinctive significant word) rather than loading
+// the whole table. Used to avoid re-discovering a paper we already have
+// under a different DOI/no DOI at all (e.g. Google Scholar results, PCI RR's
+// own commentary documents).
+export async function findMatchingPaper(
+  title: string
+): Promise<{ id: number; title: string; studyPaper: { studyId: number } | null } | null> {
+  const words = Array.from(significantWords(normalizeTitle(title)))
+    .sort((a, b) => b.length - a.length)
+    .slice(0, 3)
+  if (words.length === 0) return null
+
+  const candidates = await db.paper.findMany({
+    where: {
+      OR: words.map((w) => ({ title: { contains: w, mode: "insensitive" as const } })),
+      status: { notIn: ["REJECTED", "DUPLICATE"] },
+    },
+    select: { id: true, title: true, studyPaper: { select: { studyId: true } } },
+    take: 50,
+  })
+
+  return bestTitleMatch(title, candidates)
+}
+
 // Single source of truth for "how many things need attention on the Link
 // papers page" — used by the nav badge, the admin home card, and the stats
 // page, so they can't drift out of sync with what that page actually shows

@@ -1,7 +1,8 @@
 import db from "db"
 import { withOpenAlexApiKey } from "./openAlexApiKey"
 import { upsertAuthors } from "./zoteroImport"
-import { detectPcirrDocument, findMatchingPaper, isPcirrWork } from "./pcirr"
+import { detectPcirrDocument, isPcirrWork } from "./pcirr"
+import { findMatchingPaper } from "./duplicateClusters"
 import { STUDY_PAPER_ROLE_LABELS } from "./studyPaperRoles"
 
 const HEADERS = { "User-Agent": "mailto:buchananlab@gmail.com" }
