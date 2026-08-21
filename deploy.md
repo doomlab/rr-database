@@ -8,9 +8,9 @@ services are defined in `docker-compose.yml`.
 
 - A server (Linux, x86_64 or arm64) with Docker and the Docker Compose plugin
   installed.
-- Two DNS records pointing at the server's IP:
-  - `APP_DOMAIN` (e.g. `rr-database.example.org`) → the app
-  - `PGADMIN_DOMAIN` (e.g. `pgadmin.rr-database.example.org`) → pgAdmin4
+- A DNS record pointing at the server's IP: `APP_DOMAIN` (e.g.
+  `rr-database.example.org`). pgAdmin4 is served under the same domain at
+  `/pgadmin` (see Caddyfile) — no separate subdomain/DNS record needed.
 - Ports 80 and 443 open/forwarded to the server (Caddy needs 80 for the
   Let's Encrypt HTTP-01 challenge, and it redirects to 443 for HTTPS).
 
@@ -43,11 +43,10 @@ Docker. This section is just how to get that server if you're using
    (22) by default, separately from any firewall inside the OS itself. Caddy
    won't be able to get a certificate until 80 is open.
 
-4. **Point DNS at the static IP.** Create the `APP_DOMAIN` and
-   `PGADMIN_DOMAIN` A records (see Prerequisites below) pointing at the
-   static IP from step 2. Give DNS a few minutes to propagate before moving
-   on — Let's Encrypt's HTTP-01 challenge in step 2 further down will fail
-   if it can't resolve yet.
+4. **Point DNS at the static IP.** Create the `APP_DOMAIN` A record (see
+   Prerequisites below) pointing at the static IP from step 2. Give DNS a
+   few minutes to propagate before moving on — Let's Encrypt's HTTP-01
+   challenge in step 2 further down will fail if it can't resolve yet.
 
 5. **SSH in and install Docker.** Use the "Connect using SSH" button in the
    console, or your own SSH client with the downloaded key pair (default
@@ -96,8 +95,8 @@ cp .env.docker.example .env.docker
   makes previously saved keys undecryptable, so back it up somewhere safe.
   Leave `DATABASE_URL` as-is; docker-compose overrides it with the Postgres
   container's connection string.
-- `.env.docker` — Postgres credentials, pgAdmin login, and the two domains
-  from above. Use strong, unique passwords — this file holds real secrets.
+- `.env.docker` — Postgres credentials, pgAdmin login, and the domain from
+  above. Use strong, unique passwords — this file holds real secrets.
 
 None of these files should be committed (`.env*` is already in `.gitignore`).
 
@@ -117,7 +116,8 @@ Watch the logs until Caddy reports it obtained certificates:
 docker compose logs -f caddy
 ```
 
-Then visit `https://<APP_DOMAIN>` and `https://<PGADMIN_DOMAIN>`.
+Then visit `https://<APP_DOMAIN>` (the app) and `https://<APP_DOMAIN>/pgadmin`
+(pgAdmin4).
 
 ## 3. Create the first admin user
 
@@ -199,9 +199,9 @@ docker compose down                # stop everything (volumes persist)
 Caddy handles certificate issuance and renewal automatically — there's no
 certbot/cron step to maintain. Certificates and Caddy's internal state are
 stored in the `caddy_data`/`caddy_config` volumes, so they survive
-`docker compose down` / `up` cycles. If you change `APP_DOMAIN` or
-`PGADMIN_DOMAIN` in `.env.docker`, restart the `caddy` service so it picks up
-the new `Caddyfile` values and issues fresh certificates:
+`docker compose down` / `up` cycles. If you change `APP_DOMAIN` in
+`.env.docker`, restart the `caddy` service so it picks up the new
+`Caddyfile` values and issues fresh certificates:
 
 ```bash
 docker compose --env-file .env.docker up -d caddy

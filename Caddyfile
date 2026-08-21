@@ -3,9 +3,12 @@
 }
 
 {$APP_DOMAIN} {
-    reverse_proxy app:3000
-}
-
-{$PGADMIN_DOMAIN} {
-    reverse_proxy pgadmin:80
+    handle_path /pgadmin* {
+        reverse_proxy pgadmin:80 {
+            header_up X-Script-Name /pgadmin
+        }
+    }
+    handle {
+        reverse_proxy app:3000
+    }
 }

@@ -48,6 +48,10 @@ services:
       PGADMIN_DEFAULT_EMAIL: ${PGADMIN_DEFAULT_EMAIL}
       PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_DEFAULT_PASSWORD}
       PGADMIN_LISTEN_PORT: 80
+      # Served at APP_DOMAIN/pgadmin (see Caddyfile) rather than its own
+      # subdomain — this tells pgAdmin4 to generate links/assets assuming
+      # that path prefix instead of running at the root.
+      SCRIPT_NAME: /pgadmin
     volumes:
       - pgadmin_data:/var/lib/pgadmin
     depends_on:
@@ -63,7 +67,6 @@ services:
       - "443:443"
     environment:
       APP_DOMAIN: ${APP_DOMAIN}
-      PGADMIN_DOMAIN: ${PGADMIN_DOMAIN}
       LETSENCRYPT_EMAIL: ${LETSENCRYPT_EMAIL}
     volumes:
       - ./Caddyfile:/etc/caddy/Caddyfile
