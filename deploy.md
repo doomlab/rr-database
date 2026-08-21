@@ -14,6 +14,66 @@ services are defined in `docker-compose.yml`.
 - Ports 80 and 443 open/forwarded to the server (Caddy needs 80 for the
   Let's Encrypt HTTP-01 challenge, and it redirects to 443 for HTTPS).
 
+## 0. Setting up the server on AWS Lightsail
+
+Everything below this section is generic — it works on any server with
+Docker. This section is just how to get that server if you're using
+[Lightsail](https://lightsail.aws.amazon.com/) specifically.
+
+1. **Create the instance.** Lightsail console → Create instance:
+   - Platform: Linux/Unix.
+   - Blueprint: **OS Only → Ubuntu 22.04 LTS** (not one of the "app" blueprints
+     — Docker isn't preinstalled on any of them, and the plain OS image keeps
+     things simple).
+   - Instance plan: pick one with **at least 2 GB RAM**. `npm run build`
+     compiles the whole Next.js app inside the Docker build step, and that
+     step alone regularly wants more than 1 GB — the $5/mo/512MB plan will
+     OOM partway through the build. The $10/mo (2 GB) plan is the practical
+     minimum; go to 4 GB if you'll also run Postgres and pgAdmin on the same
+     box under real usage, not just to test the deploy.
+   - Give the instance a name, create it, and wait for it to start.
+
+2. **Attach a static IP.** By default a Lightsail instance's public IP
+   changes if it's ever stopped/restarted, which would silently break DNS.
+   In the instance's *Networking* tab, create and attach a static IP —
+   it's free as long as it stays attached to a running instance.
+
+3. **Open the firewall.** Still in *Networking*, add firewall rules for
+   **HTTP (80)** and **HTTPS (443)** — Lightsail blocks everything but SSH
+   (22) by default, separately from any firewall inside the OS itself. Caddy
+   won't be able to get a certificate until 80 is open.
+
+4. **Point DNS at the static IP.** Create the `APP_DOMAIN` and
+   `PGADMIN_DOMAIN` A records (see Prerequisites below) pointing at the
+   static IP from step 2. Give DNS a few minutes to propagate before moving
+   on — Let's Encrypt's HTTP-01 challenge in step 2 further down will fail
+   if it can't resolve yet.
+
+5. **SSH in and install Docker.** Use the "Connect using SSH" button in the
+   console, or your own SSH client with the downloaded key pair (default
+   user on the Ubuntu blueprint is `ubuntu`):
+
+   ```bash
+   sudo apt-get update
+   sudo apt-get install -y ca-certificates curl gnupg
+   sudo install -m 0755 -d /etc/apt/keyrings
+   curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
+   sudo chmod a+r /etc/apt/keyrings/docker.gpg
+   echo \
+     "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu \
+     $(. /etc/os-release && echo $VERSION_CODENAME) stable" | \
+     sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+   sudo apt-get update
+   sudo apt-get install -y docker-ce docker-ce-cli containerd.io docker-compose-plugin
+   sudo usermod -aG docker $USER
+   ```
+
+   Log out and back in (or run `newgrp docker`) so the group change takes
+   effect, then confirm with `docker compose version`.
+
+With Docker installed and DNS/firewall pointed at the box, continue with
+the steps below exactly as written — they're the same regardless of host.
+
 ## 1. Clone and configure
 
 ```bash
@@ -32,8 +92,8 @@ cp .env.docker.example .env.docker
 - `.env` — Zotero API credentials (see `README.md` for how to get a key).
 - `.env.local` — `SESSION_SECRET_KEY` and `API_KEY_ENCRYPTION_KEY` (each
   generated with `openssl rand -base64 32`). `API_KEY_ENCRYPTION_KEY`
-  encrypts user-contributed OpenAlex/Groq keys at rest — losing or rotating
-  it makes previously saved keys undecryptable, so back it up somewhere safe.
+  encrypts user-contributed OpenAlex keys at rest — losing or rotating it
+  makes previously saved keys undecryptable, so back it up somewhere safe.
   Leave `DATABASE_URL` as-is; docker-compose overrides it with the Postgres
   container's connection string.
 - `.env.docker` — Postgres credentials, pgAdmin login, and the two domains
