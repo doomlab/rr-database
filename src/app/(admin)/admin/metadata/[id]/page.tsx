@@ -67,7 +67,12 @@ export default async function MetadataSuggestionDetailPage({
     ", "
   ) as any
 
-  const suggestionAuthors = suggestion.authors as unknown as { id: number | null; name: string }[]
+  const suggestionAuthors = suggestion.authors as unknown as {
+    id: number | null
+    name: string
+    orcid: string | null
+    openalexAuthorId: string | null
+  }[]
   const currentAuthorsById = new Map(paper.authors.map((pa) => [pa.author.id, pa.author]))
   const initialAuthors =
     suggestionAuthors.length > 0
@@ -76,8 +81,10 @@ export default async function MetadataSuggestionDetailPage({
           return {
             id: a.id,
             name: a.name,
-            orcid: match?.orcid ?? null,
-            openalexAuthorId: match?.openalexAuthorId ?? null,
+            // The suggestion's own value wins if it set one — falls back to
+            // the paper's current data only when the suggester didn't touch it.
+            orcid: a.orcid ?? match?.orcid ?? null,
+            openalexAuthorId: a.openalexAuthorId ?? match?.openalexAuthorId ?? null,
           }
         })
       : paper.authors.map((pa) => ({
