@@ -43,57 +43,78 @@ type FieldKey =
   | "jmirBadgeCounterpartDoi"
 
 type FieldType = "text" | "textarea" | "number" | "boolean" | "select"
+type GroupKey = "identifiers" | "publication" | "openScience" | "classification" | "badges" | "metrics" | "notes"
 
-const FIELDS: { key: FieldKey; label: string; type: FieldType; hint?: string }[] = [
-  { key: "title", label: "Title", type: "text" },
-  { key: "doi", label: "DOI", type: "text" },
+const FIELDS: { key: FieldKey; label: string; type: FieldType; hint?: string; group: GroupKey }[] = [
+  { key: "title", label: "Title", type: "text", group: "publication" },
+  { key: "abstract", label: "Abstract", type: "textarea", group: "publication" },
+  { key: "doi", label: "DOI", type: "text", group: "identifiers" },
   {
     key: "url",
     label: "URL",
     type: "text",
+    group: "identifiers",
     hint: "The article's landing/webpage link — e.g. the publisher or journal page. Not the PDF file itself.",
   },
   {
     key: "pdfUrl",
     label: "PDF URL",
     type: "text",
+    group: "identifiers",
     hint: "A direct link to the PDF file, if one exists (open access copy, preprint, repository copy, etc.).",
   },
-  { key: "venue", label: "Venue", type: "text" },
-  { key: "publisher", label: "Publisher", type: "text" },
-  { key: "year", label: "Year", type: "number" },
-  { key: "volume", label: "Volume", type: "text" },
-  { key: "issue", label: "Issue", type: "text" },
-  { key: "pages", label: "Pages", type: "text" },
-  { key: "issn", label: "ISSN", type: "text" },
-  { key: "language", label: "Language", type: "text" },
-  { key: "itemType", label: "Item type", type: "text" },
-  { key: "openAccess", label: "Open access", type: "boolean" },
-  { key: "openAccessStatus", label: "Open access status", type: "text" },
-  { key: "citedByCount", label: "Cited by count", type: "number" },
-  { key: "openalexId", label: "OpenAlex ID", type: "text" },
-  { key: "registrationUrl", label: "Registration URL", type: "text" },
-  { key: "registrationPlatform", label: "Registration platform", type: "text" },
-  { key: "biasLevel", label: "Bias level", type: "text" },
-  { key: "openDataUrl", label: "Open data URL", type: "text" },
-  { key: "openCodeUrl", label: "Open code URL", type: "text" },
-  { key: "openMaterialsUrl", label: "Open materials URL", type: "text" },
-  { key: "tags", label: "Tags (comma-separated)", type: "text" },
-  { key: "keywords", label: "Keywords (comma-separated)", type: "text" },
+  { key: "itemType", label: "Item type", type: "text", group: "identifiers" },
+  {
+    key: "venue",
+    label: "Venue",
+    type: "text",
+    group: "publication",
+    hint: "The journal (or conference/repository) name — e.g. \"JMIR Research Protocols\" or \"PLOS ONE\".",
+  },
+  { key: "publisher", label: "Publisher", type: "text", group: "publication" },
+  { key: "year", label: "Year", type: "number", group: "publication" },
+  { key: "volume", label: "Volume", type: "text", group: "publication" },
+  { key: "issue", label: "Issue", type: "text", group: "publication" },
+  { key: "pages", label: "Pages", type: "text", group: "publication" },
+  { key: "issn", label: "ISSN", type: "text", group: "publication" },
+  { key: "language", label: "Language", type: "text", group: "publication" },
+  { key: "openAccess", label: "Open access", type: "boolean", group: "openScience" },
+  { key: "openAccessStatus", label: "Open access status", type: "text", group: "openScience" },
+  { key: "registrationUrl", label: "Registration URL", type: "text", group: "openScience" },
+  { key: "registrationPlatform", label: "Registration platform", type: "text", group: "openScience" },
+  { key: "biasLevel", label: "Bias level", type: "text", group: "badges" },
+  { key: "openDataUrl", label: "Open data URL", type: "text", group: "openScience" },
+  { key: "openCodeUrl", label: "Open code URL", type: "text", group: "openScience" },
+  { key: "openMaterialsUrl", label: "Open materials URL", type: "text", group: "openScience" },
+  { key: "tags", label: "Tags (comma-separated)", type: "text", group: "classification" },
+  { key: "keywords", label: "Keywords (comma-separated)", type: "text", group: "classification" },
   {
     key: "jmirBadgeType",
     label: "JMIR badge",
     type: "select",
+    group: "badges",
     hint: "The badge JMIR shows on the article page (Registered Report / Results Available). Only relevant for JMIR journal articles.",
   },
   {
     key: "jmirBadgeCounterpartDoi",
     label: "JMIR badge counterpart DOI",
     type: "text",
+    group: "badges",
     hint: "If the badge links to the paper's Stage 1/2 counterpart, its DOI. Saving this here does not auto-link the papers — use the JMIR badge button on the article page for that.",
   },
-  { key: "abstract", label: "Abstract", type: "textarea" },
-  { key: "zoteroNotes", label: "Notes (from Zotero)", type: "textarea" },
+  { key: "citedByCount", label: "Cited by count", type: "number", group: "metrics" },
+  { key: "openalexId", label: "OpenAlex ID", type: "text", group: "metrics" },
+  { key: "zoteroNotes", label: "Notes (from Zotero)", type: "textarea", group: "notes" },
+]
+
+const GROUPS: { key: GroupKey; label: string; alwaysOpen?: boolean }[] = [
+  { key: "identifiers", label: "Identifiers & links", alwaysOpen: true },
+  { key: "publication", label: "Publication details", alwaysOpen: true },
+  { key: "openScience", label: "Open science & registration" },
+  { key: "classification", label: "Tags & keywords" },
+  { key: "badges", label: "JMIR / PCI RR badges" },
+  { key: "metrics", label: "Metrics & external IDs" },
+  { key: "notes", label: "Notes" },
 ]
 
 type Initial = Record<FieldKey, string | number | boolean | null>
@@ -180,9 +201,77 @@ export function SuggestEditForm({
     }
   }
 
+  const renderField = ({ key, label, type, hint }: (typeof FIELDS)[number]) => {
+    if (key === "openAccessStatus") {
+      return (
+        <OpenAccessStatusField
+          key={key}
+          value={(values.openAccessStatus as string | null) ?? null}
+          onChange={(v) => setField("openAccessStatus", v)}
+        />
+      )
+    }
+    return (
+      <div key={key}>
+        <label className="label py-1 gap-1.5">
+          <span className="label-text font-medium">{label}</span>
+          {hint && (
+            <span className="tooltip tooltip-right" data-tip={hint}>
+              <span className="flex items-center justify-center w-4 h-4 rounded-full border border-info text-[10px] leading-none text-info cursor-help">
+                ?
+              </span>
+            </span>
+          )}
+        </label>
+        {type === "textarea" ? (
+          <textarea
+            className="textarea textarea-bordered w-full"
+            rows={6}
+            value={(values[key] as string) ?? ""}
+            onChange={(e) => setField(key, e.target.value)}
+          />
+        ) : type === "boolean" ? (
+          <select
+            className="select select-bordered w-full"
+            value={values[key] == null ? "" : String(values[key])}
+            onChange={(e) => setField(key, e.target.value === "" ? null : e.target.value === "true")}
+          >
+            <option value="">Unknown</option>
+            <option value="true">Yes</option>
+            <option value="false">No</option>
+          </select>
+        ) : type === "select" ? (
+          <select
+            className="select select-bordered w-full"
+            value={(values[key] as string) ?? ""}
+            onChange={(e) => setField(key, e.target.value === "" ? null : e.target.value)}
+          >
+            <option value="">Not checked</option>
+            {JMIR_BADGE_OPTIONS.map((opt) => (
+              <option key={opt.value} value={opt.value}>
+                {opt.label}
+              </option>
+            ))}
+          </select>
+        ) : (
+          <input
+            type={type === "number" ? "number" : "text"}
+            className="input input-bordered w-full"
+            value={(values[key] as string) ?? ""}
+            onChange={(e) => setField(key, e.target.value)}
+          />
+        )}
+      </div>
+    )
+  }
+
+  const hasValue = (key: FieldKey) => {
+    const v = initial[key]
+    return v !== null && v !== undefined && v !== ""
+  }
+
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-4 max-w-3xl">
-      <AuthorsEditField authors={authors} onChange={setAuthors} />
       {isAdmin && initialRole !== undefined && (
         <div>
           <label className="label py-1 gap-1.5">
@@ -209,67 +298,30 @@ export function SuggestEditForm({
           </select>
         </div>
       )}
-      {FIELDS.map(({ key, label, type, hint }) => {
-        if (key === "openAccessStatus") {
-          return (
-            <OpenAccessStatusField
-              key={key}
-              value={(values.openAccessStatus as string | null) ?? null}
-              onChange={(v) => setField("openAccessStatus", v)}
-            />
-          )
-        }
-        return (
-        <div key={key}>
-          <label className="label py-1 gap-1.5">
-            <span className="label-text font-medium">{label}</span>
-            {hint && (
-              <span className="tooltip tooltip-right" data-tip={hint}>
-                <span className="flex items-center justify-center w-4 h-4 rounded-full border border-info text-[10px] leading-none text-info cursor-help">
-                  ?
-                </span>
-              </span>
-            )}
-          </label>
-          {type === "textarea" ? (
-            <textarea
-              className="textarea textarea-bordered w-full"
-              rows={6}
-              value={(values[key] as string) ?? ""}
-              onChange={(e) => setField(key, e.target.value)}
-            />
-          ) : type === "boolean" ? (
-            <select
-              className="select select-bordered w-full"
-              value={values[key] == null ? "" : String(values[key])}
-              onChange={(e) => setField(key, e.target.value === "" ? null : e.target.value === "true")}
-            >
-              <option value="">Unknown</option>
-              <option value="true">Yes</option>
-              <option value="false">No</option>
-            </select>
-          ) : type === "select" ? (
-            <select
-              className="select select-bordered w-full"
-              value={(values[key] as string) ?? ""}
-              onChange={(e) => setField(key, e.target.value === "" ? null : e.target.value)}
-            >
-              <option value="">Not checked</option>
-              {JMIR_BADGE_OPTIONS.map((opt) => (
-                <option key={opt.value} value={opt.value}>
-                  {opt.label}
-                </option>
-              ))}
-            </select>
-          ) : (
-            <input
-              type={type === "number" ? "number" : "text"}
-              className="input input-bordered w-full"
-              value={(values[key] as string) ?? ""}
-              onChange={(e) => setField(key, e.target.value)}
-            />
-          )}
+
+      <details className="group" open>
+        <summary className="cursor-pointer select-none text-base font-medium text-base-content/60 hover:text-base-content flex items-center gap-2 w-fit">
+          <span className="transition-transform group-open:rotate-90">▸</span>
+          Authors
+        </summary>
+        <div className="mt-3 p-4 bg-base-200/50 rounded-lg flex flex-col gap-4">
+          <AuthorsEditField authors={authors} onChange={setAuthors} />
         </div>
+      </details>
+
+      {GROUPS.map((group) => {
+        const groupFields = FIELDS.filter((f) => f.group === group.key)
+        const defaultOpen = group.alwaysOpen || groupFields.some((f) => hasValue(f.key))
+        return (
+          <details key={group.key} className="group" open={defaultOpen}>
+            <summary className="cursor-pointer select-none text-base font-medium text-base-content/60 hover:text-base-content flex items-center gap-2 w-fit">
+              <span className="transition-transform group-open:rotate-90">▸</span>
+              {group.label}
+            </summary>
+            <div className="mt-3 p-4 bg-base-200/50 rounded-lg flex flex-col gap-4">
+              {groupFields.map(renderField)}
+            </div>
+          </details>
         )
       })}
 

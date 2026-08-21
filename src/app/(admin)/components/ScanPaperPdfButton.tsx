@@ -24,25 +24,20 @@ export function ScanPaperPdfButton({
   paperId: number
   hasPdfUrl: boolean
 }) {
-  const [scan] = useMutation(scanOpenSciencePracticesForPaper)
+  const [scan] = useMutation(scanOpenSciencePracticesForPaper, { throwOnError: false })
   const router = useRouter()
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [error, setError] = useState<string | null>(null)
   const [isRunning, setIsRunning] = useState(false)
-  const [offerUpload, setOfferUpload] = useState(!hasPdfUrl)
 
   const runScan = async (pdfBase64?: string) => {
     setError(null)
     setIsRunning(true)
     try {
       await scan({ paperId, pdfBase64 })
-      setOfferUpload(false)
       router.refresh()
     } catch (e: any) {
       setError(e.message ?? "Scan failed")
-      // If the stored URL didn't return a real PDF, offer the upload path
-      // instead of leaving the admin stuck.
-      if (!pdfBase64) setOfferUpload(true)
     } finally {
       setIsRunning(false)
     }
@@ -57,35 +52,38 @@ export function ScanPaperPdfButton({
   }
 
   return (
-    <div className="flex flex-col items-start gap-1">
-      <div className="flex items-center gap-2">
-        {hasPdfUrl && (
-          <button
-            type="button"
-            className="btn btn-info btn-md text-base"
-            disabled={isRunning}
-            onClick={() => runScan()}
-          >
-            {isRunning ? <span className="loading loading-spinner loading-xs" /> : "Scan PDF"}
+    <>
+      {hasPdfUrl ? (
+        <div className="dropdown">
+          <button tabIndex={0} type="button" className="btn btn-info btn-md text-base" disabled={isRunning}>
+            {isRunning ? <span className="loading loading-spinner loading-xs" /> : "Scan PDF ▾"}
           </button>
-        )}
-        {offerUpload && (
-          <button
-            type="button"
-            className="btn btn-warning btn-md text-base"
-            disabled={isRunning}
-            onClick={() => fileInputRef.current?.click()}
+          <ul
+            tabIndex={0}
+            className="dropdown-content z-20 menu p-2 mt-1 shadow-md bg-base-100 border border-base-300 rounded-lg w-56"
           >
-            {isRunning ? (
-              <span className="loading loading-spinner loading-xs" />
-            ) : hasPdfUrl ? (
-              "Upload PDF instead"
-            ) : (
-              "Upload PDF to scan"
-            )}
-          </button>
-        )}
-      </div>
+            <li>
+              <button type="button" className="text-base" onClick={() => runScan()}>
+                Scan stored PDF
+              </button>
+            </li>
+            <li>
+              <button type="button" className="text-base" onClick={() => fileInputRef.current?.click()}>
+                Upload a PDF instead
+              </button>
+            </li>
+          </ul>
+        </div>
+      ) : (
+        <button
+          type="button"
+          className="btn btn-warning btn-md text-base"
+          disabled={isRunning}
+          onClick={() => fileInputRef.current?.click()}
+        >
+          {isRunning ? <span className="loading loading-spinner loading-xs" /> : "Upload PDF to scan"}
+        </button>
+      )}
       <input
         ref={fileInputRef}
         type="file"
@@ -93,7 +91,7 @@ export function ScanPaperPdfButton({
         className="hidden"
         onChange={handleFileChange}
       />
-      {error && <span className="text-base text-error">{error}</span>}
-    </div>
+      {error && <span className="basis-full text-base text-error">{error}</span>}
+    </>
   )
 }

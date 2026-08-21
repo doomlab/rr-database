@@ -80,6 +80,12 @@ async function parsePdfBuffer(buffer: Uint8Array): Promise<string> {
   try {
     const result = await parser.getText()
     return result.text
+  } catch {
+    // pdfjs throws all kinds of internal, non-actionable errors on malformed/
+    // encrypted/image-only PDFs — surface something a human can act on instead.
+    throw new Error(
+      "Couldn't read text from this PDF — it may be corrupted, password-protected, or a scanned image with no text layer."
+    )
   } finally {
     await parser.destroy()
   }
