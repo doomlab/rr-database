@@ -23,7 +23,7 @@ export function JmirBadgeButton({
 
   if (!open) {
     return (
-      <button type="button" className="btn btn-outline btn-md text-base" onClick={() => setOpen(true)}>
+      <button type="button" className="btn btn-outline btn-secondary btn-md text-base" onClick={() => setOpen(true)}>
         {alreadyChecked ? "Edit JMIR badge info" : "Get JMIR info"}
       </button>
     )

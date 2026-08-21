@@ -62,7 +62,7 @@ export function ScanPaperPdfButton({
         {hasPdfUrl && (
           <button
             type="button"
-            className="btn btn-outline btn-md text-base"
+            className="btn btn-outline btn-info btn-md text-base"
             disabled={isRunning}
             onClick={() => runScan()}
           >
@@ -72,7 +72,7 @@ export function ScanPaperPdfButton({
         {offerUpload && (
           <button
             type="button"
-            className="btn btn-outline btn-md text-base"
+            className="btn btn-outline btn-warning btn-md text-base"
             disabled={isRunning}
             onClick={() => fileInputRef.current?.click()}
           >

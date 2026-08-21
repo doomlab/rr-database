@@ -147,7 +147,11 @@ export default async function Home({
                 {studies.map((study) => {
                   const paper = primaryPaper(study.papers)
                   if (!paper) return null
-                  const hasBothStages = study.papers.length > 1
+                  const hasStage1 = study.papers.some(
+                    (p) => p.role === "STAGE1_ARTICLE" || p.role === "STAGE1_MATERIALS"
+                  )
+                  const hasStage2 = study.papers.some((p) => p.role === "STAGE2_ARTICLE")
+                  const hasBothStages = hasStage1 && hasStage2
                   return (
                     <li
                       key={study.id}

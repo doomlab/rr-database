@@ -131,7 +131,7 @@ export function PaperRecordSection({
               href={paper.url}
               target="_blank"
               rel="noopener noreferrer"
-              className="btn btn-outline btn-md text-base"
+              className="btn btn-outline btn-info btn-md text-base"
             >
               Go to page
             </a>
@@ -141,7 +141,7 @@ export function PaperRecordSection({
               href={paper.registrationUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="btn btn-outline btn-md text-base"
+              className="btn btn-outline btn-secondary btn-md text-base"
             >
               View registration{paper.registrationPlatform ? ` (${paper.registrationPlatform})` : ""}
             </a>
@@ -151,7 +151,7 @@ export function PaperRecordSection({
               href={paper.openDataUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="btn btn-outline btn-md text-base"
+              className="btn btn-outline btn-success btn-md text-base"
             >
               Open data
             </a>
@@ -161,7 +161,7 @@ export function PaperRecordSection({
               href={paper.openCodeUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="btn btn-outline btn-md text-base"
+              className="btn btn-outline btn-accent btn-md text-base"
             >
               Open code
             </a>
@@ -171,7 +171,7 @@ export function PaperRecordSection({
               href={paper.openMaterialsUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="btn btn-outline btn-md text-base"
+              className="btn btn-outline btn-success btn-md text-base"
             >
               Open materials
             </a>

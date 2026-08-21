@@ -311,10 +311,38 @@ export async function linkRelatedStudies(): Promise<{
   return { linked, alreadyLinked, conflicts }
 }
 
+// The main browse page is Study-centric — a confirmed paper with no Study
+// membership at all is invisible there. linkRelatedStudies() only links
+// papers that have a Zotero "Related" counterpart; this catches everything
+// else by giving any still-unlinked confirmed paper a solo Study, same
+// invariant reviewPaper.ts maintains for papers approved through the review
+// queue. Run this *after* linkRelatedStudies() so genuinely related papers
+// still end up sharing one Study instead of each getting their own.
+export async function ensureSoloStudyLinks(): Promise<number> {
+  const orphans = await db.paper.findMany({
+    where: {
+      status: { in: ["IMPORTED", "APPROVED"] },
+      canonicalPaperId: null,
+      studyPaper: null,
+    },
+    select: { id: true, stage: true },
+  })
+
+  for (const paper of orphans) {
+    const study = await db.study.create({ data: {} })
+    await db.studyPaper.create({
+      data: { studyId: study.id, paperId: paper.id, role: roleForStage(paper.stage) },
+    })
+  }
+
+  return orphans.length
+}
+
 export async function importProductionLibrary(): Promise<{
   imported: number
   skipped: number
   studyLinks: { linked: number; alreadyLinked: number; conflicts: number }
+  soloStudiesCreated: number
 }> {
   const apiKey = process.env.ZOTERO_API_KEY!
   const libType = process.env.ZOTERO_LIBRARY_TYPE!
@@ -346,8 +374,9 @@ export async function importProductionLibrary(): Promise<{
   }
 
   const studyLinks = await linkRelatedStudies()
+  const soloStudiesCreated = await ensureSoloStudyLinks()
 
-  return { imported, skipped, studyLinks }
+  return { imported, skipped, studyLinks, soloStudiesCreated }
 }
 
 const COLLECTION_NUMBER_RE = /^\s*(\d+)\b/
@@ -422,6 +451,9 @@ export async function importStagingCollections(): Promise<Record<string, number>
     }
     totals[found.name] = count
   }
+
+  await linkRelatedStudies()
+  await ensureSoloStudyLinks()
 
   return totals
 }
