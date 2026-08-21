@@ -75,6 +75,11 @@ export default async function MetadataQueuePage({
                 <div className="min-w-0 space-y-1">
                   <h2 className="font-semibold text-base leading-snug">{s.paper.title}</h2>
                   <div className="text-xs text-base-content/60 space-y-0.5">
+                    {s.authors.length > 0 && (
+                      <div>
+                        <span className="font-medium">authors:</span> {s.authors.join(", ")}
+                      </div>
+                    )}
                     {FIELDS.filter((f) => s[f] !== null && s[f] !== undefined).map((f) => (
                       <div key={f}>
                         <span className="font-medium">{f}:</span> {String(s[f])}

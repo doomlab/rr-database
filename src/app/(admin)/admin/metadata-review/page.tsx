@@ -140,7 +140,7 @@ export default async function MetadataReviewPage({
           <ul className="flex flex-col divide-y divide-base-200">
             {groupPapersByStudy(papers).map((group) => {
               const first = group[0]!
-              const isClustered = group.length > 1
+              const isClustered = (first.studyPaper?.study._count.papers ?? 0) >= 2
               const viewHref = isClustered
                 ? `/studies/${first.studyPaper!.studyId}`
                 : `/papers/${first.id}`
@@ -154,7 +154,9 @@ export default async function MetadataReviewPage({
                     <div className="min-w-0 flex-1">
                       {isClustered && (
                         <p className="text-xs font-semibold uppercase tracking-wider text-base-content/40 mb-2">
-                          {group.length} linked records
+                          {group.length > 1
+                            ? `${group.length} linked records`
+                            : "Part of a linked study"}
                         </p>
                       )}
                       <div className="flex flex-col gap-3">

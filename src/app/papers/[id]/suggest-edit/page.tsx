@@ -27,7 +27,10 @@ export default async function SuggestEditPage({
 
   const paper = await db.paper.findUnique({
     where: { id: Number(id) },
-    include: { studyPaper: { select: { studyId: true } } },
+    include: {
+      studyPaper: { select: { studyId: true } },
+      authors: { include: { author: true }, orderBy: { position: "asc" } },
+    },
   })
   if (!paper) notFound()
 
@@ -70,6 +73,7 @@ export default async function SuggestEditPage({
     zoteroNotes: paper.zoteroNotes,
     tags: paper.tags.join(", "),
     keywords: paper.keywords.join(", "),
+    authors: paper.authors.map((pa) => pa.author.name).join(", "),
   }
 
   return (
@@ -82,7 +86,9 @@ export default async function SuggestEditPage({
             ← Back to article
           </a>
 
-          <h1 className="text-2xl font-bold leading-snug mb-1">Suggest an edit</h1>
+          <h1 className="text-2xl font-bold leading-snug mb-1">
+            {isAdmin ? "Edit metadata" : "Suggest an edit"}
+          </h1>
           <p className="text-base-content/60 mb-8">
             {isAdmin
               ? "As an admin, changes you save here go live immediately."

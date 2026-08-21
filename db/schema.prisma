@@ -476,6 +476,7 @@ model MetadataEditSuggestion {
   zoteroNotes           String?
   tags                  String[] @default([])
   keywords              String[] @default([])
+  authors               String[] @default([])
   note      String?
 
   resolved Boolean @default(false)

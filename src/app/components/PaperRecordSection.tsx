@@ -5,7 +5,6 @@ import { CitationCard, type CitationEntry } from "./CitationCard"
 import { AdminEnrichPanel } from "../(admin)/components/AdminEnrichPanel"
 import { JmirBadgeButton } from "../(admin)/components/JmirBadgeButton"
 import { ScanPaperPdfButton } from "../(admin)/components/ScanPaperPdfButton"
-import { VerifyMetadataButton } from "../(admin)/components/VerifyMetadataButton"
 import { Row, humanizeItemType, capitalize } from "./PaperFields"
 
 type RecordPaper = {
@@ -192,7 +191,6 @@ export function PaperRecordSection({
           <a href={suggestEditHref} className="btn btn-warning btn-md text-base">
             {isAdmin ? "Edit metadata" : "Suggest edit"}
           </a>
-          {isAdmin && !paper.metadataVerifiedAt && <VerifyMetadataButton paperId={paper.id} />}
         </div>
         <ReportButton paperId={paper.id} initialReported={isReported} isLoggedIn={!!userId} />
       </div>

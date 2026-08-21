@@ -44,6 +44,7 @@ export default resolver.pipe(
         zoteroNotes,
         tags,
         keywords,
+        authors,
       } = suggestion
       const updates = Object.fromEntries(
         Object.entries({
@@ -76,9 +77,23 @@ export default resolver.pipe(
           ...(keywords.length > 0 ? { keywords } : {}),
         }).filter(([, v]) => v !== null && v !== undefined)
       )
-      if (Object.keys(updates).length > 0) {
-        await db.paper.update({ where: { id: suggestion.paperId }, data: updates })
-      }
+
+      await db.$transaction(async (tx) => {
+        if (Object.keys(updates).length > 0) {
+          await tx.paper.update({ where: { id: suggestion.paperId }, data: updates })
+        }
+        if (authors.length > 0) {
+          await tx.paperAuthor.deleteMany({ where: { paperId: suggestion.paperId } })
+          let position = 0
+          for (const rawName of authors) {
+            const name = rawName.trim()
+            if (!name) continue
+            const author = await tx.author.upsert({ where: { name }, create: { name }, update: {} })
+            await tx.paperAuthor.create({ data: { paperId: suggestion.paperId, authorId: author.id, position } })
+            position++
+          }
+        }
+      })
     }
 
     return db.metadataEditSuggestion.update({

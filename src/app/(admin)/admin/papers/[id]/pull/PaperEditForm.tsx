@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation"
 import type { Route } from "next"
 import { useState } from "react"
 import savePaperEdit from "../../../../mutations/savePaperEdit"
+import { OpenAccessStatusField } from "../../../../../components/OpenAccessStatusField"
 
 export type FieldKey =
   | "title"
@@ -28,7 +29,7 @@ export type FieldKey =
 
 type FieldType = "text" | "textarea" | "number" | "boolean"
 
-const FIELDS: { key: FieldKey; label: string; type: FieldType }[] = [
+const FIELDS: { key: FieldKey; label: string; type: FieldType; hint?: string }[] = [
   { key: "title", label: "Title", type: "text" },
   { key: "doi", label: "DOI", type: "text" },
   { key: "venue", label: "Venue", type: "text" },
@@ -39,8 +40,18 @@ const FIELDS: { key: FieldKey; label: string; type: FieldType }[] = [
   { key: "pages", label: "Pages", type: "text" },
   { key: "issn", label: "ISSN", type: "text" },
   { key: "language", label: "Language", type: "text" },
-  { key: "url", label: "URL", type: "text" },
-  { key: "pdfUrl", label: "PDF URL", type: "text" },
+  {
+    key: "url",
+    label: "URL",
+    type: "text",
+    hint: "The article's landing/webpage link — e.g. the publisher or journal page. Not the PDF file itself.",
+  },
+  {
+    key: "pdfUrl",
+    label: "PDF URL",
+    type: "text",
+    hint: "A direct link to the PDF file, if one exists (open access copy, preprint, repository copy, etc.).",
+  },
   { key: "openAccess", label: "Open access", type: "boolean" },
   { key: "openAccessStatus", label: "Open access status", type: "text" },
   { key: "citedByCount", label: "Cited by count", type: "number" },
@@ -115,38 +126,56 @@ export function PaperEditForm({
         Check the pulled values below and correct anything that's wrong before saving.
       </p>
 
-      {FIELDS.map(({ key, label, type }) => (
-        <div key={key}>
-          <label className="label py-1">
-            <span className="label-text font-medium">{label}</span>
-          </label>
-          {type === "textarea" ? (
-            <textarea
-              className="textarea textarea-bordered w-full"
-              rows={6}
-              value={(values[key] as string) ?? ""}
-              onChange={(e) => setField(key, e.target.value)}
+      {FIELDS.map(({ key, label, type, hint }) => {
+        if (key === "openAccessStatus") {
+          return (
+            <OpenAccessStatusField
+              key={key}
+              value={(values.openAccessStatus as string | null) ?? null}
+              onChange={(v) => setField("openAccessStatus", v)}
             />
-          ) : type === "boolean" ? (
-            <select
-              className="select select-bordered w-full"
-              value={values[key] == null ? "" : String(values[key])}
-              onChange={(e) => setField(key, e.target.value === "" ? null : e.target.value === "true")}
-            >
-              <option value="">Unknown</option>
-              <option value="true">Yes</option>
-              <option value="false">No</option>
-            </select>
-          ) : (
-            <input
-              type={type === "number" ? "number" : "text"}
-              className="input input-bordered w-full"
-              value={(values[key] as string) ?? ""}
-              onChange={(e) => setField(key, e.target.value)}
-            />
-          )}
-        </div>
-      ))}
+          )
+        }
+        return (
+          <div key={key}>
+            <label className="label py-1 gap-1.5">
+              <span className="label-text font-medium">{label}</span>
+              {hint && (
+                <span className="tooltip tooltip-right" data-tip={hint}>
+                  <span className="flex items-center justify-center w-4 h-4 rounded-full border border-info text-[10px] leading-none text-info cursor-help">
+                    ?
+                  </span>
+                </span>
+              )}
+            </label>
+            {type === "textarea" ? (
+              <textarea
+                className="textarea textarea-bordered w-full"
+                rows={6}
+                value={(values[key] as string) ?? ""}
+                onChange={(e) => setField(key, e.target.value)}
+              />
+            ) : type === "boolean" ? (
+              <select
+                className="select select-bordered w-full"
+                value={values[key] == null ? "" : String(values[key])}
+                onChange={(e) => setField(key, e.target.value === "" ? null : e.target.value === "true")}
+              >
+                <option value="">Unknown</option>
+                <option value="true">Yes</option>
+                <option value="false">No</option>
+              </select>
+            ) : (
+              <input
+                type={type === "number" ? "number" : "text"}
+                className="input input-bordered w-full"
+                value={(values[key] as string) ?? ""}
+                onChange={(e) => setField(key, e.target.value)}
+              />
+            )}
+          </div>
+        )
+      })}
 
       {error && <p className="text-base text-error">{error}</p>}
 

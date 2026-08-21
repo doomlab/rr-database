@@ -5,9 +5,11 @@ import { useRouter } from "next/navigation"
 import type { Route } from "next"
 import { useState } from "react"
 import suggestMetadataEdit from "../../../(dashboard)/mutations/suggestMetadataEdit"
+import { OpenAccessStatusField } from "../../../components/OpenAccessStatusField"
 
 type FieldKey =
   | "title"
+  | "authors"
   | "doi"
   | "url"
   | "pdfUrl"
@@ -37,11 +39,27 @@ type FieldKey =
 
 type FieldType = "text" | "textarea" | "number" | "boolean"
 
-const FIELDS: { key: FieldKey; label: string; type: FieldType }[] = [
+const FIELDS: { key: FieldKey; label: string; type: FieldType; hint?: string }[] = [
   { key: "title", label: "Title", type: "text" },
+  {
+    key: "authors",
+    label: "Authors (comma-separated, in order)",
+    type: "text",
+    hint: "Fix misspelled or garbled author names here — this replaces the paper's author list.",
+  },
   { key: "doi", label: "DOI", type: "text" },
-  { key: "url", label: "URL", type: "text" },
-  { key: "pdfUrl", label: "PDF URL", type: "text" },
+  {
+    key: "url",
+    label: "URL",
+    type: "text",
+    hint: "The article's landing/webpage link — e.g. the publisher or journal page. Not the PDF file itself.",
+  },
+  {
+    key: "pdfUrl",
+    label: "PDF URL",
+    type: "text",
+    hint: "A direct link to the PDF file, if one exists (open access copy, preprint, repository copy, etc.).",
+  },
   { key: "venue", label: "Venue", type: "text" },
   { key: "publisher", label: "Publisher", type: "text" },
   { key: "year", label: "Year", type: "number" },
@@ -126,6 +144,7 @@ export function SuggestEditForm({
         zoteroNotes: emptyToNull(values.zoteroNotes),
         tags: splitList(values.tags),
         keywords: splitList(values.keywords).map((k) => k.toLowerCase()),
+        authors: splitList(values.authors),
         note: emptyToNull(note),
         markVerified,
       })
@@ -138,10 +157,27 @@ export function SuggestEditForm({
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-4 max-w-3xl">
-      {FIELDS.map(({ key, label, type }) => (
+      {FIELDS.map(({ key, label, type, hint }) => {
+        if (key === "openAccessStatus") {
+          return (
+            <OpenAccessStatusField
+              key={key}
+              value={(values.openAccessStatus as string | null) ?? null}
+              onChange={(v) => setField("openAccessStatus", v)}
+            />
+          )
+        }
+        return (
         <div key={key}>
-          <label className="label py-1">
+          <label className="label py-1 gap-1.5">
             <span className="label-text font-medium">{label}</span>
+            {hint && (
+              <span className="tooltip tooltip-right" data-tip={hint}>
+                <span className="flex items-center justify-center w-4 h-4 rounded-full border border-info text-[10px] leading-none text-info cursor-help">
+                  ?
+                </span>
+              </span>
+            )}
           </label>
           {type === "textarea" ? (
             <textarea
@@ -169,7 +205,8 @@ export function SuggestEditForm({
             />
           )}
         </div>
-      ))}
+        )
+      })}
 
       <div>
         <label className="label py-1">
