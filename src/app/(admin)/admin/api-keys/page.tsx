@@ -42,35 +42,9 @@ export default function ApiKeysInstructionsPage() {
             </li>
           </ol>
         </section>
-
-        <section>
-          <h2 className="text-lg font-semibold mb-2">Groq API key</h2>
-          <p className="text-base-content/70 mb-2">
-            Groq keys power upcoming LLM-assisted features (e.g. auto-extraction). Not required
-            yet, but it's the same idea — contribute a key so those calls can be spread across
-            more than one account.
-          </p>
-          <ol className="list-decimal list-inside space-y-1 text-base-content/70">
-            <li>
-              Go to{" "}
-              <a href="https://console.groq.com" target="_blank" rel="noreferrer" className="link">
-                console.groq.com
-              </a>{" "}
-              and sign in or create a free account.
-            </li>
-            <li>Open the API Keys section and create a new key.</li>
-            <li>
-              Copy it and paste it into the "Groq API key" field on your{" "}
-              <Link href="/account" className="link">
-                Account page
-              </Link>
-              .
-            </li>
-          </ol>
-        </section>
       </div>
 
-      <p className="text-xs text-base-content/40 mt-8">
+      <p className="text-base text-base-content/40 mt-8">
         Keys are encrypted at rest and only ever used server-side to make these calls.
       </p>
     </div>

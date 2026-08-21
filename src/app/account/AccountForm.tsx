@@ -10,7 +10,6 @@ type AccountFormProps = {
   initialLastName: string
   initialEmail: string
   hasOpenAlexApiKey: boolean
-  hasGroqApiKey: boolean
 }
 
 export function AccountForm({
@@ -18,17 +17,13 @@ export function AccountForm({
   initialLastName,
   initialEmail,
   hasOpenAlexApiKey,
-  hasGroqApiKey,
 }: AccountFormProps) {
   const [firstName, setFirstName] = useState(initialFirstName)
   const [lastName, setLastName] = useState(initialLastName)
   const [email, setEmail] = useState(initialEmail)
   const [openAlexApiKey, setOpenAlexApiKey] = useState("")
-  const [groqApiKey, setGroqApiKey] = useState("")
   const [removeOpenAlex, setRemoveOpenAlex] = useState(false)
-  const [removeGroq, setRemoveGroq] = useState(false)
   const [hasOpenAlex, setHasOpenAlex] = useState(hasOpenAlexApiKey)
-  const [hasGroq, setHasGroq] = useState(hasGroqApiKey)
   const [error, setError] = useState<string | null>(null)
   const [saved, setSaved] = useState(false)
   const [submit, submitState] = useMutation(updateProfile)
@@ -44,15 +39,11 @@ export function AccountForm({
         name: [firstName.trim(), lastName.trim()].filter(Boolean).join(" "),
         email,
         openAlexApiKey: removeOpenAlex ? "" : openAlexApiKey || undefined,
-        groqApiKey: removeGroq ? "" : groqApiKey || undefined,
       })
       setEmail(result.email)
       setHasOpenAlex(result.hasOpenAlexApiKey)
-      setHasGroq(result.hasGroqApiKey)
       setOpenAlexApiKey("")
-      setGroqApiKey("")
       setRemoveOpenAlex(false)
-      setRemoveGroq(false)
       setSaved(true)
     } catch (e: any) {
       setError(e.message ?? "Update failed")
@@ -103,10 +94,9 @@ export function AccountForm({
       <div className="divider my-2" />
 
       <p className="text-base text-base-content/60 m-2">
-        Optional — contribute your own API keys so we can spread enrichment calls (OpenAlex
-        lookups, Groq LLM calls) across more than one key instead of hitting a single shared rate
-        limit. Keys are encrypted at rest and only ever used server-side to make these calls on
-        the app's behalf.
+        Optional — contribute your own OpenAlex API key so we can spread enrichment lookups across
+        more than one key instead of hitting a single shared rate limit. Keys are encrypted at
+        rest and only ever used server-side to make these calls on the app's behalf.
       </p>
 
       <div className="m-2">
@@ -132,35 +122,6 @@ export function AccountForm({
               onChange={(e) => {
                 setRemoveOpenAlex(e.target.checked)
                 if (e.target.checked) setOpenAlexApiKey("")
-              }}
-            />
-            <span className="label-text text-base">Remove saved key</span>
-          </label>
-        )}
-      </div>
-      <div className="m-2">
-        <label className="label mb-2">
-          <span className="label-text font-medium text-lg">Groq API key</span>
-        </label>
-        <PasswordInput
-          autoComplete="off"
-          placeholder={hasGroq ? "•••••••••• (saved — leave blank to keep)" : ""}
-          value={groqApiKey}
-          onChange={(e) => {
-            setGroqApiKey(e.target.value)
-            if (e.target.value) setRemoveGroq(false)
-          }}
-          maxLength={200}
-        />
-        {hasGroq && (
-          <label className="label mt-2 cursor-pointer justify-start gap-2">
-            <input
-              type="checkbox"
-              className="checkbox checkbox-sm"
-              checked={removeGroq}
-              onChange={(e) => {
-                setRemoveGroq(e.target.checked)
-                if (e.target.checked) setGroqApiKey("")
               }}
             />
             <span className="label-text text-base">Remove saved key</span>

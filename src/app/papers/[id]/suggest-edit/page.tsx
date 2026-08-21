@@ -71,6 +71,8 @@ export default async function SuggestEditPage({
     openCodeUrl: paper.openCodeUrl,
     openMaterialsUrl: paper.openMaterialsUrl,
     zoteroNotes: paper.zoteroNotes,
+    jmirBadgeType: paper.jmirBadgeType,
+    jmirBadgeCounterpartDoi: paper.jmirBadgeCounterpartDoi,
     tags: paper.tags.join(", "),
     keywords: paper.keywords.join(", "),
   }

@@ -30,6 +30,8 @@ const FIELDS = [
   "openCodeUrl",
   "openMaterialsUrl",
   "zoteroNotes",
+  "jmirBadgeType",
+  "jmirBadgeCounterpartDoi",
 ] as const
 
 export default async function MetadataQueuePage({

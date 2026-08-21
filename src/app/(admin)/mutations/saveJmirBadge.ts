@@ -2,19 +2,7 @@ import { resolver } from "@blitzjs/rpc"
 import { z } from "zod"
 import db from "db"
 import { upsertAuthors } from "src/lib/zoteroImport"
-
-// The JMIR-specific "timing of registration" designations from the tagging
-// doc, plus a way to record that the badge was checked and nothing useful
-// was found.
-export const JMIR_BADGE_TYPES = [
-  "DE_DATA_EXISTING",
-  "PRE_REGISTERED",
-  "REGISTERED",
-  "POST",
-  "STAGE2_ONLY",
-  "STAGE1_ONLY",
-  "NONE_FOUND",
-] as const
+import { JMIR_BADGE_TYPES } from "src/lib/jmirBadgeOptions"
 
 const SaveJmirBadge = z.object({
   paperId: z.number(),

@@ -34,6 +34,8 @@ const SavePaperEdit = z.object({
   openCodeUrl: z.string().nullable(),
   openMaterialsUrl: z.string().nullable(),
   zoteroNotes: z.string().nullable(),
+  jmirBadgeType: z.string().nullable(),
+  jmirBadgeCounterpartDoi: z.string().nullable(),
   tags: z.array(z.string()),
   keywords: z.array(z.string().toLowerCase().trim()),
 })
@@ -47,6 +49,7 @@ export default resolver.pipe(
         where: { id: paperId },
         data: {
           ...data,
+          ...(data.jmirBadgeType ? { jmirBadgeCheckedAt: new Date() } : {}),
           ...(source === "openalex" ? { openAlexFetchedAt: new Date() } : {}),
           ...(source === "crossref" ? { crossrefQueried: true, crossrefFound: true } : {}),
         },

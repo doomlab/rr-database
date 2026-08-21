@@ -5,17 +5,26 @@ function StatCard({
   label,
   value,
   hint,
+  href,
 }: {
   label: string
   value: number | string
   hint?: string
+  href?: string
 }) {
-  return (
-    <div className="stat bg-base-200 rounded-box">
+  const content = (
+    <>
       <div className="stat-title text-base">{label}</div>
       <div className="stat-value text-3xl">{value}</div>
       {hint && <div className="stat-desc text-base">{hint}</div>}
-    </div>
+    </>
+  )
+  return href ? (
+    <a href={href} className="stat bg-base-200 rounded-box hover:bg-base-300 transition-colors">
+      {content}
+    </a>
+  ) : (
+    <div className="stat bg-base-200 rounded-box">{content}</div>
   )
 }
 
@@ -114,8 +123,8 @@ export default async function AdminStatsPage() {
             <StatCard label="Link groups" value={linkGroupCount} />
             <StatCard label="User reports" value={reportsCount} />
             <StatCard label="Article suggestions" value={suggestionsCount} />
-            <StatCard label="Metadata edits" value={metadataCount} />
-            <StatCard label="Extraction edits" value={extractionCount} />
+            <StatCard label="Metadata edits" value={metadataCount} href="/admin/metadata" />
+            <StatCard label="Extraction edits" value={extractionCount} href="/admin/extraction" />
           </div>
         </section>
       </div>

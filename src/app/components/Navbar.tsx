@@ -10,29 +10,18 @@ export async function Navbar() {
   const userId = ctx.session.userId
   const role = ctx.session.role
   const isAdmin = role === "ADMIN" || role === "SUPER_ADMIN"
-  const isSuperAdmin = role === "SUPER_ADMIN"
 
-  const [
-    reviewCount,
-    reportsCount,
-    suggestionsCount,
-    metadataCount,
-    extractionCount,
-    linkGroupCount,
-    metadataReviewCount,
-  ] = isAdmin
+  const [reviewCount, reportsCount, suggestionsCount, linkGroupCount, metadataReviewCount] = isAdmin
     ? await Promise.all([
         db.paper.count({ where: { status: "PENDING_REVIEW" } }),
         db.paperReport.count({ where: { resolved: false } }),
         db.articleSuggestion.count({ where: { resolved: false } }),
-        db.metadataEditSuggestion.count({ where: { resolved: false } }),
-        db.extractionEditSuggestion.count({ where: { resolved: false } }),
         countLinkNeedsReviewGroups(),
         db.paper.count({
           where: { canonicalPaperId: null, status: { in: ["IMPORTED", "APPROVED"] }, metadataVerifiedAt: null },
         }),
       ])
-    : [0, 0, 0, 0, 0, 0, 0]
+    : [0, 0, 0, 0, 0]
 
   return (
     <div className="navbar bg-base-200 px-6 shadow-sm sticky top-0 z-50">
@@ -116,28 +105,11 @@ export async function Navbar() {
                     </Link>
                   </li>
                   <li>
-                    <Link href="/admin/metadata" className="flex justify-between">
-                      <span>Metadata edits</span>
-                      {metadataCount > 0 && <span className="badge badge-warning badge-sm">{metadataCount}</span>}
-                    </Link>
-                  </li>
-                  <li>
-                    <Link href="/admin/extraction" className="flex justify-between">
-                      <span>Extraction edits</span>
-                      {extractionCount > 0 && <span className="badge badge-warning badge-sm">{extractionCount}</span>}
-                    </Link>
-                  </li>
-                  <li>
                     <Link href="/admin/users">Users</Link>
                   </li>
                   <li>
                     <Link href="/admin/api-keys">API keys</Link>
                   </li>
-                  {isSuperAdmin && (
-                    <li>
-                      <Link href="/admin/database">Database</Link>
-                    </li>
-                  )}
                 </ul>
               </div>
             )}

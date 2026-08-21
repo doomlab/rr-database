@@ -42,6 +42,8 @@ export default resolver.pipe(
         openCodeUrl,
         openMaterialsUrl,
         zoteroNotes,
+        jmirBadgeType,
+        jmirBadgeCounterpartDoi,
         tags,
         keywords,
         authors,
@@ -73,6 +75,9 @@ export default resolver.pipe(
           openCodeUrl,
           openMaterialsUrl,
           zoteroNotes,
+          jmirBadgeType,
+          jmirBadgeCounterpartDoi,
+          ...(jmirBadgeType ? { jmirBadgeCheckedAt: new Date() } : {}),
           ...(tags.length > 0 ? { tags } : {}),
           ...(keywords.length > 0 ? { keywords } : {}),
         }).filter(([, v]) => v !== null && v !== undefined)

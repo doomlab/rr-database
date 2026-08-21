@@ -102,6 +102,8 @@ export default async function PullDataPage({
     openCodeUrl: paper.openCodeUrl,
     openMaterialsUrl: paper.openMaterialsUrl,
     zoteroNotes: paper.zoteroNotes,
+    jmirBadgeType: paper.jmirBadgeType,
+    jmirBadgeCounterpartDoi: paper.jmirBadgeCounterpartDoi,
     tags: paper.tags.join(", "),
     keywords: paper.keywords.join(", "),
   }

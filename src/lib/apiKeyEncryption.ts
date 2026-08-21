@@ -18,7 +18,7 @@ function getKey(): Buffer {
   return key
 }
 
-// User-contributed API keys (OpenAlex, Groq) are stored encrypted at rest —
+// User-contributed API keys (OpenAlex) are stored encrypted at rest —
 // they're secrets we need to send back out on the user's behalf, so hashing
 // doesn't apply here; we need the plaintext back, hence symmetric encryption.
 // Buffer/Uint8Array casts below work around a type-only mismatch between this

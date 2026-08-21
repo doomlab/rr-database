@@ -2,12 +2,12 @@ import db from "db"
 import { decryptApiKey } from "./apiKeyEncryption"
 
 // Round-robins across the shared env key (if set) plus every user-contributed
-// key, so a burst of enrichment/LLM calls spreads across more than one
-// account's rate limit. Best-effort: the index resets on server restart and
-// isn't shared across multiple app instances.
+// key, so a burst of enrichment calls spreads across more than one account's
+// rate limit. Best-effort: the index resets on server restart and isn't
+// shared across multiple app instances.
 const indexes: Record<string, number> = {}
 
-async function nextKey(field: "openAlexApiKey" | "groqApiKey", envKey?: string): Promise<string | null> {
+async function nextKey(field: "openAlexApiKey", envKey?: string): Promise<string | null> {
   const users = await db.user.findMany({
     where: { [field]: { not: null } },
     select: { [field]: true },
@@ -25,10 +25,6 @@ async function nextKey(field: "openAlexApiKey" | "groqApiKey", envKey?: string):
 
 export function getOpenAlexApiKey(): Promise<string | null> {
   return nextKey("openAlexApiKey", process.env.OPENALEX_API_KEY)
-}
-
-export function getGroqApiKey(): Promise<string | null> {
-  return nextKey("groqApiKey", process.env.GROQ_API_KEY)
 }
 
 // Pulling from OpenAlex is gated on the requesting admin having contributed

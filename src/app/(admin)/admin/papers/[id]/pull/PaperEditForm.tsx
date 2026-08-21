@@ -7,6 +7,7 @@ import { useState } from "react"
 import savePaperEdit from "../../../../mutations/savePaperEdit"
 import { OpenAccessStatusField } from "../../../../../components/OpenAccessStatusField"
 import { AuthorsEditField, type AuthorRow } from "../../../../../components/AuthorsEditField"
+import { JMIR_BADGE_OPTIONS } from "src/lib/jmirBadgeOptions"
 
 export type FieldKey =
   | "title"
@@ -36,8 +37,10 @@ export type FieldKey =
   | "tags"
   | "keywords"
   | "zoteroNotes"
+  | "jmirBadgeType"
+  | "jmirBadgeCounterpartDoi"
 
-type FieldType = "text" | "textarea" | "number" | "boolean"
+type FieldType = "text" | "textarea" | "number" | "boolean" | "select"
 
 const FIELDS: { key: FieldKey; label: string; type: FieldType; hint?: string }[] = [
   { key: "title", label: "Title", type: "text" },
@@ -75,6 +78,18 @@ const FIELDS: { key: FieldKey; label: string; type: FieldType; hint?: string }[]
   { key: "openMaterialsUrl", label: "Open materials URL", type: "text" },
   { key: "tags", label: "Tags (comma-separated)", type: "text" },
   { key: "keywords", label: "Keywords (comma-separated)", type: "text" },
+  {
+    key: "jmirBadgeType",
+    label: "JMIR badge",
+    type: "select",
+    hint: "The badge JMIR shows on the article page (Registered Report / Results Available). Only relevant for JMIR journal articles.",
+  },
+  {
+    key: "jmirBadgeCounterpartDoi",
+    label: "JMIR badge counterpart DOI",
+    type: "text",
+    hint: "If the badge links to the paper's Stage 1/2 counterpart, its DOI. Saving this here does not auto-link the papers — use the JMIR badge button on the article page for that.",
+  },
   { key: "abstract", label: "Abstract", type: "textarea" },
   { key: "zoteroNotes", label: "Notes (from Zotero)", type: "textarea" },
 ]
@@ -139,6 +154,8 @@ export function PaperEditForm({
         openCodeUrl: emptyToNull(values.openCodeUrl),
         openMaterialsUrl: emptyToNull(values.openMaterialsUrl),
         zoteroNotes: emptyToNull(values.zoteroNotes),
+        jmirBadgeType: emptyToNull(values.jmirBadgeType),
+        jmirBadgeCounterpartDoi: emptyToNull(values.jmirBadgeCounterpartDoi),
         tags: String(values.tags ?? "")
           .split(",")
           .map((t) => t.trim())
@@ -201,6 +218,19 @@ export function PaperEditForm({
                 <option value="">Unknown</option>
                 <option value="true">Yes</option>
                 <option value="false">No</option>
+              </select>
+            ) : type === "select" ? (
+              <select
+                className="select select-bordered w-full"
+                value={(values[key] as string) ?? ""}
+                onChange={(e) => setField(key, e.target.value === "" ? null : e.target.value)}
+              >
+                <option value="">Not checked</option>
+                {JMIR_BADGE_OPTIONS.map((opt) => (
+                  <option key={opt.value} value={opt.value}>
+                    {opt.label}
+                  </option>
+                ))}
               </select>
             ) : (
               <input

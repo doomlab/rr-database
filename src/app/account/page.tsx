@@ -14,7 +14,7 @@ export default async function AccountPage() {
 
   const user = await db.user.findFirst({
     where: { id: userId },
-    select: { name: true, email: true, openAlexApiKey: true, groqApiKey: true },
+    select: { name: true, email: true, openAlexApiKey: true },
   })
 
   const [initialFirstName = "", ...rest] = (user?.name ?? "").trim().split(/\s+/).filter(Boolean)
@@ -34,7 +34,6 @@ export default async function AccountPage() {
             initialLastName={initialLastName}
             initialEmail={user?.email ?? ""}
             hasOpenAlexApiKey={!!user?.openAlexApiKey}
-            hasGroqApiKey={!!user?.groqApiKey}
           />
         </div>
       </div>

@@ -4,18 +4,7 @@ import { useMutation } from "@blitzjs/rpc"
 import { useRouter } from "next/navigation"
 import { useState } from "react"
 import saveJmirBadge from "../mutations/saveJmirBadge"
-
-const BADGE_OPTIONS = [
-  { value: "DE_DATA_EXISTING", label: "DE: Data Existing" },
-  { value: "PRE_REGISTERED", label: "PRE-registered" },
-  { value: "REGISTERED", label: "Registered" },
-  { value: "POST", label: "POST" },
-  { value: "STAGE2_ONLY", label: "Stage 2 Only" },
-  { value: "STAGE1_ONLY", label: "Stage 1 Only" },
-  { value: "NONE_FOUND", label: "No badge found" },
-] as const
-
-type BadgeType = (typeof BADGE_OPTIONS)[number]["value"]
+import { JMIR_BADGE_OPTIONS as BADGE_OPTIONS, type JmirBadgeType as BadgeType } from "src/lib/jmirBadgeOptions"
 
 export function JmirBadgeButton({
   paperId,
@@ -86,7 +75,7 @@ export function JmirBadgeButton({
           className="input input-bordered input-sm text-base flex-1"
         />
       </div>
-      <p className="text-sm text-base-content/50">
+      <p className="text-base text-base-content/50">
         If the badge links to a DOI, paste it here — we'll link that paper (adding it first if it's
         not already in the database).
       </p>
