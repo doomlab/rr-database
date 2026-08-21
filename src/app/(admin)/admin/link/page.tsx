@@ -173,10 +173,20 @@ async function AutoDetectedGroups({ page, tab }: { page: number; tab: "needs-rev
   // just the untouched legacy fallback.
   const linkable = eligible.map((p) => toLinkable(p, p.studyPaper?.role ?? null, false))
 
+  // "Already tagged" also needs to include papers a human never touched on
+  // this page but that are genuinely linked anyway — the production Zotero
+  // pull auto-links Stage 1/2 pairs via Zotero's own "Related" field
+  // (linkRelatedStudies()) without writing a "link" edit-history entry, so
+  // those would otherwise never show up anywhere to be spot-checked.
+  const actuallyLinkedIds = eligiblePapers
+    .filter((p) => (p.studyPaper?.study._count.papers ?? 0) >= 2)
+    .map((p) => p.id)
+  const reviewedIds = new Set([...touchedIds, ...actuallyLinkedIds])
+
   // minGroupSize 1 so untouched papers with no title match still show up as
   // their own single-paper card, with a way to link them manually.
   const needsReviewGroups = clusterPapersByTitle(linkable, 1)
-  const reviewedGroups = await groupsForPaperIds(Array.from(touchedIds))
+  const reviewedGroups = await groupsForPaperIds(Array.from(reviewedIds))
   const groups = tab === "reviewed" ? reviewedGroups : needsReviewGroups
 
   const totalPages = Math.ceil(groups.length / GROUPS_PER_PAGE)
