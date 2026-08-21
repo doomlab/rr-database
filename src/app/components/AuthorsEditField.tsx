@@ -20,8 +20,8 @@ export function AuthorsEditField({
 }) {
   const [linkingRow, setLinkingRow] = useState<number | null>(null)
 
-  const update = (i: number, name: string) => {
-    onChange(authors.map((a, idx) => (idx === i ? { ...a, name } : a)))
+  const updateField = (i: number, field: "name" | "orcid" | "openalexAuthorId", value: string) => {
+    onChange(authors.map((a, idx) => (idx === i ? { ...a, [field]: value === "" ? null : value } : a)))
   }
   const remove = (i: number) => {
     onChange(authors.filter((_, idx) => idx !== i))
@@ -54,9 +54,9 @@ export function AuthorsEditField({
           </span>
         </span>
       </label>
-      <div className="flex flex-col gap-2">
+      <div className="flex flex-col gap-3">
         {authors.map((a, i) => (
-          <div key={i} className="flex flex-col gap-1">
+          <div key={i} className="flex flex-col gap-1.5 p-2 rounded-lg border border-base-200">
             <div className="flex items-center gap-2">
               <div className="flex flex-col gap-0.5">
                 <button
@@ -82,7 +82,7 @@ export function AuthorsEditField({
                 type="text"
                 className="input input-bordered w-full"
                 value={a.name}
-                onChange={(e) => update(i, e.target.value)}
+                onChange={(e) => updateField(i, "name", e.target.value)}
                 placeholder="Author name"
               />
               {a.orcid && (
@@ -93,7 +93,7 @@ export function AuthorsEditField({
                   title="ORCID profile"
                   className="shrink-0"
                 >
-                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" className="w-4 h-4">
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" className="w-5 h-5">
                     <path
                       fill="#A6CE39"
                       d="M256 128c0 70.7-57.3 128-128 128S0 198.7 0 128 57.3 0 128 0s128 57.3 128 128z"
@@ -111,14 +111,14 @@ export function AuthorsEditField({
                   target="_blank"
                   rel="noopener noreferrer"
                   title="OpenAlex profile"
-                  className="shrink-0 text-[10px] font-semibold text-base-content/40 hover:text-primary leading-none"
+                  className="shrink-0 badge badge-outline hover:badge-primary"
                 >
                   OA
                 </a>
               )}
               <button
                 type="button"
-                className="btn btn-ghost btn-xs shrink-0"
+                className="btn btn-ghost btn-sm shrink-0"
                 onClick={() => setLinkingRow(linkingRow === i ? null : i)}
               >
                 {linkingRow === i ? "Cancel" : "Link existing"}
@@ -132,6 +132,24 @@ export function AuthorsEditField({
                 ✕
               </button>
             </div>
+
+            <div className="flex flex-wrap gap-2 ml-8">
+              <input
+                type="text"
+                className="input input-bordered input-sm w-full max-w-xs"
+                value={a.orcid ?? ""}
+                onChange={(e) => updateField(i, "orcid", e.target.value)}
+                placeholder="ORCID URL (https://orcid.org/...)"
+              />
+              <input
+                type="text"
+                className="input input-bordered input-sm w-full max-w-xs"
+                value={a.openalexAuthorId ?? ""}
+                onChange={(e) => updateField(i, "openalexAuthorId", e.target.value)}
+                placeholder="OpenAlex author ID (A1234567890)"
+              />
+            </div>
+
             {linkingRow === i && <AuthorSearch onPick={(picked) => linkTo(i, picked)} />}
           </div>
         ))}
@@ -165,7 +183,7 @@ function AuthorSearch({ onPick }: { onPick: (author: AuthorRow) => void }) {
   }
 
   return (
-    <div className="ml-6 p-2 border border-base-300 rounded-lg bg-base-200/40">
+    <div className="ml-8 p-2 border border-base-300 rounded-lg bg-base-200/40">
       <input
         type="text"
         className="input input-bordered input-sm w-full max-w-xs"
@@ -174,15 +192,15 @@ function AuthorSearch({ onPick }: { onPick: (author: AuthorRow) => void }) {
         onChange={(e) => runSearch(e.target.value)}
         autoFocus
       />
-      {isPending && <p className="text-xs text-base-content/50 mt-1">Searching…</p>}
-      {error && <p className="text-xs text-error mt-1">{error}</p>}
+      {isPending && <p className="text-base text-base-content/50 mt-1">Searching…</p>}
+      {error && <p className="text-base text-error mt-1">{error}</p>}
       {results.length > 0 && (
         <ul className="mt-2 flex flex-col gap-1">
           {results.map((r) => (
             <li key={r.id}>
               <button
                 type="button"
-                className="btn btn-ghost btn-xs justify-start w-full text-left"
+                className="btn btn-ghost btn-sm justify-start w-full text-left"
                 onClick={() => onPick(r)}
               >
                 {r.name}

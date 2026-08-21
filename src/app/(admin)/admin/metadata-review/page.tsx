@@ -130,7 +130,7 @@ export default async function MetadataReviewPage({
                 : "Nothing left to review."}
           </p>
           {q && (
-            <a href="/admin/metadata-review" className="link link-primary text-sm mt-2 inline-block">
+            <a href="/admin/metadata-review" className="link link-primary text-base mt-2 inline-block">
               Clear search
             </a>
           )}
@@ -153,7 +153,7 @@ export default async function MetadataReviewPage({
                   <div className="flex items-start justify-between gap-4">
                     <div className="min-w-0 flex-1">
                       {isClustered && (
-                        <p className="text-xs font-semibold uppercase tracking-wider text-base-content/40 mb-2">
+                        <p className="text-base font-semibold uppercase tracking-wider text-base-content/40 mb-2">
                           {group.length > 1
                             ? `${group.length} linked records`
                             : "Part of a linked study"}
@@ -163,7 +163,7 @@ export default async function MetadataReviewPage({
                         {group.map((paper) => (
                           <div key={paper.id}>
                             <h2 className="font-semibold text-base leading-snug mb-1">{paper.title}</h2>
-                            <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-base-content/50">
+                            <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-base text-base-content/50">
                               {paper.authors.length > 0 && (
                                 <>
                                   <span>{paper.authors.map((pa) => pa.author.name).join(", ")}</span>

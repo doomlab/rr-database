@@ -95,6 +95,7 @@ export function PaperEditForm({
         paperId,
         source,
         title: String(values.title ?? "").trim(),
+        authors: authors.map((a) => ({ id: a.id, name: a.name.trim() })).filter((a) => a.name !== ""),
         doi: emptyToNull(values.doi),
         abstract: emptyToNull(values.abstract),
         year: values.year === "" || values.year == null ? null : Number(values.year),
@@ -129,6 +130,8 @@ export function PaperEditForm({
       <p className="text-base text-base-content/60 -mt-2">
         Check the pulled values below and correct anything that's wrong before saving.
       </p>
+
+      <AuthorsEditField authors={authors} onChange={setAuthors} />
 
       {FIELDS.map(({ key, label, type, hint }) => {
         if (key === "openAccessStatus") {

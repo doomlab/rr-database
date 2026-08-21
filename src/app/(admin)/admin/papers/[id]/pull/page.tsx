@@ -25,7 +25,10 @@ export default async function PullDataPage({
 
   const paper = await db.paper.findUnique({
     where: { id: Number(id) },
-    include: { studyPaper: { select: { studyId: true } } },
+    include: {
+      studyPaper: { select: { studyId: true } },
+      authors: { include: { author: true }, orderBy: { position: "asc" } },
+    },
   })
   if (!paper) notFound()
 
@@ -101,6 +104,29 @@ export default async function PullDataPage({
     initial[key] = key === "keywords" ? (fetchedValue as string[]).join(", ") : fetchedValue
   }
 
+  const currentAuthors = paper.authors.map((pa) => ({
+    id: pa.author.id,
+    name: pa.author.name,
+    orcid: pa.author.orcid,
+    openalexAuthorId: pa.author.openalexAuthorId,
+  }))
+  // Fetched authorships don't carry our internal Author id — match by name
+  // against the paper's current authors so a rename/enrichment doesn't
+  // silently drop an already-linked ORCID/OpenAlex id.
+  const initialAuthors = fetched.authors
+    ? fetched.authors.map((fa) => {
+        const match = currentAuthors.find(
+          (ca) => ca.name.trim().toLowerCase() === fa.name.trim().toLowerCase()
+        )
+        return {
+          id: match?.id ?? null,
+          name: fa.name,
+          orcid: fa.orcid ?? match?.orcid ?? null,
+          openalexAuthorId: fa.openalexAuthorId ?? match?.openalexAuthorId ?? null,
+        }
+      })
+    : currentAuthors
+
   return (
     <div>
       <a href={backHref} className="text-sm text-base-content/50 hover:text-base-content mb-6 inline-block">
@@ -115,7 +141,13 @@ export default async function PullDataPage({
       {fetchError ? (
         <p className="text-error">{fetchError}</p>
       ) : (
-        <PaperEditForm paperId={paper.id} source={source} initial={initial} backHref={backHref} />
+        <PaperEditForm
+          paperId={paper.id}
+          source={source}
+          initial={initial}
+          initialAuthors={initialAuthors}
+          backHref={backHref}
+        />
       )}
     </div>
   )

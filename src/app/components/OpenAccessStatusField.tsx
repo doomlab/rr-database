@@ -69,8 +69,8 @@ export function OpenAccessStatusField({
             ?
           </summary>
           <div className="dropdown-content z-10 card w-96 p-4 shadow bg-base-100 border border-base-300 mt-1">
-            <p className="font-semibold text-sm mb-2">Common open access status categories</p>
-            <ul className="space-y-2 text-sm">
+            <p className="font-semibold text-base mb-2">Common open access status categories</p>
+            <ul className="space-y-2 text-base">
               {OA_STATUS_OPTIONS.map((o) => (
                 <li key={o.value}>
                   <span className="font-semibold">{o.label}:</span>{" "}
