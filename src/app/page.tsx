@@ -3,6 +3,7 @@ import { FavoriteButton } from "./components/FavoriteButton"
 import { ReportButton } from "./components/ReportButton"
 import { Pagination } from "./components/Pagination"
 import { SearchAndKeywordFilter } from "./components/SearchAndKeywordFilter"
+import { SavedSearchBar } from "./components/SavedSearchBar"
 import { getBlitzContext } from "./blitz-server"
 import db from "db"
 import { parseStudyFilterParams, buildStudyWhere, CONFIRMED_STATUSES } from "src/lib/studyFilters"
@@ -42,7 +43,7 @@ export default async function Home({
 
   const studyWhere = await buildStudyWhere(filters)
 
-  const [studies, totalStudies, favoritedIds, reportedIds] = await Promise.all([
+  const [studies, totalStudies, favoritedIds, reportedIds, savedSearches] = await Promise.all([
     db.study.findMany({
       where: studyWhere,
       include: {
@@ -70,10 +71,18 @@ export default async function Home({
           .findMany({ where: { userId }, select: { paperId: true } })
           .then((rows) => new Set(rows.map((r) => r.paperId)))
       : Promise.resolve(new Set<number>()),
+    userId
+      ? db.savedSearch.findMany({
+          where: { userId },
+          orderBy: { createdAt: "desc" },
+          select: { id: true, name: true, query: true },
+        })
+      : Promise.resolve([]),
   ])
 
   const totalPages = Math.ceil(totalStudies / PAGE_SIZE)
-  const buildHref = (p: number) => {
+
+  const filtersQueryString = (() => {
     const sp = new URLSearchParams()
     if (q) sp.set("q", q)
     if (keyword) sp.set("keyword", keyword)
@@ -82,21 +91,18 @@ export default async function Home({
     if (openAccess) sp.set("openAccess", openAccess)
     if (yearFrom) sp.set("yearFrom", yearFrom)
     if (yearTo) sp.set("yearTo", yearTo)
+    return sp.toString()
+  })()
+
+  const buildHref = (p: number) => {
+    const sp = new URLSearchParams(filtersQueryString)
     sp.set("page", String(p))
     return `/?${sp.toString()}`
   }
 
-  const exportHref = (() => {
-    const sp = new URLSearchParams()
-    if (q) sp.set("q", q)
-    if (keyword) sp.set("keyword", keyword)
-    if (venue) sp.set("venue", venue)
-    if (stage) sp.set("stage", stage)
-    if (openAccess) sp.set("openAccess", openAccess)
-    if (yearFrom) sp.set("yearFrom", yearFrom)
-    if (yearTo) sp.set("yearTo", yearTo)
-    return sp.toString() ? `/api/export/studies?${sp.toString()}` : "/api/export/studies"
-  })()
+  const exportHref = filtersQueryString
+    ? `/api/export/studies?${filtersQueryString}`
+    : "/api/export/studies"
 
   return (
     <div className="min-h-screen bg-base-100 flex flex-col">
@@ -123,7 +129,10 @@ export default async function Home({
               report{totalStudies === 1 ? "" : "s"}
             </p>
             <div className="flex items-center gap-2">
-              <a href={exportHref} className="btn btn-outline btn-sm">
+              {userId && (
+                <SavedSearchBar currentQuery={filtersQueryString} savedSearches={savedSearches} />
+              )}
+              <a href={exportHref} className="btn btn-primary btn-sm">
                 Download results (CSV)
               </a>
               <a

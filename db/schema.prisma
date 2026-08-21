@@ -47,6 +47,7 @@ model User {
   extractionEditSuggestions ExtractionEditSuggestion[]
   paperReports             PaperReport[]
   paperEditHistory         PaperEditHistory[]
+  savedSearches            SavedSearch[]
 }
 
 model Session {
@@ -316,6 +317,21 @@ model StudyFavorite {
   study   Study @relation(fields: [studyId], references: [id])
 
   @@unique([userId, studyId])
+}
+
+// A user's saved search/filter combination on the main browse page — stored
+// as the raw query string so it stays in sync with whatever filters exist
+// (stage, keywords, venue, year range, etc.) without needing its own schema.
+model SavedSearch {
+  id        Int      @id @default(autoincrement())
+  createdAt DateTime @default(now())
+
+  userId Int
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name   String
+  query  String
+
+  @@index([userId])
 }
 
 // Manually (or LLM-assisted) coded information that can't be pulled from
