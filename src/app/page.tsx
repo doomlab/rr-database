@@ -4,7 +4,7 @@ import { ReportButton } from "./components/ReportButton"
 import { Pagination } from "./components/Pagination"
 import { SearchAndKeywordFilter } from "./components/SearchAndKeywordFilter"
 import { getBlitzContext } from "./blitz-server"
-import db, { PaperStatus } from "db"
+import db, { PaperStatus, StudyPaperRole } from "db"
 
 const PAGE_SIZE = 50
 
@@ -19,11 +19,27 @@ function primaryPaper(papers: { role: string; paper: any }[]) {
 export default async function Home({
   searchParams,
 }: {
-  searchParams: Promise<{ q?: string; keyword?: string; page?: string }>
+  searchParams: Promise<{
+    q?: string
+    keyword?: string
+    stage?: string
+    openAccess?: string
+    venue?: string
+    yearFrom?: string
+    yearTo?: string
+    page?: string
+  }>
 }) {
   const params = await searchParams
   const q = params.q?.trim() || undefined
   const keyword = params.keyword?.trim().toLowerCase() || undefined
+  const keywords = keyword ? keyword.split(",").map((k) => k.trim()).filter(Boolean) : []
+  const venue = params.venue?.trim() || undefined
+  const venues = venue ? venue.split(",").map((v) => v.trim()).filter(Boolean) : []
+  const stage = params.stage === "1" || params.stage === "2" || params.stage === "both" ? params.stage : undefined
+  const openAccess = params.openAccess === "yes" || params.openAccess === "no" ? params.openAccess : undefined
+  const yearFrom = params.yearFrom?.trim() || undefined
+  const yearTo = params.yearTo?.trim() || undefined
   const page = Math.max(1, parseInt(params.page ?? "1", 10) || 1)
   const skip = (page - 1) * PAGE_SIZE
 
@@ -31,6 +47,8 @@ export default async function Home({
   const userId = ctx.session.userId as number | undefined
 
   const CONFIRMED_STATUSES: PaperStatus[] = [PaperStatus.IMPORTED, PaperStatus.APPROVED]
+  const STAGE1_ROLES: StudyPaperRole[] = [StudyPaperRole.STAGE1_ARTICLE, StudyPaperRole.STAGE1_MATERIALS]
+  const STAGE2_ROLES: StudyPaperRole[] = [StudyPaperRole.STAGE2_ARTICLE]
 
   const andConditions = [
     ...(q
@@ -56,15 +74,72 @@ export default async function Home({
           },
         ]
       : []),
-    ...(keyword
+    ...(keywords.length > 0
       ? [
           {
             papers: {
               some: {
-                paper: { status: { in: CONFIRMED_STATUSES }, keywords: { has: keyword } },
+                paper: { status: { in: CONFIRMED_STATUSES }, keywords: { hasSome: keywords } },
               },
             },
           },
+        ]
+      : []),
+    ...(venues.length > 0
+      ? [
+          {
+            papers: {
+              some: {
+                paper: { status: { in: CONFIRMED_STATUSES }, venue: { in: venues } },
+              },
+            },
+          },
+        ]
+      : []),
+    ...(openAccess
+      ? [
+          {
+            papers: {
+              some: {
+                paper: { status: { in: CONFIRMED_STATUSES }, openAccess: openAccess === "yes" },
+              },
+            },
+          },
+        ]
+      : []),
+    ...(yearFrom || yearTo
+      ? [
+          {
+            papers: {
+              some: {
+                paper: {
+                  status: { in: CONFIRMED_STATUSES },
+                  year: {
+                    ...(yearFrom ? { gte: Number(yearFrom) } : {}),
+                    ...(yearTo ? { lte: Number(yearTo) } : {}),
+                  },
+                },
+              },
+            },
+          },
+        ]
+      : []),
+    ...(stage === "1"
+      ? [
+          { papers: { some: { role: { in: STAGE1_ROLES } } } },
+          { papers: { none: { role: { in: STAGE2_ROLES } } } },
+        ]
+      : []),
+    ...(stage === "2"
+      ? [
+          { papers: { some: { role: { in: STAGE2_ROLES } } } },
+          { papers: { none: { role: { in: STAGE1_ROLES } } } },
+        ]
+      : []),
+    ...(stage === "both"
+      ? [
+          { papers: { some: { role: { in: STAGE1_ROLES } } } },
+          { papers: { some: { role: { in: STAGE2_ROLES } } } },
         ]
       : []),
   ]
@@ -109,6 +184,11 @@ export default async function Home({
     const sp = new URLSearchParams()
     if (q) sp.set("q", q)
     if (keyword) sp.set("keyword", keyword)
+    if (venue) sp.set("venue", venue)
+    if (stage) sp.set("stage", stage)
+    if (openAccess) sp.set("openAccess", openAccess)
+    if (yearFrom) sp.set("yearFrom", yearFrom)
+    if (yearTo) sp.set("yearTo", yearTo)
     sp.set("page", String(p))
     return `/?${sp.toString()}`
   }
@@ -119,7 +199,18 @@ export default async function Home({
 
       <div className="flex-1 w-full px-10 py-8">
         <div className="w-[90%] mx-auto">
-          <SearchAndKeywordFilter action="/" q={q} keyword={keyword} />
+          <SearchAndKeywordFilter
+            action="/"
+            q={q}
+            keyword={keyword}
+            stage={stage}
+            showStageFilter
+            showAdvancedFilters
+            openAccess={openAccess}
+            venue={venue}
+            yearFrom={yearFrom}
+            yearTo={yearTo}
+          />
 
           <div className="flex items-center justify-between mb-5">
             <p className="text-base text-base-content/60">
