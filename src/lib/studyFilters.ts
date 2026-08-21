@@ -38,11 +38,13 @@ export function parseStudyFilterParams(params: StudyFilterSearchParams) {
         .map((v) => v.trim())
         .filter(Boolean)
     : []
-  const stage = params.stage === "1" || params.stage === "2" || params.stage === "both" ? params.stage : undefined
+  const STAGE_VALUES = ["1", "2", "both", "other", "pci"]
+  const stage = params.stage && STAGE_VALUES.includes(params.stage) ? params.stage : undefined
   const materials = params.materials === "yes" ? "yes" : undefined
-  const verified = params.verified === "yes" ? "yes" : undefined
+  const verified = params.verified === "yes" || params.verified === "no" ? params.verified : undefined
   const oaStatusRaw = params.oaStatus?.trim().toLowerCase() || undefined
-  const oaStatus = oaStatusRaw && OA_STATUS_VALUES.includes(oaStatusRaw) ? oaStatusRaw : undefined
+  const oaStatus =
+    oaStatusRaw && (oaStatusRaw === "none" || OA_STATUS_VALUES.includes(oaStatusRaw)) ? oaStatusRaw : undefined
   const yearFrom = params.yearFrom?.trim() || undefined
   const yearTo = params.yearTo?.trim() || undefined
 
@@ -68,10 +70,18 @@ export function parseStudyFilterQueryString(query: string) {
   })
 }
 
-const STAGE_LABELS: Record<string, string> = { "1": "Stage 1", "2": "Stage 2", both: "Stage 1 + 2" }
+const STAGE_LABELS: Record<string, string> = {
+  "1": "Stage 1",
+  "2": "Stage 2",
+  both: "Stage 1 + 2",
+  other: "Other",
+  pci: "PCI RR page",
+}
 const OA_STATUS_LABELS: Record<string, string> = Object.fromEntries(
   OA_STATUS_OPTIONS.map((o) => [o.value, o.label])
 )
+OA_STATUS_LABELS.none = "Not checked yet"
+const VERIFIED_LABELS: Record<string, string> = { yes: "Verified metadata", no: "Needs metadata review" }
 
 // Human-readable chips summarizing a saved search's criteria for display.
 export function describeStudyFilters(filters: ParsedStudyFilters): string[] {
@@ -79,7 +89,7 @@ export function describeStudyFilters(filters: ParsedStudyFilters): string[] {
   if (filters.q) chips.push(`"${filters.q}"`)
   if (filters.stage) chips.push(STAGE_LABELS[filters.stage] ?? filters.stage)
   if (filters.materials) chips.push("Materials")
-  if (filters.verified) chips.push("Verified metadata")
+  if (filters.verified) chips.push(VERIFIED_LABELS[filters.verified] ?? filters.verified)
   if (filters.oaStatus) chips.push(OA_STATUS_LABELS[filters.oaStatus] ?? filters.oaStatus)
   if (filters.yearFrom || filters.yearTo) chips.push(`${filters.yearFrom ?? "…"}–${filters.yearTo ?? "…"}`)
   filters.keywords.forEach((k) => chips.push(k))
@@ -182,7 +192,8 @@ export async function buildStudyWhere(filters: ParsedStudyFilters) {
               some: {
                 paper: {
                   status: { in: CONFIRMED_STATUSES },
-                  openAccessStatus: { equals: oaStatus, mode: "insensitive" as const },
+                  openAccessStatus:
+                    oaStatus === "none" ? null : { equals: oaStatus, mode: "insensitive" as const },
                 },
               },
             },
@@ -197,7 +208,10 @@ export async function buildStudyWhere(filters: ParsedStudyFilters) {
           {
             papers: {
               some: {
-                paper: { status: { in: CONFIRMED_STATUSES }, metadataVerifiedAt: { not: null } },
+                paper: {
+                  status: { in: CONFIRMED_STATUSES },
+                  metadataVerifiedAt: verified === "yes" ? { not: null } : null,
+                },
               },
             },
           },
@@ -238,6 +252,8 @@ export async function buildStudyWhere(filters: ParsedStudyFilters) {
           { papers: { some: { role: { in: STAGE2_ROLES } } } },
         ]
       : []),
+    ...(stage === "other" ? [{ papers: { some: { role: StudyPaperRole.OTHER } } }] : []),
+    ...(stage === "pci" ? [{ papers: { some: { role: StudyPaperRole.PCIRR_PAGE } } }] : []),
   ]
 
   return {

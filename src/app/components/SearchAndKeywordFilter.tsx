@@ -5,6 +5,13 @@ const STAGE_OPTIONS: { value: string; label: string; color: string }[] = [
   { value: "1", label: "Stage 1", color: "badge-info" },
   { value: "2", label: "Stage 2", color: "badge-accent" },
   { value: "both", label: "Stage 1 + 2", color: "badge-primary" },
+  { value: "other", label: "Other", color: "badge-neutral" },
+  { value: "pci", label: "PCI RR page", color: "badge-warning" },
+]
+
+const VERIFIED_OPTIONS: { value: string; label: string }[] = [
+  { value: "yes", label: "Verified only" },
+  { value: "no", label: "Needs review" },
 ]
 
 type FilterParams = {
@@ -51,7 +58,9 @@ export function SearchAndKeywordFilter({
   }
 
   const stageLabel = STAGE_OPTIONS.find((o) => o.value === stage)?.label
-  const oaStatusLabel = OA_STATUS_OPTIONS.find((o) => o.value === oaStatus)?.label
+  const oaStatusLabel =
+    oaStatus === "none" ? "Not checked yet" : OA_STATUS_OPTIONS.find((o) => o.value === oaStatus)?.label
+  const verifiedLabel = VERIFIED_OPTIONS.find((o) => o.value === verified)?.label
   const yearLabel = yearFrom || yearTo ? `${yearFrom ?? "…"}–${yearTo ?? "…"}` : undefined
 
   const activeCount =
@@ -130,16 +139,28 @@ export function SearchAndKeywordFilter({
                   {opt.label}
                 </a>
               ))}
+              <a
+                href={hrefFor({ oaStatus: oaStatus === "none" ? undefined : "none" })}
+                className={`badge ${oaStatus === "none" ? "badge-warning" : "badge-outline"}`}
+              >
+                Not checked yet
+              </a>
             </div>
 
             <div className="flex flex-wrap items-center gap-2">
               <span className="text-base text-base-content/50 w-24 shrink-0">Metadata</span>
-              <a
-                href={hrefFor({ verified: verified ? undefined : "yes" })}
-                className={`badge ${verified ? "badge-secondary" : "badge-outline"}`}
-              >
-                Verified only
+              <a href={hrefFor({ verified: undefined })} className={`badge ${!verified ? "badge-neutral" : "badge-outline"}`}>
+                All
               </a>
+              {VERIFIED_OPTIONS.map((opt) => (
+                <a
+                  key={opt.value}
+                  href={hrefFor({ verified: verified === opt.value ? undefined : opt.value })}
+                  className={`badge ${verified === opt.value ? "badge-secondary" : "badge-outline"}`}
+                >
+                  {opt.label}
+                </a>
+              ))}
             </div>
 
             <div className="flex flex-wrap items-center gap-2">
@@ -218,9 +239,9 @@ export function SearchAndKeywordFilter({
               <a href={hrefFor({ oaStatus: undefined })} aria-label="Clear open access filter">✕</a>
             </span>
           )}
-          {verified && (
+          {verifiedLabel && (
             <span className="badge badge-lg gap-1">
-              Verified metadata
+              {verifiedLabel}
               <a href={hrefFor({ verified: undefined })} aria-label="Clear verified filter">✕</a>
             </span>
           )}
