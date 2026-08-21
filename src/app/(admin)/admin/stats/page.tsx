@@ -28,6 +28,39 @@ function StatCard({
   )
 }
 
+function SegmentedBar({
+  segments,
+}: {
+  segments: { label: string; value: number; colorClass: string }[]
+}) {
+  const total = segments.reduce((sum, s) => sum + s.value, 0)
+  if (total === 0) return null
+  return (
+    <div>
+      <div className="flex h-4 w-full overflow-hidden rounded-full bg-base-300">
+        {segments
+          .filter((s) => s.value > 0)
+          .map((s) => (
+            <div
+              key={s.label}
+              className={`${s.colorClass} h-full`}
+              style={{ width: `${(s.value / total) * 100}%` }}
+              title={`${s.label}: ${s.value} (${((s.value / total) * 100).toFixed(0)}%)`}
+            />
+          ))}
+      </div>
+      <div className="flex flex-wrap gap-x-4 gap-y-1 mt-2 text-base text-base-content/60">
+        {segments.map((s) => (
+          <span key={s.label} className="flex items-center gap-1.5">
+            <span className={`inline-block w-2.5 h-2.5 rounded-full ${s.colorClass}`} />
+            {s.label} ({s.value})
+          </span>
+        ))}
+      </div>
+    </div>
+  )
+}
+
 export default async function AdminStatsPage() {
   const [
     statusCounts,
@@ -67,7 +100,7 @@ export default async function AdminStatsPage() {
       <div className="flex flex-col gap-8">
         <section>
           <h2 className="text-lg font-semibold mb-3">Papers by status</h2>
-          <div className="stats stats-vertical sm:stats-horizontal shadow w-full flex-wrap bg-base-200">
+          <div className="stats stats-vertical sm:stats-horizontal shadow w-full flex-wrap bg-base-200 mb-4">
             <StatCard label="Total papers" value={totalPapers} />
             <StatCard label="Imported" value={countFor("IMPORTED")} hint="From production Zotero" />
             <StatCard label="Pending review" value={countFor("PENDING_REVIEW")} />
@@ -75,11 +108,20 @@ export default async function AdminStatsPage() {
             <StatCard label="Rejected" value={countFor("REJECTED")} hint="Excluded" />
             <StatCard label="Duplicate" value={countFor("DUPLICATE")} />
           </div>
+          <SegmentedBar
+            segments={[
+              { label: "Imported", value: countFor("IMPORTED"), colorClass: "bg-info" },
+              { label: "Pending review", value: countFor("PENDING_REVIEW"), colorClass: "bg-warning" },
+              { label: "Approved", value: countFor("APPROVED"), colorClass: "bg-success" },
+              { label: "Rejected", value: countFor("REJECTED"), colorClass: "bg-error" },
+              { label: "Duplicate", value: countFor("DUPLICATE"), colorClass: "bg-neutral" },
+            ]}
+          />
         </section>
 
         <section>
           <h2 className="text-lg font-semibold mb-3">Study linking</h2>
-          <div className="stats stats-vertical sm:stats-horizontal shadow w-full flex-wrap bg-base-200">
+          <div className="stats stats-vertical sm:stats-horizontal shadow w-full flex-wrap bg-base-200 mb-4">
             <StatCard label="Total studies" value={totalStudies} />
             <StatCard
               label="Actually linked"
@@ -97,6 +139,12 @@ export default async function AdminStatsPage() {
               hint="Title-matched, not yet linked"
             />
           </div>
+          <SegmentedBar
+            segments={[
+              { label: "Actually linked", value: linkedStudies, colorClass: "bg-primary" },
+              { label: "Solo studies", value: totalStudies - linkedStudies, colorClass: "bg-neutral" },
+            ]}
+          />
         </section>
 
         <section>
