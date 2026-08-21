@@ -35,6 +35,8 @@ export default async function AdminHomePage() {
     reviewCount,
     linkGroupCount,
     metadataReviewCount,
+    articleSuggestionCount,
+    metadataEditCount,
   ] = await Promise.all([
     isSuperAdmin ? lastZoteroRun("[production]") : Promise.resolve(null),
     isSuperAdmin ? lastZoteroRun("[stagingCollections]") : Promise.resolve(null),
@@ -47,6 +49,8 @@ export default async function AdminHomePage() {
     db.paper.count({
       where: { canonicalPaperId: null, status: { in: ["IMPORTED", "APPROVED"] }, metadataVerifiedAt: null },
     }),
+    db.articleSuggestion.count({ where: { resolved: false } }),
+    db.metadataEditSuggestion.count({ where: { resolved: false } }),
   ])
 
   return (
@@ -176,6 +180,26 @@ export default async function AdminHomePage() {
               )}
             </RunCard>
           </div>
+        </WorkflowCard>
+
+        <WorkflowCard
+          title="Article suggestions"
+          description="Papers users have suggested that aren't in the database yet. Review each one, correct anything before adding, and it flows straight into the review queue — or dismiss it without adding."
+          badge={articleSuggestionCount}
+        >
+          <a href="/admin/suggestions" className="btn btn-primary btn-sm text-base">
+            Go to article suggestions
+          </a>
+        </WorkflowCard>
+
+        <WorkflowCard
+          title="Metadata fixes"
+          description="Corrections users have suggested on a paper's own page — wrong journal, garbled author names, missing links, etc. Review the whole record before applying, or dismiss the suggestion."
+          badge={metadataEditCount}
+        >
+          <a href="/admin/metadata" className="btn btn-primary btn-sm text-base">
+            Go to metadata fixes
+          </a>
         </WorkflowCard>
       </div>
     </div>

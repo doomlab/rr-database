@@ -179,8 +179,8 @@ export function PaperRecordSection({
           {isAdmin && paper.doi?.startsWith("10.2196/") && (
             <JmirBadgeButton paperId={paper.id} alreadyChecked={!!paper.jmirBadgeCheckedAt} />
           )}
-          {isAdmin && paper.pdfUrl && !paper.openSciencePracticesScannedAt && (
-            <ScanPaperPdfButton paperId={paper.id} />
+          {isAdmin && !paper.openSciencePracticesScannedAt && (
+            <ScanPaperPdfButton paperId={paper.id} hasPdfUrl={!!paper.pdfUrl} />
           )}
           {isAdmin && (
             <AdminEnrichPanel

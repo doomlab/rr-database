@@ -54,10 +54,27 @@ function classifyLinks(text: string): {
   return { openDataUrl, openCodeUrl, openMaterialsUrl, registrationUrl }
 }
 
-export async function scanPdfText(pdfUrl: string): Promise<string> {
-  const res = await fetch(pdfUrl, { headers: { "User-Agent": "Mozilla/5.0" } })
-  if (!res.ok) throw new Error(`Failed to fetch PDF (${res.status})`)
-  const buffer = new Uint8Array(await res.arrayBuffer())
+// PDFs start with "%PDF-" — cheap way to tell a real PDF apart from an HTML
+// landing page or error page that a stored pdfUrl sometimes actually points
+// to, before handing it to the parser (which throws an opaque error on
+// anything else).
+function looksLikePdf(buffer: Uint8Array): boolean {
+  return (
+    buffer.length >= 5 &&
+    buffer[0] === 0x25 && // %
+    buffer[1] === 0x50 && // P
+    buffer[2] === 0x44 && // D
+    buffer[3] === 0x46 && // F
+    buffer[4] === 0x2d // -
+  )
+}
+
+async function parsePdfBuffer(buffer: Uint8Array): Promise<string> {
+  if (!looksLikePdf(buffer)) {
+    throw new Error(
+      "That doesn't look like a real PDF file (it's probably a landing page or login wall instead of the actual document). Try the PDF upload option below."
+    )
+  }
   const { PDFParse } = await import("pdf-parse")
   const parser = new PDFParse({ data: buffer })
   try {
@@ -68,18 +85,37 @@ export async function scanPdfText(pdfUrl: string): Promise<string> {
   }
 }
 
+export async function scanPdfText(pdfUrl: string): Promise<string> {
+  const res = await fetch(pdfUrl, { headers: { "User-Agent": "Mozilla/5.0" } })
+  if (!res.ok) throw new Error(`Failed to fetch PDF (${res.status})`)
+  const buffer = new Uint8Array(await res.arrayBuffer())
+  return parsePdfBuffer(buffer)
+}
+
 // Scans one paper's PDF on demand — deliberately not a batch job, since
 // fetching + parsing a PDF is slow and we don't want this running over
 // hundreds of papers automatically. Triggered from a button on that paper's
-// own view page.
-export async function scanOpenSciencePracticesForPaper(paperId: number): Promise<{ found: boolean }> {
+// own view page. Pass `uploadedPdf` to scan a file the admin picked instead
+// of fetching paper.pdfUrl (e.g. when the stored URL isn't a real PDF).
+export async function scanOpenSciencePracticesForPaper(
+  paperId: number,
+  uploadedPdf?: Uint8Array
+): Promise<{ found: boolean }> {
   const paper = await db.paper.findUnique({
     where: { id: paperId },
     select: { pdfUrl: true, registrationUrl: true },
   })
-  if (!paper?.pdfUrl) throw new Error("This paper has no PDF to scan.")
+  if (!paper) throw new Error("Paper not found.")
 
-  const text = await scanPdfText(paper.pdfUrl)
+  let text: string
+  if (uploadedPdf) {
+    text = await parsePdfBuffer(uploadedPdf)
+  } else if (paper.pdfUrl) {
+    text = await scanPdfText(paper.pdfUrl)
+  } else {
+    throw new Error("This paper has no PDF URL to scan — upload a PDF instead.")
+  }
+
   const result = classifyLinks(text)
 
   const data: Record<string, unknown> = { openSciencePracticesScannedAt: new Date() }
