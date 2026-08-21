@@ -110,6 +110,7 @@ enum DiscoverySource {
   OPENALEX
   GOOGLE_SCHOLAR
   PCIRR
+  USER_SUGGESTION
 }
 
 enum ZoteroSyncStatus {

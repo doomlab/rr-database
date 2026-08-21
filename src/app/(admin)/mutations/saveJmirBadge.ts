@@ -1,51 +1,14 @@
 import { resolver } from "@blitzjs/rpc"
 import { z } from "zod"
 import db from "db"
-import { upsertAuthors } from "src/lib/zoteroImport"
 import { JMIR_BADGE_TYPES } from "src/lib/jmirBadgeOptions"
+import { fetchOrCreatePaperByDoi, normalizeDoi } from "src/lib/crossrefPaperLookup"
 
 const SaveJmirBadge = z.object({
   paperId: z.number(),
   badgeType: z.enum(JMIR_BADGE_TYPES),
   counterpartDoi: z.string().trim().optional(),
 })
-
-function normalizeDoi(raw: string): string {
-  return raw.replace(/^https?:\/\/(dx\.)?doi\.org\//i, "").trim().toLowerCase()
-}
-
-async function fetchOrCreatePaperByDoi(doi: string): Promise<{ id: number; title: string; created: boolean }> {
-  const existing = await db.paper.findFirst({ where: { doi }, select: { id: true, title: true } })
-  if (existing) return { ...existing, created: false }
-
-  const res = await fetch(`https://api.crossref.org/works/${encodeURIComponent(doi)}`, {
-    headers: { "User-Agent": "mailto:buchananlab@gmail.com" },
-  })
-  if (!res.ok) throw new Error(`Could not find DOI ${doi} on Crossref (${res.status})`)
-  const { message } = await res.json()
-
-  const title: string = message.title?.[0] ?? "Untitled"
-  const paper = await db.paper.create({
-    data: {
-      title,
-      doi,
-      year: message.issued?.["date-parts"]?.[0]?.[0] ?? null,
-      venue: message["container-title"]?.[0] ?? null,
-      publisher: message.publisher ?? null,
-      volume: message.volume ?? null,
-      issue: message.issue ?? null,
-      pages: message.page ?? null,
-      status: "PENDING_REVIEW",
-    },
-  })
-
-  const authorNames: string[] = (message.author ?? [])
-    .map((a: { given?: string; family?: string }) => [a.given, a.family].filter(Boolean).join(" "))
-    .filter((n: string) => n.length > 0)
-  await upsertAuthors(paper.id, authorNames)
-
-  return { id: paper.id, title, created: true }
-}
 
 // Puts two papers in the same Study without touching their roles — this
 // tool only knows "these two belong together," not which is Stage 1 vs
