@@ -3,7 +3,7 @@
 }
 
 {$APP_DOMAIN} {
-    handle_path /pgadmin* {
+    handle /pgadmin* {
         reverse_proxy pgadmin:80 {
             header_up X-Script-Name /pgadmin
         }

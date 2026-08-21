@@ -70,8 +70,26 @@ Docker. This section is just how to get that server if you're using
    Log out and back in (or run `newgrp docker`) so the group change takes
    effect, then confirm with `docker compose version`.
 
-With Docker installed and DNS/firewall pointed at the box, continue with
-the steps below exactly as written — they're the same regardless of host.
+6. **Add swap.** Even on the recommended 2 GB plan, `docker compose up -d
+   --build` running `npm run build` alongside the other three containers can
+   spike memory hard enough to make the instance briefly unresponsive
+   (including over SSH) — swap turns that into "slower" instead of "frozen
+   solid." Add 2 GB:
+
+   ```bash
+   sudo fallocate -l 2G /swapfile
+   sudo chmod 600 /swapfile
+   sudo mkswap /swapfile
+   sudo swapon /swapfile
+   echo '/swapfile none swap sw 0 0' | sudo tee -a /etc/fstab
+   ```
+
+   The last line makes it survive a reboot. Confirm with `free -h` — you
+   should see a `Swap:` line showing `2.0Gi`.
+
+With Docker installed, swap set up, and DNS/firewall pointed at the box,
+continue with the steps below exactly as written — they're the same
+regardless of host.
 
 ## 1. Clone and configure
 
@@ -184,6 +202,33 @@ Check, 2 – To Tag, 4 – Do Not Add — 3 and 5 are intentionally skipped) and
 sets each paper's status accordingly instead of dumping everything in as
 `PENDING_REVIEW` the way `import_zotero.py --library staging` did. See the
 docstring at the top of that file for the full mapping.
+
+## Troubleshooting
+
+**Login/signup fails with a "Failed to find Server Action" error, and the
+`app` container's `CREATED`/`STATUS` in `docker compose ps` don't match (it's
+restarted since it was created).** This is a red herring — the actual
+problem is that the Node process crashed and got auto-restarted by Docker,
+and the browser is holding a page from before the crash. Confirm by tailing
+logs across a login/signup attempt (`docker compose --env-file .env.docker
+logs app --tail 300 --timestamps`) — if you see the whole
+`prisma migrate deploy && npm run start` boot sequence repeat immediately
+after a `signup()`/`login()` log line, the process died handling that
+request. The cause: `secure-password` (password hashing) depends on
+`sodium-native`, a native addon whose prebuilt binaries target glibc — it
+crashes the whole process on Alpine's musl libc. The Dockerfile already
+builds on `node:20-bookworm-slim` (Debian, glibc) specifically because of
+this — if this error resurfaces, check whether the base image got changed
+back to an `alpine` variant before looking anywhere else.
+
+**`docker compose up -d --build` makes the instance unresponsive (even over
+SSH) partway through.** Memory pressure from `npm run build` running
+alongside the other three containers on a small instance. Add swap (see
+step 6 of the Lightsail setup above) — it turns this into "slow" instead of
+"frozen." If you have to hard-reboot to recover, `docker compose ps`
+afterward to check whether the `app` image actually finished rebuilding
+before the freeze (if not, its tag still points at the old image and you'll
+need to rerun the build).
 
 ## Useful commands
 
