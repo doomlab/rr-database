@@ -88,12 +88,21 @@ export default async function PullDataPage({
     issn: paper.issn,
     publisher: paper.publisher,
     language: paper.language,
+    itemType: paper.itemType,
     url: paper.url,
     pdfUrl: paper.pdfUrl,
     openAccess: paper.openAccess,
     openAccessStatus: paper.openAccessStatus,
     citedByCount: paper.citedByCount,
     openalexId: paper.openalexId,
+    registrationUrl: paper.registrationUrl,
+    registrationPlatform: paper.registrationPlatform,
+    biasLevel: paper.biasLevel,
+    openDataUrl: paper.openDataUrl,
+    openCodeUrl: paper.openCodeUrl,
+    openMaterialsUrl: paper.openMaterialsUrl,
+    zoteroNotes: paper.zoteroNotes,
+    tags: paper.tags.join(", "),
     keywords: paper.keywords.join(", "),
   }
 
@@ -101,7 +110,7 @@ export default async function PullDataPage({
   for (const key of Object.keys(current) as FieldKey[]) {
     const fetchedValue = (fetched as any)[key]
     if (fetchedValue == null) continue
-    initial[key] = key === "keywords" ? (fetchedValue as string[]).join(", ") : fetchedValue
+    initial[key] = key === "keywords" || key === "tags" ? (fetchedValue as string[]).join(", ") : fetchedValue
   }
 
   const currentAuthors = paper.authors.map((pa) => ({

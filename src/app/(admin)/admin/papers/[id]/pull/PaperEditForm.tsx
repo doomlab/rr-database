@@ -20,13 +20,22 @@ export type FieldKey =
   | "issn"
   | "publisher"
   | "language"
+  | "itemType"
   | "url"
   | "pdfUrl"
   | "openAccess"
   | "openAccessStatus"
   | "citedByCount"
   | "openalexId"
+  | "registrationUrl"
+  | "registrationPlatform"
+  | "biasLevel"
+  | "openDataUrl"
+  | "openCodeUrl"
+  | "openMaterialsUrl"
+  | "tags"
   | "keywords"
+  | "zoteroNotes"
 
 type FieldType = "text" | "textarea" | "number" | "boolean"
 
@@ -41,6 +50,7 @@ const FIELDS: { key: FieldKey; label: string; type: FieldType; hint?: string }[]
   { key: "pages", label: "Pages", type: "text" },
   { key: "issn", label: "ISSN", type: "text" },
   { key: "language", label: "Language", type: "text" },
+  { key: "itemType", label: "Item type", type: "text" },
   {
     key: "url",
     label: "URL",
@@ -57,8 +67,16 @@ const FIELDS: { key: FieldKey; label: string; type: FieldType; hint?: string }[]
   { key: "openAccessStatus", label: "Open access status", type: "text" },
   { key: "citedByCount", label: "Cited by count", type: "number" },
   { key: "openalexId", label: "OpenAlex ID", type: "text" },
+  { key: "registrationUrl", label: "Registration URL", type: "text" },
+  { key: "registrationPlatform", label: "Registration platform", type: "text" },
+  { key: "biasLevel", label: "Bias level", type: "text" },
+  { key: "openDataUrl", label: "Open data URL", type: "text" },
+  { key: "openCodeUrl", label: "Open code URL", type: "text" },
+  { key: "openMaterialsUrl", label: "Open materials URL", type: "text" },
+  { key: "tags", label: "Tags (comma-separated)", type: "text" },
   { key: "keywords", label: "Keywords (comma-separated)", type: "text" },
   { key: "abstract", label: "Abstract", type: "textarea" },
+  { key: "zoteroNotes", label: "Notes (from Zotero)", type: "textarea" },
 ]
 
 type FormValues = Record<FieldKey, string | number | boolean | null>
@@ -106,6 +124,7 @@ export function PaperEditForm({
         issn: emptyToNull(values.issn),
         publisher: emptyToNull(values.publisher),
         language: emptyToNull(values.language),
+        itemType: emptyToNull(values.itemType),
         url: emptyToNull(values.url),
         pdfUrl: emptyToNull(values.pdfUrl),
         openAccess: typeof values.openAccess === "boolean" ? values.openAccess : null,
@@ -113,6 +132,17 @@ export function PaperEditForm({
         citedByCount:
           values.citedByCount === "" || values.citedByCount == null ? null : Number(values.citedByCount),
         openalexId: emptyToNull(values.openalexId),
+        registrationUrl: emptyToNull(values.registrationUrl),
+        registrationPlatform: emptyToNull(values.registrationPlatform),
+        biasLevel: emptyToNull(values.biasLevel),
+        openDataUrl: emptyToNull(values.openDataUrl),
+        openCodeUrl: emptyToNull(values.openCodeUrl),
+        openMaterialsUrl: emptyToNull(values.openMaterialsUrl),
+        zoteroNotes: emptyToNull(values.zoteroNotes),
+        tags: String(values.tags ?? "")
+          .split(",")
+          .map((t) => t.trim())
+          .filter(Boolean),
         keywords: String(values.keywords ?? "")
           .split(",")
           .map((k) => k.trim().toLowerCase())
