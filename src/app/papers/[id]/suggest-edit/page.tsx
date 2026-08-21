@@ -28,7 +28,7 @@ export default async function SuggestEditPage({
   const paper = await db.paper.findUnique({
     where: { id: Number(id) },
     include: {
-      studyPaper: { select: { studyId: true } },
+      studyPaper: { select: { studyId: true, role: true } },
       authors: { include: { author: true }, orderBy: { position: "asc" } },
     },
   })
@@ -107,6 +107,7 @@ export default async function SuggestEditPage({
             paperId={paper.id}
             initial={initial}
             initialAuthors={initialAuthors}
+            initialRole={paper.studyPaper?.role ?? null}
             backHref={backHref}
             isAdmin={isAdmin}
           />

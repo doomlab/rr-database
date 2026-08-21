@@ -8,6 +8,8 @@ import suggestMetadataEdit from "../../../(dashboard)/mutations/suggestMetadataE
 import { OpenAccessStatusField } from "../../../components/OpenAccessStatusField"
 import { AuthorsEditField, type AuthorRow } from "../../../components/AuthorsEditField"
 import { JMIR_BADGE_OPTIONS } from "src/lib/jmirBadgeOptions"
+import { STUDY_PAPER_ROLE_OPTIONS } from "src/lib/studyPaperRoles"
+import updatePaperRole from "../../../(admin)/mutations/updatePaperRole"
 
 type FieldKey =
   | "title"
@@ -101,21 +103,25 @@ export function SuggestEditForm({
   paperId,
   initial,
   initialAuthors,
+  initialRole,
   backHref,
   isAdmin,
 }: {
   paperId: number
   initial: Initial
   initialAuthors: AuthorRow[]
+  initialRole?: string | null
   backHref: string
   isAdmin: boolean
 }) {
   const router = useRouter()
   const [values, setValues] = useState<FormValues>(initial)
   const [authors, setAuthors] = useState<AuthorRow[]>(initialAuthors)
+  const [role, setRole] = useState(initialRole ?? "OTHER")
   const [note, setNote] = useState("")
   const [error, setError] = useState<string | null>(null)
   const [submit, submitState] = useMutation(suggestMetadataEdit)
+  const [saveRole] = useMutation(updatePaperRole)
   const isSubmitting = (submitState as any).isLoading
 
   const setField = (key: FieldKey, value: string | boolean | null) => {
@@ -164,6 +170,9 @@ export function SuggestEditForm({
         note: emptyToNull(note),
         markVerified,
       })
+      if (isAdmin && initialRole !== undefined) {
+        await saveRole({ paperId, role: role as any })
+      }
       router.push(backHref as Route)
       router.refresh()
     } catch (e: any) {
@@ -174,6 +183,32 @@ export function SuggestEditForm({
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-4 max-w-3xl">
       <AuthorsEditField authors={authors} onChange={setAuthors} />
+      {isAdmin && initialRole !== undefined && (
+        <div>
+          <label className="label py-1 gap-1.5">
+            <span className="label-text font-medium">Role in study</span>
+            <span
+              className="tooltip tooltip-right"
+              data-tip="Which Stage/materials record this is within its Study. Get this wrong and the paper can show up mislabeled or miss its Stage 1/2 pairing."
+            >
+              <span className="flex items-center justify-center w-4 h-4 rounded-full border border-info text-[10px] leading-none text-info cursor-help">
+                ?
+              </span>
+            </span>
+          </label>
+          <select
+            className="select select-bordered w-full"
+            value={role}
+            onChange={(e) => setRole(e.target.value)}
+          >
+            {STUDY_PAPER_ROLE_OPTIONS.map((opt) => (
+              <option key={opt.value} value={opt.value}>
+                {opt.label}
+              </option>
+            ))}
+          </select>
+        </div>
+      )}
       {FIELDS.map(({ key, label, type, hint }) => {
         if (key === "openAccessStatus") {
           return (

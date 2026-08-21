@@ -43,7 +43,6 @@ export default async function ReviewDetailPage({
         orderBy: { createdAt: "desc" },
       },
       metadataVerifiedBy: { select: { name: true, email: true } },
-      studyPaper: { select: { role: true } },
     },
   })
 
@@ -84,7 +83,6 @@ export default async function ReviewDetailPage({
         <PaperRecordSection
           paper={paper}
           roleLabel="Record"
-          currentRole={paper.studyPaper?.role ?? null}
           citationData={citationData}
           isAdmin
           hasOpenAlexApiKey={hasOpenAlexApiKey}

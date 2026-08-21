@@ -7,7 +7,6 @@ import { JmirBadgeButton } from "../(admin)/components/JmirBadgeButton"
 import { ScanPaperPdfButton } from "../(admin)/components/ScanPaperPdfButton"
 import { Row, humanizeItemType, capitalize } from "./PaperFields"
 import { AuthorList } from "./AuthorList"
-import { PaperRoleSelect } from "./PaperRoleSelect"
 
 type RecordPaper = {
   id: number
@@ -69,7 +68,6 @@ type CitationData = {
 export function PaperRecordSection({
   paper,
   roleLabel,
-  currentRole,
   citationData,
   isAdmin,
   hasOpenAlexApiKey,
@@ -83,7 +81,6 @@ export function PaperRecordSection({
 }: {
   paper: RecordPaper
   roleLabel: string
-  currentRole?: string | null
   citationData: CitationData
   isAdmin: boolean
   hasOpenAlexApiKey: boolean
@@ -103,14 +100,9 @@ export function PaperRecordSection({
 
   return (
     <div className="py-6">
-      <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
-        <h2 className="text-sm font-semibold uppercase tracking-wider text-base-content/40">
-          {roleLabel}
-        </h2>
-        {isAdmin && currentRole !== undefined && (
-          <PaperRoleSelect paperId={paper.id} currentRole={currentRole} />
-        )}
-      </div>
+      <h2 className="text-sm font-semibold uppercase tracking-wider text-base-content/40 mb-3">
+        {roleLabel}
+      </h2>
 
       <div className="flex flex-wrap items-start justify-between gap-2 mb-3">
         <div className="flex flex-wrap items-start gap-2">
