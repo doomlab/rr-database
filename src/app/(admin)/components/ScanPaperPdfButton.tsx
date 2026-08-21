@@ -30,11 +30,11 @@ export function ScanPaperPdfButton({
   const [error, setError] = useState<string | null>(null)
   const [isRunning, setIsRunning] = useState(false)
 
-  const runScan = async (pdfBase64?: string) => {
+  const runScan = async (fileBase64?: string) => {
     setError(null)
     setIsRunning(true)
     try {
-      await scan({ paperId, pdfBase64 })
+      await scan({ paperId, fileBase64 })
       router.refresh()
     } catch (e: any) {
       setError(e.message ?? "Scan failed")
@@ -69,7 +69,7 @@ export function ScanPaperPdfButton({
             </li>
             <li>
               <button type="button" className="text-base" onClick={() => fileInputRef.current?.click()}>
-                Upload a PDF instead
+                Upload a PDF or Word doc instead
               </button>
             </li>
           </ul>
@@ -81,13 +81,13 @@ export function ScanPaperPdfButton({
           disabled={isRunning}
           onClick={() => fileInputRef.current?.click()}
         >
-          {isRunning ? <span className="loading loading-spinner loading-xs" /> : "Upload PDF to scan"}
+          {isRunning ? <span className="loading loading-spinner loading-xs" /> : "Upload PDF/Word doc to scan"}
         </button>
       )}
       <input
         ref={fileInputRef}
         type="file"
-        accept="application/pdf"
+        accept="application/pdf,.doc,.docx,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
         className="hidden"
         onChange={handleFileChange}
       />

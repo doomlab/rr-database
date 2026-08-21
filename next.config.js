@@ -6,7 +6,7 @@ const nextConfig = {
   // pdf-parse (via pdfjs-dist) resolves its worker script dynamically at
   // runtime — letting webpack bundle/transform it breaks that resolution
   // and throws an opaque "Object.defineProperty called on non-object" error.
-  serverExternalPackages: ["sodium-native", "secure-password", "pdf-parse"],
+  serverExternalPackages: ["sodium-native", "secure-password", "pdf-parse", "mammoth", "word-extractor"],
 }
 
 module.exports = withBlitz(nextConfig)

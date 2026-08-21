@@ -54,9 +54,10 @@ function classifyLinks(text: string): {
   return { openDataUrl, openCodeUrl, openMaterialsUrl, registrationUrl }
 }
 
-// PDFs start with "%PDF-" — cheap way to tell a real PDF apart from an HTML
+// PDFs start with "%PDF-"; .docx (and other OOXML) files are zip archives
+// starting with "PK" — cheap way to tell a real document apart from an HTML
 // landing page or error page that a stored pdfUrl sometimes actually points
-// to, before handing it to the parser (which throws an opaque error on
+// to, before handing it to a parser (which throws an opaque error on
 // anything else).
 function looksLikePdf(buffer: Uint8Array): boolean {
   return (
@@ -69,12 +70,18 @@ function looksLikePdf(buffer: Uint8Array): boolean {
   )
 }
 
+function looksLikeDocx(buffer: Uint8Array): boolean {
+  return buffer.length >= 2 && buffer[0] === 0x50 && buffer[1] === 0x4b // P K
+}
+
+// Legacy .doc (OLE Compound File Binary Format) starts with a fixed 8-byte
+// signature, distinct from the zip-based .docx format above.
+function looksLikeDoc(buffer: Uint8Array): boolean {
+  const sig = [0xd0, 0xcf, 0x11, 0xe0, 0xa1, 0xb1, 0x1a, 0xe1]
+  return buffer.length >= sig.length && sig.every((byte, i) => buffer[i] === byte)
+}
+
 async function parsePdfBuffer(buffer: Uint8Array): Promise<string> {
-  if (!looksLikePdf(buffer)) {
-    throw new Error(
-      "That doesn't look like a real PDF file (it's probably a landing page or login wall instead of the actual document). Try the PDF upload option below."
-    )
-  }
   const { PDFParse } = await import("pdf-parse")
   const parser = new PDFParse({ data: buffer })
   try {
@@ -91,21 +98,52 @@ async function parsePdfBuffer(buffer: Uint8Array): Promise<string> {
   }
 }
 
-export async function scanPdfText(pdfUrl: string): Promise<string> {
-  const res = await fetch(pdfUrl, { headers: { "User-Agent": "Mozilla/5.0" } })
-  if (!res.ok) throw new Error(`Failed to fetch PDF (${res.status})`)
-  const buffer = new Uint8Array(await res.arrayBuffer())
-  return parsePdfBuffer(buffer)
+async function parseDocxBuffer(buffer: Uint8Array): Promise<string> {
+  const mammoth = await import("mammoth")
+  try {
+    const result = await mammoth.extractRawText({ buffer: Buffer.from(buffer) })
+    return result.value
+  } catch {
+    throw new Error("Couldn't read text from this Word document — it may be corrupted or password-protected.")
+  }
 }
 
-// Scans one paper's PDF on demand — deliberately not a batch job, since
-// fetching + parsing a PDF is slow and we don't want this running over
-// hundreds of papers automatically. Triggered from a button on that paper's
-// own view page. Pass `uploadedPdf` to scan a file the admin picked instead
-// of fetching paper.pdfUrl (e.g. when the stored URL isn't a real PDF).
+async function parseDocBuffer(buffer: Uint8Array): Promise<string> {
+  const WordExtractor = (await import("word-extractor")).default
+  try {
+    const extractor = new WordExtractor()
+    const doc = await extractor.extract(Buffer.from(buffer))
+    return doc.getBody()
+  } catch {
+    throw new Error("Couldn't read text from this Word document — it may be corrupted or password-protected.")
+  }
+}
+
+async function parseDocumentBuffer(buffer: Uint8Array): Promise<string> {
+  if (looksLikePdf(buffer)) return parsePdfBuffer(buffer)
+  if (looksLikeDocx(buffer)) return parseDocxBuffer(buffer)
+  if (looksLikeDoc(buffer)) return parseDocBuffer(buffer)
+  throw new Error(
+    "That doesn't look like a real PDF or Word (.doc/.docx) file (it's probably a landing page or login wall instead of the actual document). Try the upload option below."
+  )
+}
+
+export async function scanDocumentText(fileUrl: string): Promise<string> {
+  const res = await fetch(fileUrl, { headers: { "User-Agent": "Mozilla/5.0" } })
+  if (!res.ok) throw new Error(`Failed to fetch document (${res.status})`)
+  const buffer = new Uint8Array(await res.arrayBuffer())
+  return parseDocumentBuffer(buffer)
+}
+
+// Scans one paper's PDF/Word doc on demand — deliberately not a batch job,
+// since fetching + parsing a document is slow and we don't want this running
+// over hundreds of papers automatically. Triggered from a button on that
+// paper's own view page. Pass `uploadedFile` to scan a file the admin picked
+// instead of fetching paper.pdfUrl (e.g. when the stored URL isn't a real
+// document, or the open-access copy is a .docx).
 export async function scanOpenSciencePracticesForPaper(
   paperId: number,
-  uploadedPdf?: Uint8Array
+  uploadedFile?: Uint8Array
 ): Promise<{ found: boolean }> {
   const paper = await db.paper.findUnique({
     where: { id: paperId },
@@ -114,12 +152,12 @@ export async function scanOpenSciencePracticesForPaper(
   if (!paper) throw new Error("Paper not found.")
 
   let text: string
-  if (uploadedPdf) {
-    text = await parsePdfBuffer(uploadedPdf)
+  if (uploadedFile) {
+    text = await parseDocumentBuffer(uploadedFile)
   } else if (paper.pdfUrl) {
-    text = await scanPdfText(paper.pdfUrl)
+    text = await scanDocumentText(paper.pdfUrl)
   } else {
-    throw new Error("This paper has no PDF URL to scan — upload a PDF instead.")
+    throw new Error("This paper has no PDF URL to scan — upload a PDF or Word document instead.")
   }
 
   const result = classifyLinks(text)
