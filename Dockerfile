@@ -1,6 +1,12 @@
-FROM node:20-alpine AS base
+FROM node:20-bookworm-slim AS base
 WORKDIR /app
-RUN apk add --no-cache libc6-compat openssl
+# sodium-native (via secure-password, used for password hashing) is a native
+# addon whose prebuilt binaries target glibc — it segfaults/crashes the
+# whole Node process on Alpine's musl libc, which silently exits the
+# container the moment login/signup hashes a password. Debian slim (glibc)
+# avoids that; do not switch this back to an alpine base.
+RUN apt-get update && apt-get install -y --no-install-recommends openssl ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
 
 FROM base AS deps
 COPY package.json package-lock.json ./
