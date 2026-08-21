@@ -225,20 +225,16 @@ export default async function Home({
                           {(hasOpenData || hasOpenCode || hasOpenMaterials || hasPrereg) && (
                             <div className="flex flex-wrap items-center gap-1.5 mb-2">
                               {hasPrereg && (
-                                <span className="badge badge-outline badge-secondary badge-sm">
-                                  preregistered
-                                </span>
+                                <span className="badge badge-secondary badge-sm">preregistered</span>
                               )}
                               {hasOpenData && (
-                                <span className="badge badge-outline badge-success badge-sm">open data</span>
+                                <span className="badge badge-success badge-sm">open data</span>
                               )}
                               {hasOpenCode && (
-                                <span className="badge badge-outline badge-accent badge-sm">open code</span>
+                                <span className="badge badge-accent badge-sm">open code</span>
                               )}
                               {hasOpenMaterials && (
-                                <span className="badge badge-outline badge-success badge-sm">
-                                  open materials
-                                </span>
+                                <span className="badge badge-success badge-sm">open materials</span>
                               )}
                             </div>
                           )}
