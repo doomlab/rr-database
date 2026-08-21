@@ -4,7 +4,8 @@ import { ReportButton } from "./components/ReportButton"
 import { Pagination } from "./components/Pagination"
 import { SearchAndKeywordFilter } from "./components/SearchAndKeywordFilter"
 import { getBlitzContext } from "./blitz-server"
-import db, { PaperStatus, StudyPaperRole } from "db"
+import db from "db"
+import { parseStudyFilterParams, buildStudyWhere, CONFIRMED_STATUSES } from "src/lib/studyFilters"
 
 const PAGE_SIZE = 50
 
@@ -50,6 +51,23 @@ export default async function Home({
   const STAGE1_ROLES: StudyPaperRole[] = [StudyPaperRole.STAGE1_ARTICLE, StudyPaperRole.STAGE1_MATERIALS]
   const STAGE2_ROLES: StudyPaperRole[] = [StudyPaperRole.STAGE2_ARTICLE]
 
+  // Prisma's array filters only support exact-element matching, so a substring
+  // match on keywords needs a raw pre-pass to resolve which papers qualify.
+  const keywordMatchedPaperIds =
+    keywords.length > 0
+      ? (
+          await db.$queryRaw<{ id: number }[]>(Prisma.sql`
+            SELECT DISTINCT p.id
+            FROM "Paper" p, unnest(p.keywords) AS kw
+            WHERE p.status::text IN (${PaperStatus.IMPORTED}, ${PaperStatus.APPROVED})
+              AND (${Prisma.join(
+                keywords.map((k) => Prisma.sql`kw ILIKE ${"%" + k + "%"}`),
+                " OR "
+              )})
+          `)
+        ).map((r) => r.id)
+      : []
+
   const andConditions = [
     ...(q
       ? [
@@ -79,7 +97,7 @@ export default async function Home({
           {
             papers: {
               some: {
-                paper: { status: { in: CONFIRMED_STATUSES }, keywords: { hasSome: keywords } },
+                paper: { status: { in: CONFIRMED_STATUSES }, id: { in: keywordMatchedPaperIds } },
               },
             },
           },
@@ -90,7 +108,10 @@ export default async function Home({
           {
             papers: {
               some: {
-                paper: { status: { in: CONFIRMED_STATUSES }, venue: { in: venues } },
+                paper: {
+                  status: { in: CONFIRMED_STATUSES },
+                  OR: venues.map((v) => ({ venue: { contains: v, mode: "insensitive" as const } })),
+                },
               },
             },
           },
