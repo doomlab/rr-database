@@ -128,7 +128,9 @@ export function PaperEditForm({
         paperId,
         source,
         title: String(values.title ?? "").trim(),
-        authors: authors.map((a) => ({ id: a.id, name: a.name.trim() })).filter((a) => a.name !== ""),
+        authors: authors
+          .map((a) => ({ id: a.id, name: a.name.trim(), orcid: a.orcid, openalexAuthorId: a.openalexAuthorId }))
+          .filter((a) => a.name !== ""),
         doi: emptyToNull(values.doi),
         abstract: emptyToNull(values.abstract),
         year: values.year === "" || values.year == null ? null : Number(values.year),

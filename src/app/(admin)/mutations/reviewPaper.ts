@@ -41,6 +41,16 @@ export default resolver.pipe(
         create: { paperId, extractedData: {}, needsReview: true },
         update: {},
       })
+
+      // The main browse page is Study-centric — a confirmed paper with no
+      // Study membership at all is invisible there. Give it a solo Study so
+      // it shows up immediately; it stays eligible to be merged into a
+      // multi-paper Study later via the Link papers page.
+      const existingLink = await db.studyPaper.findUnique({ where: { paperId } })
+      if (!existingLink) {
+        const study = await db.study.create({ data: {} })
+        await db.studyPaper.create({ data: { studyId: study.id, paperId, role: "OTHER" } })
+      }
     }
 
     return paper

@@ -149,7 +149,9 @@ export function ApplySuggestionForm({
         jmirBadgeCounterpartDoi: emptyToNull(values.jmirBadgeCounterpartDoi),
         tags: splitList(values.tags),
         keywords: splitList(values.keywords).map((k) => k.toLowerCase()),
-        authors: authors.map((a) => ({ id: a.id, name: a.name.trim() })).filter((a) => a.name !== ""),
+        authors: authors
+          .map((a) => ({ id: a.id, name: a.name.trim(), orcid: a.orcid, openalexAuthorId: a.openalexAuthorId }))
+          .filter((a) => a.name !== ""),
         markVerified,
       })
       router.push(backHref as any)

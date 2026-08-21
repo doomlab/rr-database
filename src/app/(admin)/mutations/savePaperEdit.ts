@@ -3,7 +3,12 @@ import { z } from "zod"
 import db from "db"
 import { fetchAndStoreCitations } from "src/lib/fetchAndStoreCitations"
 
-const AuthorInput = z.object({ id: z.number().nullable(), name: z.string() })
+const AuthorInput = z.object({
+  id: z.number().nullable(),
+  name: z.string(),
+  orcid: z.string().nullable(),
+  openalexAuthorId: z.string().nullable(),
+})
 
 const SavePaperEdit = z.object({
   paperId: z.number(),
@@ -63,9 +68,20 @@ export default resolver.pipe(
       for (const a of authors) {
         const name = a.name.trim()
         if (!name) continue
+        const authorData = { name, orcid: a.orcid, openalexAuthorId: a.openalexAuthorId }
+        // An id-matched row is a trusted direct edit — overwrite. The
+        // upsert-by-name fallback might coincidentally match an unrelated
+        // existing Author, so it only fills in blanks, never clobbers.
         const author = a.id
-          ? await tx.author.update({ where: { id: a.id }, data: { name } })
-          : await tx.author.upsert({ where: { name }, create: { name }, update: {} })
+          ? await tx.author.update({ where: { id: a.id }, data: authorData })
+          : await tx.author.upsert({
+              where: { name },
+              create: authorData,
+              update: {
+                ...(a.orcid ? { orcid: a.orcid } : {}),
+                ...(a.openalexAuthorId ? { openalexAuthorId: a.openalexAuthorId } : {}),
+              },
+            })
         await tx.paperAuthor.create({ data: { paperId, authorId: author.id, position } })
         position++
       }

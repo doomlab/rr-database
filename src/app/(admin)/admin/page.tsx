@@ -8,6 +8,7 @@ import { RunCard } from "../components/RunCard"
 import { RunImportButton } from "../components/RunImportButton"
 import { DiscoverOpenAlexYearButton } from "../components/DiscoverOpenAlexYearButton"
 import { DiscoverOpenAlexRecentButton } from "../components/DiscoverOpenAlexRecentButton"
+import { RunAuthorMetaBackfillButton } from "../components/RunAuthorMetaBackfillButton"
 
 // Registered reports as a format only really got going around 2013.
 const EARLIEST_RR_YEAR = 2013
@@ -29,6 +30,7 @@ export default async function AdminHomePage() {
     stagingCollectionsRun,
     openAlexYearRun,
     openAlexRecentRun,
+    authorMetaBackfillRun,
     yearRunHistory,
     reviewCount,
     linkGroupCount,
@@ -38,6 +40,7 @@ export default async function AdminHomePage() {
     isSuperAdmin ? lastZoteroRun("[stagingCollections]") : Promise.resolve(null),
     lastPipelineRun("QUERY_OPENALEX", "[openalex:year:"),
     lastPipelineRun("QUERY_OPENALEX", "[openalex:recent]"),
+    lastPipelineRun("ENRICH", "[author-meta-backfill]"),
     openAlexYearRunHistory(),
     db.paper.count({ where: { status: "PENDING_REVIEW", canonicalPaperId: null } }),
     countLinkNeedsReviewGroups(),
@@ -148,9 +151,31 @@ export default async function AdminHomePage() {
           description="Confirm each confirmed paper's metadata is correct — tags, open science links, JMIR badge info, and anything else added or edited. Open science links and JMIR badge info are detected/entered one paper at a time from that paper's own page (look for the scan/badge buttons there)."
           badge={metadataReviewCount}
         >
-          <a href="/admin/metadata-review" className="btn btn-primary btn-sm text-base">
-            Go to metadata review
-          </a>
+          <div className="flex flex-col gap-4">
+            <a href="/admin/metadata-review" className="btn btn-primary btn-sm text-base w-fit">
+              Go to metadata review
+            </a>
+
+            <RunCard
+              title="Backfill author ORCID / OpenAlex IDs"
+              description="For papers that already have an OpenAlex ID, re-checks their authors against OpenAlex and fills in ORCID/OpenAlex profile links wherever they're still missing — this is what powers the badges next to author names. Only fills in blanks, safe to re-run any time."
+              run={authorMetaBackfillRun}
+              nested
+            >
+              {hasOpenAlexApiKey ? (
+                <RunAuthorMetaBackfillButton />
+              ) : (
+                <div
+                  className="tooltip"
+                  data-tip="Add an OpenAlex key on your Account page to enable this"
+                >
+                  <button type="button" className="btn btn-accent btn-sm text-base" disabled>
+                    Backfill ORCID/OpenAlex IDs
+                  </button>
+                </div>
+              )}
+            </RunCard>
+          </div>
         </WorkflowCard>
       </div>
     </div>

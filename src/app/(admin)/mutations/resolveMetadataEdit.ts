@@ -83,7 +83,12 @@ export default resolver.pipe(
         }).filter(([, v]) => v !== null && v !== undefined)
       )
 
-      const authorList = authors as unknown as { id: number | null; name: string }[]
+      const authorList = authors as unknown as {
+        id: number | null
+        name: string
+        orcid: string | null
+        openalexAuthorId: string | null
+      }[]
 
       await db.$transaction(async (tx) => {
         if (Object.keys(updates).length > 0) {
@@ -95,9 +100,17 @@ export default resolver.pipe(
           for (const a of authorList) {
             const name = a.name.trim()
             if (!name) continue
+            const authorData = { name, orcid: a.orcid, openalexAuthorId: a.openalexAuthorId }
             const author = a.id
-              ? await tx.author.update({ where: { id: a.id }, data: { name } })
-              : await tx.author.upsert({ where: { name }, create: { name }, update: {} })
+              ? await tx.author.update({ where: { id: a.id }, data: authorData })
+              : await tx.author.upsert({
+                  where: { name },
+                  create: authorData,
+                  update: {
+                    ...(a.orcid ? { orcid: a.orcid } : {}),
+                    ...(a.openalexAuthorId ? { openalexAuthorId: a.openalexAuthorId } : {}),
+                  },
+                })
             await tx.paperAuthor.create({ data: { paperId: suggestion.paperId, authorId: author.id, position } })
             position++
           }
