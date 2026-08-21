@@ -1,6 +1,8 @@
 import db from "db"
 import { Pagination } from "../../../components/Pagination"
 import { SearchAndKeywordFilter } from "../../../components/SearchAndKeywordFilter"
+import { clusterPapersByTitle } from "src/lib/duplicateClusters"
+import { BulkRejectButton } from "./BulkRejectButton"
 
 const PAGE_SIZE = 50
 
@@ -85,67 +87,107 @@ export default async function ReviewQueuePage({
         </div>
       ) : (
         <>
-          <ul className="flex flex-col divide-y divide-base-200">
-            {papers.map((paper, idx) => {
-              const nextIds = papers
-                .slice(idx + 1, idx + 11)
-                .map((r) => r.id)
-                .join(",")
-              return (
-                <li
-                  key={paper.id}
-                  className="py-5 hover:bg-base-200/40 px-3 -mx-3 rounded-lg transition-colors"
-                >
-                  <div className="flex items-start justify-between gap-4">
-                    <div className="min-w-0">
-                      <h2 className="font-semibold text-base leading-snug mb-1">{paper.title}</h2>
-                      {paper.abstract && (
-                        <p className="text-base text-base-content/60 mb-2 line-clamp-2">
-                          {paper.abstract}
-                        </p>
-                      )}
-                      <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-base-content/50">
-                        {paper.authors.length > 0 && (
-                          <>
-                            <span>{paper.authors.map((pa) => pa.author.name).join(", ")}</span>
-                            <span>·</span>
-                          </>
-                        )}
-                        {paper.year && <span>{paper.year}</span>}
-                        {paper.venue && (
-                          <>
-                            <span>·</span>
-                            <span className="italic">{paper.venue}</span>
-                          </>
-                        )}
-                        {paper.doi && (
-                          <>
-                            <span>·</span>
-                            <a
-                              href={`https://doi.org/${paper.doi}`}
-                              target="_blank"
-                              rel="noreferrer"
-                              className="link link-primary"
-                            >
-                              {paper.doi}
-                            </a>
-                          </>
-                        )}
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-2 shrink-0">
-                      <a
-                        href={`/admin/review/${paper.id}${nextIds ? `?next=${nextIds}` : ""}`}
-                        className="btn btn-primary btn-sm"
-                      >
-                        View
-                      </a>
-                    </div>
-                  </div>
-                </li>
+          {(() => {
+            const nextIdsById = new Map<number, string>()
+            papers.forEach((paper, idx) => {
+              nextIdsById.set(
+                paper.id,
+                papers
+                  .slice(idx + 1, idx + 11)
+                  .map((r) => r.id)
+                  .join(",")
               )
-            })}
-          </ul>
+            })
+
+            // Group probable duplicates within this page (e.g. a flood of
+            // near-identical noise hits from a discovery pull) so they can be
+            // dismissed together instead of one at a time. Ordered so each
+            // group appears where its first (highest-ranked) member would.
+            const groups = clusterPapersByTitle(papers, 1).sort((a, b) => {
+              const ai = papers.findIndex((p) => p.id === a[0]!.id)
+              const bi = papers.findIndex((p) => p.id === b[0]!.id)
+              return ai - bi
+            })
+
+            return (
+              <ul className="flex flex-col divide-y divide-base-200">
+                {groups.map((group) => (
+                  <li key={group[0]!.id} className="py-5">
+                    {group.length > 1 && (
+                      <div className="flex items-center justify-between gap-4 mb-3 px-3 py-2 rounded-lg bg-warning/10">
+                        <p className="text-base text-base-content/70">
+                          {group.length} papers with very similar titles — probably the same noise
+                          hit or duplicate.
+                        </p>
+                        <BulkRejectButton paperIds={group.map((p) => p.id)} />
+                      </div>
+                    )}
+                    <ul className="flex flex-col divide-y divide-base-200">
+                      {group.map((paper) => (
+                        <li
+                          key={paper.id}
+                          className="py-5 first:pt-0 hover:bg-base-200/40 px-3 -mx-3 rounded-lg transition-colors"
+                        >
+                          <div className="flex items-start justify-between gap-4">
+                            <div className="min-w-0">
+                              <h2 className="font-semibold text-base leading-snug mb-1">
+                                {paper.title}
+                              </h2>
+                              {paper.abstract && (
+                                <p className="text-base text-base-content/60 mb-2 line-clamp-2">
+                                  {paper.abstract}
+                                </p>
+                              )}
+                              <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-base-content/50">
+                                {paper.authors.length > 0 && (
+                                  <>
+                                    <span>
+                                      {paper.authors.map((pa) => pa.author.name).join(", ")}
+                                    </span>
+                                    <span>·</span>
+                                  </>
+                                )}
+                                {paper.year && <span>{paper.year}</span>}
+                                {paper.venue && (
+                                  <>
+                                    <span>·</span>
+                                    <span className="italic">{paper.venue}</span>
+                                  </>
+                                )}
+                                {paper.doi && (
+                                  <>
+                                    <span>·</span>
+                                    <a
+                                      href={`https://doi.org/${paper.doi}`}
+                                      target="_blank"
+                                      rel="noreferrer"
+                                      className="link link-primary"
+                                    >
+                                      {paper.doi}
+                                    </a>
+                                  </>
+                                )}
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-2 shrink-0">
+                              <a
+                                href={`/admin/review/${paper.id}${
+                                  nextIdsById.get(paper.id) ? `?next=${nextIdsById.get(paper.id)}` : ""
+                                }`}
+                                className="btn btn-primary btn-sm"
+                              >
+                                View
+                              </a>
+                            </div>
+                          </div>
+                        </li>
+                      ))}
+                    </ul>
+                  </li>
+                ))}
+              </ul>
+            )
+          })()}
           <Pagination page={page} totalPages={totalPages} buildHref={buildHref} />
         </>
       )}

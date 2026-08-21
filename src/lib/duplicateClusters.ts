@@ -32,6 +32,18 @@ function diceCoefficient(a: Set<string>, b: Set<string>): number {
 
 const SIMILARITY_THRESHOLD = 0.6
 
+// Short titles have too few significant words for the Dice ratio to be
+// reliable — two unrelated papers sharing just 2-3 generic on-topic words
+// (e.g. "covid vaccine trial") can already clear 0.6. Require a
+// progressively stricter ratio the fewer significant words either title has,
+// so short titles only cluster when they're near-identical.
+function requiredThreshold(sizeA: number, sizeB: number): number {
+  const minSize = Math.min(sizeA, sizeB)
+  if (minSize <= 2) return 0.9
+  if (minSize <= 4) return 0.75
+  return SIMILARITY_THRESHOLD
+}
+
 export type ClusterablePaper = {
   id: number
   title: string
@@ -101,7 +113,9 @@ export function clusterPapersByTitle<T extends ClusterablePaper>(
       }
     }
     for (const otherId of candidateIds) {
-      if (diceCoefficient(paperWords, words.get(otherId)!) >= SIMILARITY_THRESHOLD) {
+      const otherWords = words.get(otherId)!
+      const threshold = requiredThreshold(paperWords.size, otherWords.size)
+      if (diceCoefficient(paperWords, otherWords) >= threshold) {
         union(paper.id, otherId)
       }
     }
