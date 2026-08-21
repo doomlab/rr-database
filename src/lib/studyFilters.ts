@@ -10,6 +10,14 @@ export const MATERIALS_ROLES: StudyPaperRole[] = [
 ]
 const OA_STATUS_VALUES = OA_STATUS_OPTIONS.map((o) => o.value)
 
+export const PRACTICE_OPTIONS: { value: string; label: string }[] = [
+  { value: "prereg", label: "Preregistered" },
+  { value: "openData", label: "Open data" },
+  { value: "openCode", label: "Open code" },
+  { value: "openMaterials", label: "Open materials" },
+]
+const PRACTICE_VALUES = PRACTICE_OPTIONS.map((o) => o.value)
+
 export type StudyFilterSearchParams = {
   q?: string
   keyword?: string
@@ -17,6 +25,7 @@ export type StudyFilterSearchParams = {
   materials?: string
   verified?: string
   oaStatus?: string
+  practices?: string
   venue?: string
   yearFrom?: string
   yearTo?: string
@@ -45,10 +54,27 @@ export function parseStudyFilterParams(params: StudyFilterSearchParams) {
   const oaStatusRaw = params.oaStatus?.trim().toLowerCase() || undefined
   const oaStatus =
     oaStatusRaw && (oaStatusRaw === "none" || OA_STATUS_VALUES.includes(oaStatusRaw)) ? oaStatusRaw : undefined
+  const practices = (params.practices ?? "")
+    .split(",")
+    .map((p) => p.trim())
+    .filter((p) => PRACTICE_VALUES.includes(p))
   const yearFrom = params.yearFrom?.trim() || undefined
   const yearTo = params.yearTo?.trim() || undefined
 
-  return { q, keyword, keywords, venue, venues, stage, materials, verified, oaStatus, yearFrom, yearTo }
+  return {
+    q,
+    keyword,
+    keywords,
+    venue,
+    venues,
+    stage,
+    materials,
+    verified,
+    oaStatus,
+    practices,
+    yearFrom,
+    yearTo,
+  }
 }
 
 export type ParsedStudyFilters = ReturnType<typeof parseStudyFilterParams>
@@ -64,6 +90,7 @@ export function parseStudyFilterQueryString(query: string) {
     materials: sp.get("materials") ?? undefined,
     verified: sp.get("verified") ?? undefined,
     oaStatus: sp.get("oaStatus") ?? undefined,
+    practices: sp.get("practices") ?? undefined,
     venue: sp.get("venue") ?? undefined,
     yearFrom: sp.get("yearFrom") ?? undefined,
     yearTo: sp.get("yearTo") ?? undefined,
@@ -91,6 +118,7 @@ export function describeStudyFilters(filters: ParsedStudyFilters): string[] {
   if (filters.materials) chips.push("Materials")
   if (filters.verified) chips.push(VERIFIED_LABELS[filters.verified] ?? filters.verified)
   if (filters.oaStatus) chips.push(OA_STATUS_LABELS[filters.oaStatus] ?? filters.oaStatus)
+  filters.practices.forEach((p) => chips.push(PRACTICE_OPTIONS.find((o) => o.value === p)?.label ?? p))
   if (filters.yearFrom || filters.yearTo) chips.push(`${filters.yearFrom ?? "…"}–${filters.yearTo ?? "…"}`)
   filters.keywords.forEach((k) => chips.push(k))
   filters.venues.forEach((v) => chips.push(v))
@@ -98,7 +126,7 @@ export function describeStudyFilters(filters: ParsedStudyFilters): string[] {
 }
 
 export async function buildStudyWhere(filters: ParsedStudyFilters) {
-  const { q, keywords, venues, stage, materials, verified, oaStatus, yearFrom, yearTo } = filters
+  const { q, keywords, venues, stage, materials, verified, oaStatus, practices, yearFrom, yearTo } = filters
 
   // Prisma's array filters only support exact-element matching, so a substring
   // match on keywords needs a raw pre-pass to resolve which papers qualify.
@@ -203,6 +231,23 @@ export async function buildStudyWhere(filters: ParsedStudyFilters) {
     ...(materials
       ? [{ papers: { some: { role: { in: MATERIALS_ROLES } } } }]
       : []),
+    ...practices.map((practice) => {
+      const field =
+        practice === "prereg"
+          ? "registrationUrl"
+          : practice === "openData"
+            ? "openDataUrl"
+            : practice === "openCode"
+              ? "openCodeUrl"
+              : "openMaterialsUrl"
+      return {
+        papers: {
+          some: {
+            paper: { status: { in: CONFIRMED_STATUSES }, [field]: { not: null } },
+          },
+        },
+      }
+    }),
     ...(verified
       ? [
           {

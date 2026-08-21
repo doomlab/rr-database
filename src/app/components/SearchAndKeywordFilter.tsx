@@ -1,5 +1,6 @@
 import { MultiValueFilter } from "./MultiValueFilter"
 import { OA_STATUS_OPTIONS } from "src/lib/openAccessStatus"
+import { PRACTICE_OPTIONS } from "src/lib/studyFilters"
 
 const STAGE_OPTIONS: { value: string; label: string; color: string }[] = [
   { value: "1", label: "Stage 1", color: "badge-info" },
@@ -22,6 +23,7 @@ type FilterParams = {
   materials?: string
   verified?: string
   oaStatus?: string
+  practices?: string
   yearFrom?: string
   yearTo?: string
 }
@@ -36,6 +38,7 @@ export function SearchAndKeywordFilter({
   showStageFilter = false,
   showAdvancedFilters = false,
   oaStatus,
+  practices,
   venue,
   yearFrom,
   yearTo,
@@ -46,7 +49,19 @@ export function SearchAndKeywordFilter({
 }) {
   const keywords = keyword ? keyword.split(",").filter(Boolean) : []
   const venues = venue ? venue.split(",").filter(Boolean) : []
-  const current: FilterParams = { q, keyword, venue, stage, materials, verified, oaStatus, yearFrom, yearTo }
+  const selectedPractices = practices ? practices.split(",").filter(Boolean) : []
+  const current: FilterParams = {
+    q,
+    keyword,
+    venue,
+    stage,
+    materials,
+    verified,
+    oaStatus,
+    practices,
+    yearFrom,
+    yearTo,
+  }
 
   const hrefFor = (overrides: FilterParams) => {
     const merged = { ...current, ...overrides }
@@ -68,10 +83,18 @@ export function SearchAndKeywordFilter({
     (materials ? 1 : 0) +
     (verified ? 1 : 0) +
     (oaStatus ? 1 : 0) +
+    selectedPractices.length +
     keywords.length +
     venues.length +
     (yearFrom || yearTo ? 1 : 0)
   const hasActiveFilters = activeCount > 0
+
+  const togglePractice = (value: string) => {
+    const next = selectedPractices.includes(value)
+      ? selectedPractices.filter((p) => p !== value)
+      : [...selectedPractices, value]
+    return hrefFor({ practices: next.length > 0 ? next.join(",") : undefined })
+  }
 
   return (
     <div className="mb-6">
@@ -82,6 +105,7 @@ export function SearchAndKeywordFilter({
         {materials && <input type="hidden" name="materials" value={materials} />}
         {verified && <input type="hidden" name="verified" value={verified} />}
         {oaStatus && <input type="hidden" name="oaStatus" value={oaStatus} />}
+        {practices && <input type="hidden" name="practices" value={practices} />}
         <input
           type="text"
           name="q"
@@ -164,6 +188,19 @@ export function SearchAndKeywordFilter({
             </div>
 
             <div className="flex flex-wrap items-center gap-2">
+              <span className="text-base text-base-content/50 w-24 shrink-0">Open practices</span>
+              {PRACTICE_OPTIONS.map((opt) => (
+                <a
+                  key={opt.value}
+                  href={togglePractice(opt.value)}
+                  className={`badge ${selectedPractices.includes(opt.value) ? "badge-accent" : "badge-outline"}`}
+                >
+                  {opt.label}
+                </a>
+              ))}
+            </div>
+
+            <div className="flex flex-wrap items-center gap-2">
               <span className="text-base text-base-content/50 w-24 shrink-0">Year</span>
               <form action={action} method="get" className="flex items-center gap-2">
                 {keyword && <input type="hidden" name="keyword" value={keyword} />}
@@ -172,6 +209,7 @@ export function SearchAndKeywordFilter({
                 {materials && <input type="hidden" name="materials" value={materials} />}
                 {verified && <input type="hidden" name="verified" value={verified} />}
                 {oaStatus && <input type="hidden" name="oaStatus" value={oaStatus} />}
+                {practices && <input type="hidden" name="practices" value={practices} />}
                 {q && <input type="hidden" name="q" value={q} />}
                 <input
                   type="number"
@@ -245,6 +283,14 @@ export function SearchAndKeywordFilter({
               <a href={hrefFor({ verified: undefined })} aria-label="Clear verified filter">✕</a>
             </span>
           )}
+          {selectedPractices.map((p) => (
+            <span key={p} className="badge badge-lg gap-1">
+              {PRACTICE_OPTIONS.find((o) => o.value === p)?.label ?? p}
+              <a href={togglePractice(p)} aria-label={`Remove ${p} filter`}>
+                ✕
+              </a>
+            </span>
+          ))}
           {yearLabel && (
             <span className="badge badge-lg gap-1">
               {yearLabel}

@@ -40,6 +40,7 @@ export default async function Home({
     materials?: string
     verified?: string
     oaStatus?: string
+    practices?: string
     venue?: string
     yearFrom?: string
     yearTo?: string
@@ -48,7 +49,8 @@ export default async function Home({
 }) {
   const params = await searchParams
   const filters = parseStudyFilterParams(params)
-  const { q, keyword, venue, stage, materials, verified, oaStatus, yearFrom, yearTo } = filters
+  const { q, keyword, venue, stage, materials, verified, oaStatus, practices, yearFrom, yearTo } = filters
+  const practicesParam = practices.length > 0 ? practices.join(",") : undefined
   const page = Math.max(1, parseInt(params.page ?? "1", 10) || 1)
   const skip = (page - 1) * PAGE_SIZE
 
@@ -105,6 +107,7 @@ export default async function Home({
     if (materials) sp.set("materials", materials)
     if (verified) sp.set("verified", verified)
     if (oaStatus) sp.set("oaStatus", oaStatus)
+    if (practicesParam) sp.set("practices", practicesParam)
     if (yearFrom) sp.set("yearFrom", yearFrom)
     if (yearTo) sp.set("yearTo", yearTo)
     return sp.toString()
@@ -136,6 +139,7 @@ export default async function Home({
             showStageFilter
             showAdvancedFilters
             oaStatus={oaStatus}
+            practices={practicesParam}
             venue={venue}
             yearFrom={yearFrom}
             yearTo={yearTo}
@@ -190,6 +194,10 @@ export default async function Home({
                     ? OA_STATUS_BADGE_LABELS[paper.openAccessStatus.toLowerCase()] ?? paper.openAccessStatus
                     : null
                   const isVerified = !!paper.metadataVerifiedAt
+                  const hasOpenData = study.papers.some((p) => !!p.paper.openDataUrl)
+                  const hasOpenCode = study.papers.some((p) => !!p.paper.openCodeUrl)
+                  const hasOpenMaterials = study.papers.some((p) => !!p.paper.openMaterialsUrl)
+                  const hasPrereg = study.papers.some((p) => !!p.paper.registrationUrl)
                   return (
                     <li
                       key={study.id}
@@ -214,6 +222,26 @@ export default async function Home({
                               <span className="badge badge-secondary badge-sm shrink-0">verified</span>
                             )}
                           </div>
+                          {(hasOpenData || hasOpenCode || hasOpenMaterials || hasPrereg) && (
+                            <div className="flex flex-wrap items-center gap-1.5 mb-2">
+                              {hasPrereg && (
+                                <span className="badge badge-outline badge-secondary badge-sm">
+                                  preregistered
+                                </span>
+                              )}
+                              {hasOpenData && (
+                                <span className="badge badge-outline badge-success badge-sm">open data</span>
+                              )}
+                              {hasOpenCode && (
+                                <span className="badge badge-outline badge-accent badge-sm">open code</span>
+                              )}
+                              {hasOpenMaterials && (
+                                <span className="badge badge-outline badge-success badge-sm">
+                                  open materials
+                                </span>
+                              )}
+                            </div>
+                          )}
                           {paper.abstract && (
                             <p className="text-base text-base-content/60 mb-2 line-clamp-2">
                               {paper.abstract}

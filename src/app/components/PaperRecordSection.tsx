@@ -7,6 +7,7 @@ import { JmirBadgeButton } from "../(admin)/components/JmirBadgeButton"
 import { ScanPaperPdfButton } from "../(admin)/components/ScanPaperPdfButton"
 import { Row, humanizeItemType, capitalize } from "./PaperFields"
 import { AuthorList } from "./AuthorList"
+import { JMIR_BADGE_OPTIONS } from "src/lib/jmirBadgeOptions"
 
 type RecordPaper = {
   id: number
@@ -36,6 +37,8 @@ type RecordPaper = {
   openDataUrl: string | null
   openCodeUrl: string | null
   openMaterialsUrl: string | null
+  jmirBadgeType: string | null
+  jmirBadgeCounterpartDoi: string | null
   jmirBadgeCheckedAt: Date | null
   openSciencePracticesScannedAt: Date | null
   metadataVerifiedAt: Date | null
@@ -197,7 +200,7 @@ export function PaperRecordSection({
         </p>
       )}
 
-      <div className="space-y-1.5 text-base">
+      <div className="text-base mb-4">
         <AuthorList
           authors={paper.authors.map((pa) => ({
             name: pa.author.name,
@@ -205,76 +208,155 @@ export function PaperRecordSection({
             openalexAuthorId: pa.author.openalexAuthorId,
           }))}
         />
-        <Row label="Year" value={paper.year?.toString()} />
-        <Row label="Venue" value={paper.venue ?? undefined} italic />
-        <Row label="Publisher" value={paper.publisher ?? undefined} />
-        <Row
-          label="Volume / Issue"
-          value={[paper.volume, paper.issue].filter(Boolean).join(" / ") || undefined}
-        />
-        <Row label="Pages" value={paper.pages ?? undefined} />
-        <Row label="ISSN" value={paper.issn ?? undefined} />
-        <Row label="Language" value={paper.language ?? undefined} />
-        <Row label="Item type" value={humanizeItemType(paper.itemType)} />
-        <Row
-          label="Open access"
-          value={
-            paper.openAccess == null
-              ? undefined
-              : paper.openAccess
-              ? `Yes${paper.openAccessStatus ? ` (${capitalize(paper.openAccessStatus)})` : ""}`
-              : "No"
-          }
-        />
-        <Row
-          label="Cited by"
-          value={paper.citedByCount != null ? `${paper.citedByCount} papers` : undefined}
-        />
-        <Row label="Bias level" value={paper.biasLevel ?? undefined} />
-        <Row label="DOI" value={paper.doi ?? undefined} />
-        <Row label="URL" value={paper.url ?? undefined} />
-        <Row label="Registration" value={paper.registrationUrl ?? undefined} />
-        <Row label="OpenAlex ID" value={paper.openalexId ?? undefined} />
-        {paper.abstract && (
-          <div className="pt-2">
-            <p className="text-base-content/70 leading-relaxed">{paper.abstract}</p>
-          </div>
-        )}
       </div>
 
-      {paper.tags.length > 0 && (
-        <div className="mt-4">
-          <h3 className="text-sm font-semibold uppercase tracking-wider text-base-content/60 mb-2">
-            Tags
-          </h3>
-          <div className="flex flex-wrap gap-1.5">
-            {paper.tags.map((tag) => (
-              <span key={tag} className="badge badge-secondary badge-outline">
-                {tag}
-              </span>
-            ))}
-          </div>
-        </div>
-      )}
+      <div className="space-y-4">
+        {(paper.abstract ||
+          paper.venue ||
+          paper.publisher ||
+          paper.year ||
+          paper.volume ||
+          paper.issue ||
+          paper.pages ||
+          paper.issn ||
+          paper.language) && (
+          <CollapsibleSection title="Publication details" defaultOpen>
+            <div className="space-y-1.5">
+              <Row label="Year" value={paper.year?.toString()} />
+              <Row label="Venue" value={paper.venue ?? undefined} italic />
+              <Row label="Publisher" value={paper.publisher ?? undefined} />
+              <Row
+                label="Volume / Issue"
+                value={[paper.volume, paper.issue].filter(Boolean).join(" / ") || undefined}
+              />
+              <Row label="Pages" value={paper.pages ?? undefined} />
+              <Row label="ISSN" value={paper.issn ?? undefined} />
+              <Row label="Language" value={paper.language ?? undefined} />
+              {paper.abstract && (
+                <div className="pt-2">
+                  <p className="text-base-content/70 leading-relaxed">{paper.abstract}</p>
+                </div>
+              )}
+            </div>
+          </CollapsibleSection>
+        )}
 
-      {paper.keywords.length > 0 && (
-        <div className="mt-4">
-          <h3 className="text-sm font-semibold uppercase tracking-wider text-base-content/60 mb-2">
-            Keywords
-          </h3>
-          <div className="flex flex-wrap gap-1.5">
-            {paper.keywords.map((kw) => (
-              <a
-                key={kw}
-                href={`${keywordBasePath}?keyword=${encodeURIComponent(kw)}`}
-                className={`badge ${kw === activeKeyword ? "badge-primary" : "badge-outline hover:badge-primary"}`}
-              >
-                {kw}
-              </a>
-            ))}
-          </div>
-        </div>
-      )}
+        {(paper.doi || paper.url || paper.pdfUrl || paper.itemType) && (
+          <CollapsibleSection title="Identifiers & links" defaultOpen>
+            <div className="space-y-1.5">
+              <Row label="DOI" value={paper.doi ?? undefined} />
+              <Row label="URL" value={paper.url ?? undefined} />
+              <Row label="PDF URL" value={paper.pdfUrl ?? undefined} />
+              <Row label="Item type" value={humanizeItemType(paper.itemType)} />
+            </div>
+          </CollapsibleSection>
+        )}
+
+        {(paper.openAccess != null ||
+          paper.registrationUrl ||
+          paper.openDataUrl ||
+          paper.openCodeUrl ||
+          paper.openMaterialsUrl) && (
+          <CollapsibleSection title="Open science & registration" defaultOpen>
+            <div className="space-y-1.5">
+              <Row
+                label="Open access"
+                value={
+                  paper.openAccess == null
+                    ? undefined
+                    : paper.openAccess
+                    ? `Yes${paper.openAccessStatus ? ` (${capitalize(paper.openAccessStatus)})` : ""}`
+                    : "No"
+                }
+              />
+              <Row
+                label="Registration"
+                value={
+                  paper.registrationUrl
+                    ? `${paper.registrationUrl}${
+                        paper.registrationPlatform ? ` (${paper.registrationPlatform})` : ""
+                      }`
+                    : undefined
+                }
+              />
+              <Row label="Open data" value={paper.openDataUrl ?? undefined} />
+              <Row label="Open code" value={paper.openCodeUrl ?? undefined} />
+              <Row label="Open materials" value={paper.openMaterialsUrl ?? undefined} />
+            </div>
+          </CollapsibleSection>
+        )}
+
+        {(paper.tags.length > 0 || paper.keywords.length > 0) && (
+          <CollapsibleSection title="Tags & keywords" defaultOpen>
+            <div className="space-y-3">
+              {paper.tags.length > 0 && (
+                <div>
+                  <h3 className="text-sm font-semibold uppercase tracking-wider text-base-content/60 mb-2">
+                    Tags
+                  </h3>
+                  <div className="flex flex-wrap gap-1.5">
+                    {paper.tags.map((tag) => (
+                      <span key={tag} className="badge badge-secondary badge-outline">
+                        {tag}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+              {paper.keywords.length > 0 && (
+                <div>
+                  <h3 className="text-sm font-semibold uppercase tracking-wider text-base-content/60 mb-2">
+                    Keywords
+                  </h3>
+                  <div className="flex flex-wrap gap-1.5">
+                    {paper.keywords.map((kw) => (
+                      <a
+                        key={kw}
+                        href={`${keywordBasePath}?keyword=${encodeURIComponent(kw)}`}
+                        className={`badge ${
+                          kw === activeKeyword ? "badge-primary" : "badge-outline hover:badge-primary"
+                        }`}
+                      >
+                        {kw}
+                      </a>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          </CollapsibleSection>
+        )}
+
+        {(paper.jmirBadgeType || paper.jmirBadgeCounterpartDoi || paper.biasLevel) && (
+          <CollapsibleSection title="JMIR / PCI RR badges" defaultOpen>
+            <div className="space-y-1.5">
+              <Row
+                label="JMIR badge"
+                value={
+                  paper.jmirBadgeType
+                    ? JMIR_BADGE_OPTIONS.find((o) => o.value === paper.jmirBadgeType)?.label ??
+                      paper.jmirBadgeType
+                    : undefined
+                }
+              />
+              <Row label="JMIR counterpart DOI" value={paper.jmirBadgeCounterpartDoi ?? undefined} />
+              <Row label="Bias level" value={paper.biasLevel ?? undefined} />
+            </div>
+          </CollapsibleSection>
+        )}
+
+        {(paper.citedByCount != null || paper.openalexId) && (
+          <CollapsibleSection title="Metrics & external IDs" defaultOpen>
+            <div className="space-y-1.5">
+              <Row
+                label="Cited by"
+                value={paper.citedByCount != null ? `${paper.citedByCount} papers` : undefined}
+              />
+              <Row label="OpenAlex ID" value={paper.openalexId ?? undefined} />
+            </div>
+          </CollapsibleSection>
+        )}
+      </div>
 
       {paper.zoteroNotes && (
         <div className="mt-4">

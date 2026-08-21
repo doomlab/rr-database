@@ -9,8 +9,13 @@ import {
   MATERIALS_ROLES,
 } from "src/lib/studyFilters"
 import { OA_STATUS_OPTIONS } from "src/lib/openAccessStatus"
+import { JMIR_BADGE_OPTIONS } from "src/lib/jmirBadgeOptions"
+import { humanizeItemType } from "src/app/components/PaperFields"
 
 const OA_STATUS_LABELS: Record<string, string> = Object.fromEntries(OA_STATUS_OPTIONS.map((o) => [o.value, o.label]))
+const JMIR_BADGE_LABELS: Record<string, string> = Object.fromEntries(
+  JMIR_BADGE_OPTIONS.map((o) => [o.value, o.label])
+)
 
 function primaryPaper(papers: { role: string; paper: any }[]) {
   return (
@@ -47,14 +52,35 @@ export async function GET(request: NextRequest) {
   const header = [
     "Title",
     "Authors",
+    "Abstract",
     "Year",
     "Venue",
+    "Publisher",
+    "Volume",
+    "Issue",
+    "Pages",
+    "ISSN",
+    "Language",
+    "Item type",
     "DOI",
     "URL",
+    "PDF URL",
     "Stage",
     "Materials",
+    "Open access",
     "Open access status",
+    "Registration URL",
+    "Registration platform",
+    "Open data URL",
+    "Open code URL",
+    "Open materials URL",
+    "Bias level",
+    "JMIR badge",
+    "JMIR counterpart DOI",
+    "Cited by count",
+    "OpenAlex ID",
     "Metadata verified",
+    "Tags",
     "Keywords",
     "Database link",
   ]
@@ -70,21 +96,46 @@ export async function GET(request: NextRequest) {
       const oaStatusLabel = paper.openAccessStatus
         ? OA_STATUS_LABELS[paper.openAccessStatus.toLowerCase()] ?? paper.openAccessStatus
         : ""
+      const jmirBadgeLabel = paper.jmirBadgeType
+        ? JMIR_BADGE_LABELS[paper.jmirBadgeType] ?? paper.jmirBadgeType
+        : ""
       const authors = paper.authors.map((pa: any) => pa.author.name).join("; ")
+      const tags = (paper.tags ?? []).join("; ")
       const keywords = (paper.keywords ?? []).join("; ")
       const url = `${request.nextUrl.origin}/studies/${study.id}`
 
       return [
         csvCell(paper.title),
         csvCell(authors),
+        csvCell(paper.abstract),
         csvCell(paper.year),
         csvCell(paper.venue),
+        csvCell(paper.publisher),
+        csvCell(paper.volume),
+        csvCell(paper.issue),
+        csvCell(paper.pages),
+        csvCell(paper.issn),
+        csvCell(paper.language),
+        csvCell(humanizeItemType(paper.itemType)),
         csvCell(paper.doi),
         csvCell(paper.url),
+        csvCell(paper.pdfUrl),
         csvCell(stageLabel),
         csvCell(hasMaterials ? "Yes" : "No"),
+        csvCell(paper.openAccess == null ? "" : paper.openAccess ? "Yes" : "No"),
         csvCell(oaStatusLabel),
+        csvCell(paper.registrationUrl),
+        csvCell(paper.registrationPlatform),
+        csvCell(paper.openDataUrl),
+        csvCell(paper.openCodeUrl),
+        csvCell(paper.openMaterialsUrl),
+        csvCell(paper.biasLevel),
+        csvCell(jmirBadgeLabel),
+        csvCell(paper.jmirBadgeCounterpartDoi),
+        csvCell(paper.citedByCount),
+        csvCell(paper.openalexId),
         csvCell(paper.metadataVerifiedAt ? "Yes" : "No"),
+        csvCell(tags),
         csvCell(keywords),
         csvCell(url),
       ].join(",")
