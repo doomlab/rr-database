@@ -60,25 +60,44 @@ export async function buildStudyWhere(filters: ParsedStudyFilters) {
         ).map((r) => r.id)
       : []
 
+  // Search across every text field on the paper (and its authors/tags/keywords),
+  // not just title/abstract/doi — a raw pre-pass since array-field substring
+  // matches (tags, keywords) aren't expressible through Prisma's filter API.
+  const qMatchedPaperIds = q
+    ? (
+        await db.$queryRaw<{ id: number }[]>(Prisma.sql`
+          SELECT DISTINCT p.id
+          FROM "Paper" p
+          LEFT JOIN "PaperAuthor" pa ON pa."paperId" = p.id
+          LEFT JOIN "Author" a ON a.id = pa."authorId"
+          WHERE p.status::text IN (${PaperStatus.IMPORTED}, ${PaperStatus.APPROVED})
+            AND (
+              p.title ILIKE ${"%" + q + "%"}
+              OR p.abstract ILIKE ${"%" + q + "%"}
+              OR p.doi ILIKE ${"%" + q + "%"}
+              OR p.venue ILIKE ${"%" + q + "%"}
+              OR p.publisher ILIKE ${"%" + q + "%"}
+              OR p.issn ILIKE ${"%" + q + "%"}
+              OR p.language ILIKE ${"%" + q + "%"}
+              OR p."itemType" ILIKE ${"%" + q + "%"}
+              OR p."registrationUrl" ILIKE ${"%" + q + "%"}
+              OR p."registrationPlatform" ILIKE ${"%" + q + "%"}
+              OR p."biasLevel" ILIKE ${"%" + q + "%"}
+              OR a.name ILIKE ${"%" + q + "%"}
+              OR EXISTS (SELECT 1 FROM unnest(p.tags) t WHERE t ILIKE ${"%" + q + "%"})
+              OR EXISTS (SELECT 1 FROM unnest(p.keywords) kw WHERE kw ILIKE ${"%" + q + "%"})
+            )
+        `)
+      ).map((r) => r.id)
+    : []
+
   const andConditions = [
     ...(q
       ? [
           {
             papers: {
               some: {
-                paper: {
-                  status: { in: CONFIRMED_STATUSES },
-                  OR: [
-                    { title: { contains: q, mode: "insensitive" as const } },
-                    { abstract: { contains: q, mode: "insensitive" as const } },
-                    { doi: { contains: q, mode: "insensitive" as const } },
-                    {
-                      authors: {
-                        some: { author: { name: { contains: q, mode: "insensitive" as const } } },
-                      },
-                    },
-                  ],
-                },
+                paper: { status: { in: CONFIRMED_STATUSES }, id: { in: qMatchedPaperIds } },
               },
             },
           },
