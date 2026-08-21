@@ -66,7 +66,7 @@ export function ScanPaperPdfButton({
             disabled={isRunning}
             onClick={() => runScan()}
           >
-            {isRunning ? <span className="loading loading-spinner loading-xs" /> : "Scan PDF for open science links"}
+            {isRunning ? <span className="loading loading-spinner loading-xs" /> : "Scan PDF"}
           </button>
         )}
         {offerUpload && (
@@ -79,9 +79,9 @@ export function ScanPaperPdfButton({
             {isRunning ? (
               <span className="loading loading-spinner loading-xs" />
             ) : hasPdfUrl ? (
-              "Upload a PDF instead"
+              "Upload PDF instead"
             ) : (
-              "Upload a PDF to scan for open science links"
+              "Upload PDF to scan"
             )}
           </button>
         )}
