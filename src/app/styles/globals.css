@@ -1,0 +1,21 @@
+@import "tailwindcss";
+@plugin "daisyui";
+
+/* Unlayered so it wins over daisyUI's layered focus rules: use the
+   secondary color for the focus highlight on all form fields site-wide. */
+.input:focus,
+.input:focus-within,
+.select:focus,
+.select:focus-within,
+.textarea:focus,
+.textarea:focus-within,
+.checkbox:focus,
+.checkbox:focus-within,
+.radio:focus,
+.radio:focus-within,
+.toggle:focus,
+.toggle:focus-within,
+.file-input:focus,
+.file-input:focus-within {
+  --input-color: var(--color-secondary);
+}

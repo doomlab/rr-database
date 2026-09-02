@@ -1,0 +1,14 @@
+{
+    email {$LETSENCRYPT_EMAIL}
+}
+
+{$APP_DOMAIN} {
+    handle /pgadmin* {
+        reverse_proxy pgadmin:80 {
+            header_up X-Script-Name /pgadmin
+        }
+    }
+    handle {
+        reverse_proxy app:3000
+    }
+}

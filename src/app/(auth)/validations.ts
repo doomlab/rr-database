@@ -1,0 +1,35 @@
+import { z } from "zod"
+
+export const email = z
+  .string()
+  .email()
+  .transform((str) => str.toLowerCase().trim())
+
+export const password = z
+  .string()
+  .min(8, "Password must be at least 8 characters")
+  .max(100)
+  .transform((str) => str.trim())
+
+export const name = z
+  .string()
+  .min(1, "Please enter your name")
+  .max(200)
+  .transform((str) => str.trim())
+
+export const Signup = z
+  .object({
+    name,
+    email,
+    password,
+    passwordConfirmation: password,
+  })
+  .refine((data) => data.password === data.passwordConfirmation, {
+    message: "Passwords don't match",
+    path: ["passwordConfirmation"],
+  })
+
+export const Login = z.object({
+  email,
+  password: z.string(),
+})

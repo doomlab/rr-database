@@ -1,0 +1,12 @@
+node_modules
+.next
+.git
+.venv
+.env
+.env.local
+*.log
+*.log1
+data
+doc
+.github
+tsconfig.tsbuildinfo

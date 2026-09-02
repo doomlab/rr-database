@@ -1,0 +1,538 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+// ---------------------------------------------------------------------------
+// Users / auth
+// ---------------------------------------------------------------------------
+
+enum Role {
+  USER
+  ADMIN
+  SUPER_ADMIN
+}
+
+model User {
+  id        Int      @id @default(autoincrement())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  email     String   @unique
+  name      String?
+  role      Role     @default(USER)
+
+  hashedPassword String?
+  tokens         Token[]
+  sessions       Session[]
+
+  // A personal OpenAlex API key, optionally contributed by the user, so
+  // pipeline calls can round-robin across multiple keys instead of
+  // hammering a single shared one.
+  openAlexApiKey String?
+
+  reviewedPapers  Paper[]         @relation("PaperReviewedBy")
+  verifiedMetadataPapers Paper[]  @relation("PaperMetadataVerifiedBy")
+  pipelineRuns    PipelineRun[]   @relation("PipelineRunStartedBy")
+  favoriteStudies StudyFavorite[]
+  favoritePapers  PaperFavorite[]
+
+  articleSuggestions       ArticleSuggestion[]
+  metadataEditSuggestions  MetadataEditSuggestion[]
+  paperReports             PaperReport[]
+  paperEditHistory         PaperEditHistory[]
+  savedSearches            SavedSearch[]
+}
+
+model Session {
+  id                 Int       @id @default(autoincrement())
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+  expiresAt          DateTime?
+  handle             String    @unique
+  hashedSessionToken String?
+  antiCSRFToken      String?
+  publicData         String?
+  privateData        String?
+
+  user   User? @relation(fields: [userId], references: [id])
+  userId Int?
+}
+
+enum TokenType {
+  RESET_PASSWORD
+}
+
+model Token {
+  id          Int       @id @default(autoincrement())
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  hashedToken String
+  type        TokenType
+  expiresAt   DateTime
+  sentTo      String
+
+  user   User @relation(fields: [userId], references: [id])
+  userId Int
+
+  @@unique([hashedToken, type])
+}
+
+// ---------------------------------------------------------------------------
+// Papers
+// ---------------------------------------------------------------------------
+
+enum PaperStatus {
+  IMPORTED // came from a Zotero library import; already canonical
+  DISCOVERED // found by a discovery script, not yet merged/deduped
+  MERGED // resolved against OpenAlex, ready for dedup
+  DUPLICATE // matched an existing IMPORTED paper
+  NEW_CANDIDATE // passed dedup, not yet enriched
+  ENRICHED // Crossref enrichment complete, ready for review
+  PENDING_REVIEW // queued for admin review
+  APPROVED // admin approved; eligible to sync to Zotero
+  REJECTED // admin rejected; will not sync
+  SYNCED // successfully pushed to a Zotero library
+}
+
+enum Stage {
+  STAGE_1
+  STAGE_2
+}
+
+enum DiscoverySource {
+  ZOTERO_IMPORT
+  OPENALEX
+  GOOGLE_SCHOLAR
+  PCIRR
+  USER_SUGGESTION
+}
+
+enum ZoteroSyncStatus {
+  NOT_SYNCED
+  SYNCED_STAGING
+  SYNCED_PRODUCTION
+}
+
+model Paper {
+  id        Int      @id @default(autoincrement())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Bibliographic metadata
+  title        String
+  doi          String?
+  abstract     String?
+  year         Int?
+  venue        String?
+  volume       String?
+  issue        String?
+  pages        String?
+  issn         String?
+  publisher    String?
+  language     String?
+  url          String?
+  citedByCount       Int?
+  openAccess         Boolean?
+  openAccessStatus   String? // OpenAlex oa_status: "gold" | "green" | "hybrid" | "bronze" | "closed" | "diamond"
+  pdfUrl             String?
+  itemType           String?
+  citationsFetchedAt DateTime?
+  openAlexFetchedAt  DateTime?
+  // Relevance score from the discovery-triage classifier (Phase 2+, once
+  // there's enough reviewed PENDING_REVIEW/REJECTED data to train on).
+  modelScore         Float?
+
+  authors    PaperAuthor[]
+  citationsFrom PaperCitation[]
+
+  // RR-specific metadata
+  // Manually-added Zotero tags only (tag.type === 1 is Zotero's own
+  // automatic/imported tags — e.g. MeSH keywords — and is excluded); this is
+  // what the coders actually applied, tag normalization for `stage` aside.
+  tags                 String[] @default([])
+  // OpenAlex's own topical keywords for this work, lowercased at fetch time.
+  // Distinct from `tags` (coder-applied) — shown as clickable filters so
+  // readers can browse other papers sharing a keyword.
+  keywords             String[] @default([])
+  stage                Stage?
+  registrationUrl      String? // preregistration link (OSF, figshare, Zenodo, etc.);
+  // used to match this paper's stage counterpart when linking into a Study
+  // (same registration, both stages point at the same registration link)
+  registrationPlatform String? // "OSF" / "figshare" / "Zenodo" / etc., if known
+  biasLevel            String?
+
+  // Open science practices — detected by scanning the PDF text (pdfUrl) for
+  // links near "data/code/materials availability" language. Null means
+  // either never scanned, or scanned and nothing found.
+  openDataUrl                    String?
+  openCodeUrl                    String?
+  openMaterialsUrl               String?
+  openSciencePracticesScannedAt  DateTime?
+
+  // JMIR badges "Registered"/"Results Available" can't be scraped (JMIR
+  // blocks automated fetches behind a WAF challenge), so this is filled in
+  // by an admin manually reading the badge off the page. jmirBadgeCheckedAt
+  // null means nobody has done this paper yet.
+  jmirBadgeType           String?
+  jmirBadgeCounterpartDoi String?
+  jmirBadgeCheckedAt      DateTime?
+
+  // A single "someone looked at this paper's auto-filled metadata (open
+  // science links, JMIR badge, etc.) and confirmed it's correct" flag —
+  // covers everything at once rather than tracking each source separately.
+  metadataVerifiedById Int?
+  metadataVerifiedBy   User?     @relation("PaperMetadataVerifiedBy", fields: [metadataVerifiedById], references: [id])
+  metadataVerifiedAt   DateTime?
+
+  // Source-tracking / provenance
+  openalexId              String? @unique
+  zoteroKeyProduction     String? @unique
+  zoteroKeyStaging        String? @unique
+  zoteroVersionProduction Int?
+  zoteroVersionStaging    Int?
+  discoveredVia           DiscoverySource[]
+  sourceMetadata          Json?
+  pcirrMetadata           Json?
+  // Raw Zotero "Related" links (data.relations["dc:relation"], as item
+  // URIs) captured at import time — the seed data for resolving which
+  // papers belong together in a Study, and for pushing the same relation
+  // back onto Zotero items when syncing.
+  zoteroRelations         Json?
+  // Child note items attached to this record in Zotero (coders' free-text
+  // annotations — e.g. "no open data despite claiming it"), HTML-stripped
+  // and joined if there's more than one. Re-synced on every production pull.
+  zoteroNotes             String?
+
+  // Dedup / review state
+  status         PaperStatus @default(DISCOVERED)
+  dedupReason    String?
+  crossrefQueried Boolean    @default(false)
+  crossrefFound   Boolean    @default(false)
+
+  canonicalPaperId Int?
+  canonical        Paper?  @relation("PaperDuplicates", fields: [canonicalPaperId], references: [id])
+  duplicates       Paper[] @relation("PaperDuplicates")
+
+  reviewedById Int?
+  reviewedBy   User?     @relation("PaperReviewedBy", fields: [reviewedById], references: [id])
+  reviewedAt   DateTime?
+  reviewNote   String?
+
+  // Sync-back state
+  zoteroSyncStatus ZoteroSyncStatus @default(NOT_SYNCED)
+  lastSyncedAt     DateTime?
+
+  studyPaper StudyPaper?
+
+  metadataEdits   MetadataEditSuggestion[]
+  reports         PaperReport[]
+  editHistory     PaperEditHistory[]
+  favorites       PaperFavorite[]
+
+  @@index([status])
+  @@index([doi])
+}
+
+// Audit trail of admin-triggered metadata pulls (OpenAlex/Crossref/manual
+// edits) on a paper — who did it, from where, and when. Shown as a history
+// card on the paper's view page.
+model PaperEditHistory {
+  id        Int      @id @default(autoincrement())
+  createdAt DateTime @default(now())
+
+  paperId Int
+  paper   Paper @relation(fields: [paperId], references: [id], onDelete: Cascade)
+  userId  Int
+  user    User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  source  String // "openalex" | "crossref" | "manual"
+  summary String? // short human-readable note on what changed
+
+  @@index([paperId])
+}
+
+// A Study is one registered report project — the OSF-registered plan plus
+// whichever stage(s) got published as journal articles. Stage 1 and Stage 2
+// are each their own bibliographic Paper (different DOI/journal/authors are
+// possible), linked here so they can be browsed, favorited, and coded as a
+// single unit. A Study can exist with only one stage linked if the other
+// hasn't been published (or found) yet.
+model Study {
+  id        Int      @id @default(autoincrement())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  registrationUrl      String?
+  registrationPlatform String?
+  biasLevel            String?
+
+  papers    StudyPaper[]
+  favorites StudyFavorite[]
+}
+
+// A registered report can have more than one Stage 1/Stage 2 record — e.g.
+// several Zenodo DOIs for preregistered materials alongside the published
+// articles. Each is its own bibliographic Paper (distinct DOI, not a
+// duplicate to collapse) but belongs to one Study. A Paper belongs to at
+// most one Study.
+enum StudyPaperRole {
+  STAGE1_ARTICLE
+  STAGE1_MATERIALS
+  STAGE2_ARTICLE
+  STAGE2_MATERIALS
+  PCIRR_PAGE // the recommendation text itself — DOI has no .rev/.ar/.d suffix
+  PCIRR_REVIEW // DOI ends .rev<n>
+  PCIRR_AUTHOR_RESPONSE // DOI ends .ar<n>
+  PCIRR_DECISION // DOI ends .d<n>
+  OTHER
+}
+
+model StudyPaper {
+  id        Int      @id @default(autoincrement())
+  createdAt DateTime @default(now())
+
+  studyId Int
+  study   Study @relation(fields: [studyId], references: [id])
+  paperId Int   @unique
+  paper   Paper @relation(fields: [paperId], references: [id])
+
+  role StudyPaperRole @default(OTHER)
+
+  @@index([studyId])
+}
+
+model StudyFavorite {
+  id        Int      @id @default(autoincrement())
+  createdAt DateTime @default(now())
+
+  userId  Int
+  user    User  @relation(fields: [userId], references: [id])
+  studyId Int
+  study   Study @relation(fields: [studyId], references: [id])
+
+  @@unique([userId, studyId])
+}
+
+// A user's saved search/filter combination on the main browse page — stored
+// as the raw query string so it stays in sync with whatever filters exist
+// (stage, keywords, venue, year range, etc.) without needing its own schema.
+model SavedSearch {
+  id        Int      @id @default(autoincrement())
+  createdAt DateTime @default(now())
+
+  userId Int
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name   String
+  query  String
+
+  @@index([userId])
+}
+
+model Author {
+  id   Int    @id @default(autoincrement())
+  name String @unique
+
+  // Filled in from OpenAlex authorship data when available (discovery pull,
+  // etc.) — never hand-typed. orcid is stored as the full profile URL
+  // (https://orcid.org/...), matching how OpenAlex returns it.
+  orcid            String?
+  openalexAuthorId String? @unique
+
+  papers PaperAuthor[]
+}
+
+model PaperAuthor {
+  paper    Paper  @relation(fields: [paperId], references: [id])
+  paperId  Int
+  author   Author @relation(fields: [authorId], references: [id])
+  authorId Int
+  position Int
+
+  @@id([paperId, authorId])
+  @@index([paperId])
+}
+
+// Outgoing references for a Paper, fetched from OpenAlex (falling back to
+// Crossref reference DOIs when OpenAlex's parsed list is empty). Cited works
+// are stored denormalized rather than as Paper rows, since most of what a RR
+// cites won't itself be a registered report in this database — this is what
+// powers the citation network view.
+model PaperCitation {
+  id            Int      @id @default(autoincrement())
+  createdAt     DateTime @default(now())
+  citingPaperId Int
+  citingPaper   Paper    @relation(fields: [citingPaperId], references: [id], onDelete: Cascade)
+
+  citedOpenAlexId String
+  title           String?
+  authors         String[]
+  year            Int?
+  journal         String?
+  doi             String?
+  reviewed        Boolean  @default(false)
+
+  @@unique([citingPaperId, citedOpenAlexId])
+}
+
+// ---------------------------------------------------------------------------
+// Pipeline runs
+// ---------------------------------------------------------------------------
+
+enum PipelineStep {
+  PULL_ZOTERO
+  QUERY_OPENALEX
+  QUERY_GOOGLE_SCHOLAR
+  QUERY_PCIRR
+  MERGE
+  DEDUP
+  ENRICH
+  SYNC
+}
+
+enum PipelineStatus {
+  RUNNING
+  DONE
+  FAILED
+}
+
+model PipelineRun {
+  id        Int      @id @default(autoincrement())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  step   PipelineStep
+  status PipelineStatus @default(RUNNING)
+  output String?
+
+  startedById Int?
+  startedBy   User? @relation("PipelineRunStartedBy", fields: [startedById], references: [id])
+}
+
+// ---------------------------------------------------------------------------
+// User-submitted suggestions / reports
+// ---------------------------------------------------------------------------
+
+// Suggest a brand-new RR to add — not tied to an existing Paper.
+model ArticleSuggestion {
+  id        Int      @id @default(autoincrement())
+  createdAt DateTime @default(now())
+
+  userId Int
+  user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  title   String?
+  authors String?
+  year    Int?
+  doi     String?
+  url     String?
+  note    String?
+
+  resolved Boolean @default(false)
+}
+
+// Suggest a correction to an existing Paper's bibliographic metadata.
+model MetadataEditSuggestion {
+  id        Int      @id @default(autoincrement())
+  createdAt DateTime @default(now())
+
+  paperId Int
+  paper   Paper @relation(fields: [paperId], references: [id], onDelete: Cascade)
+  userId  Int
+  user    User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  title     String?
+  doi       String?
+  abstract  String?
+  year      Int?
+  venue     String?
+  volume    String?
+  issue     String?
+  pages     String?
+  publisher String?
+  url       String?
+  issn                  String?
+  language              String?
+  itemType              String?
+  pdfUrl                String?
+  openAccess            Boolean?
+  openAccessStatus      String?
+  citedByCount          Int?
+  openalexId            String?
+  registrationUrl       String?
+  registrationPlatform  String?
+  biasLevel             String?
+  openDataUrl           String?
+  openCodeUrl           String?
+  openMaterialsUrl      String?
+  zoteroNotes           String?
+  jmirBadgeType           String?
+  jmirBadgeCounterpartDoi String?
+  tags                  String[] @default([])
+  keywords              String[] @default([])
+  // {id: number|null, name: string}[] — id links back to the existing
+  // Author row so an approved rename updates it in place instead of
+  // re-upserting by name (which would orphan its ORCID/OpenAlex link).
+  authors               Json     @default("[]")
+  note      String?
+
+  resolved Boolean @default(false)
+
+  @@unique([userId, paperId])
+}
+
+// Flag a problem with a Paper (wrong metadata, not actually an RR, duplicate, etc).
+model PaperReport {
+  id        Int      @id @default(autoincrement())
+  createdAt DateTime @default(now())
+
+  paperId Int
+  paper   Paper @relation(fields: [paperId], references: [id], onDelete: Cascade)
+  userId  Int
+  user    User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  reason String
+  note   String?
+
+  resolved Boolean @default(false)
+
+  @@unique([userId, paperId])
+}
+
+// Save a Paper for later — used on standalone papers (e.g. excluded/rejected
+// ones) that aren't linked into a Study and so can't use StudyFavorite.
+model PaperFavorite {
+  id        Int      @id @default(autoincrement())
+  createdAt DateTime @default(now())
+
+  userId  Int
+  user    User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  paperId Int
+  paper   Paper @relation(fields: [paperId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, paperId])
+}
+
+// ---------------------------------------------------------------------------
+// Discovery-triage classifier
+// ---------------------------------------------------------------------------
+
+// Logs each retrain/eval of the classifier that scores newly discovered
+// candidates into Paper.modelScore. Not usable yet — needs enough reviewed
+// APPROVED/REJECTED papers (real "yes"/"no" examples) to train on — but the
+// schema is ready for when that data exists.
+model ModelRun {
+  id            Int      @id @default(autoincrement())
+  createdAt     DateTime @default(now())
+  trainSize     Int
+  valSize       Int
+  accuracy      Float
+  precision     Float
+  recall        Float
+  f1            Float
+  valRebalanced Boolean  @default(false)
+  notes         String?
+}

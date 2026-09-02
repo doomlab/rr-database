@@ -1,4 +1,3 @@
-import argparse
 import html
 import json
 import os
@@ -8,25 +7,12 @@ from pathlib import Path
 from dotenv import load_dotenv
 load_dotenv()
 
-parser = argparse.ArgumentParser()
-parser.add_argument(
-    "--test",
-    action="store_true",
-    help="Push to your personal test library (ZOTERO_TEST_*) instead of staging",
-)
-args = parser.parse_args()
-
 DATA_DIR = Path("data")
 INPUT_PATH = DATA_DIR / "enriched_candidates.json"
 
-if args.test:
-    ZOTERO_API_KEY = os.environ["ZOTERO_TEST_API_KEY"]
-    GROUP_ID = os.environ["ZOTERO_TEST_LIBRARY_ID"]
-    target_label = "TEST"
-else:
-    ZOTERO_API_KEY = os.environ["ZOTERO_STAGING_API_KEY"]
-    GROUP_ID = os.environ["ZOTERO_STAGING_LIBRARY_ID"]
-    target_label = "STAGING"
+ZOTERO_API_KEY = os.environ["ZOTERO_STAGING_API_KEY"]
+GROUP_ID = os.environ["ZOTERO_STAGING_LIBRARY_ID"]
+target_label = "STAGING"
 
 BASE_URL = f"https://api.zotero.org/groups/{GROUP_ID}"
 HEADERS = {

@@ -31,19 +31,50 @@ def query_openalex_by_title(title):
     return None
 
 
+SEARCH_TERMS = [
+    "registered report",
+    "preregistered report",
+    "pre-registered report",
+    "preregistered research",
+]
+
+# Many clinical-trial protocol papers (mostly JMIR-family journals) carry the
+# boilerplate line "INTERNATIONAL REGISTERED REPORT IDENTIFIER (IRRID): RR..."
+# in their abstract, which matches "registered report" even though it has
+# nothing to do with the Registered Reports publishing format. OpenAlex search
+# filters don't support "!" negation, so we can't exclude this at the API
+# level -- instead a work only counts as a real match if its title actually
+# contains one of our terms, or its abstract doesn't contain the boilerplate.
+IRRID_BOILERPLATE = "international registered report identifier"
+
+
+def reconstruct_abstract(inverted_index):
+    if not inverted_index:
+        return ""
+    positions = []
+    for word, idxs in inverted_index.items():
+        for i in idxs:
+            positions.append((i, word))
+    positions.sort()
+    return " ".join(word for _, word in positions)
+
+
+def is_likely_match(work):
+    title = (work.get("title") or "").lower()
+    if any(term in title for term in SEARCH_TERMS):
+        return True
+    abstract = reconstruct_abstract(work.get("abstract_inverted_index")).lower()
+    return IRRID_BOILERPLATE not in abstract
+
+
 def main():
     DATA_DIR.mkdir(exist_ok=True)
 
     one_year_ago = (datetime.now(timezone.utc) - timedelta(days=365)).strftime("%Y-%m-%d")
 
+    search_filter = "|".join(f'"{term}"' for term in SEARCH_TERMS)
     params = {
-        "search": (
-            '"registered report" OR '
-            '"preregistered report" OR '
-            '"pre-registered report" OR '
-            '"preregistered research"'
-        ),
-        "filter": f"from_publication_date:{one_year_ago}",
+        "filter": f"from_publication_date:{one_year_ago},title_and_abstract.search:{search_filter}",
         "per-page": 200,
         "cursor": "*"
     }
@@ -58,7 +89,7 @@ def main():
         r.raise_for_status()
         data = r.json()
         batch = data.get("results", [])
-        works.extend(batch)
+        works.extend(w for w in batch if is_likely_match(w))
         next_cursor = data.get("meta", {}).get("next_cursor")
         if not next_cursor or not batch:
             break
