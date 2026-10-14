@@ -109,7 +109,7 @@ cp .env.docker.example .env.docker
 - `.env` — Zotero API credentials (see `README.md` for how to get a key).
 - `.env.local` — `SESSION_SECRET_KEY` and `API_KEY_ENCRYPTION_KEY` (each
   generated with `openssl rand -base64 32`). `API_KEY_ENCRYPTION_KEY`
-  encrypts user-contributed OpenAlex keys at rest — losing or rotating it
+  encrypts user-contributed OpenAlex and Web of Science keys at rest — losing or rotating it
   makes previously saved keys undecryptable, so back it up somewhere safe.
   Leave `DATABASE_URL` as-is; docker-compose overrides it with the Postgres
   container's connection string.

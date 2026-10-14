@@ -22,6 +22,7 @@ const ADMIN_SECTIONS: Section[] = [
   { id: "admin-discover", title: "2. Add new items" },
   { id: "admin-workflow", title: "3. One group at a time" },
   { id: "admin-stages", title: "The separate queue pages" },
+  { id: "admin-item", title: "Admin buttons on an item" },
   { id: "admin-requests", title: "Suggestions, fixes and reports" },
   { id: "admin-people", title: "Users, roles and stats" },
   { id: "admin-tips", title: "Tips and troubleshooting" },
@@ -153,8 +154,9 @@ export default async function GuidePage() {
               Click <Term>View</Term> on a result to open the study. The study page shows its title, badges and
               abstract, then one tab per item (Stage 1 article, Stage 2 article, preprint, supplemental materials, PCI RR page, and so on).
               Each tab has that item's authors (with ORCID and OpenAlex badges where known), venue, DOI and links,
-              open science links (preregistration, data, code, materials), and citation information. Admins can also
-              rename a study from its page.
+              open science links (preregistration, data, code, materials), and citation information. Under the tabs, the
+              buttons (Article, PDF, Source page, Registration, Data, Code, Materials) open each link — hover over one for
+              what it does. Click the small <Term>i</Term> next to the tabs for what the tabs mean.
             </p>
             <p className="mt-3">
               Each item also has its own page, reachable from its tab, with the full record and its edit history.
@@ -305,6 +307,12 @@ export default async function GuidePage() {
                     kept.
                   </li>
                   <li>
+                    <Term>Lifecycle Journal</Term>: lists every article in the Center for Open Science's Lifecycle Journal
+                    through its Crossref DOIs (no key needed). The journal isn't limited to registered reports and doesn't
+                    label them, so expect to reject some. Each version of an article is its own DOI and its own item —
+                    link them into one study afterward. Duplicates are matched by DOI only.
+                  </li>
+                  <li>
                     <Term>PCI Registered Reports — a specific year</Term> (2022 onwards): reads PCI RR's public feed and
                     visits each study page (one per second, so a busy year takes a minute or two) for title, authors, stage
                     and links. Existing items are not duplicated; blank stage, protocol link or author fields on them are
@@ -344,7 +352,7 @@ export default async function GuidePage() {
 
                 <H3>Step 1 — Review</H3>
                 <p>
-                  Click an item's title to open its full record in a new tab. <Term>Approve</Term> items that are genuine
+                  Click an item's title to open its overview page in a new tab (your place in the workflow is kept). <Term>Approve</Term> items that are genuine
                   registered reports; <Term>Reject</Term> the rest. Rejected and duplicate items drop out of the later
                   steps.
                 </p>
@@ -361,8 +369,10 @@ export default async function GuidePage() {
                 <H3>Step 3 — Enrich</H3>
                 <p>
                   Each item shows whether OpenAlex and Crossref have been pulled. Use <Term>Pull OpenAlex</Term> and{" "}
-                  <Term>Pull Crossref</Term> per item, or <Term>Pull everything for all papers</Term>. Crossref looks items
-                  up by DOI, so it is disabled for items without one. Pulls are saved immediately and logged in each
+                  <Term>Pull Crossref</Term> per item, or <Term>Pull everything for all papers</Term>. Items with no DOI
+                  are looked up by title instead, and only a confident match (about 80% or better, with a publication year
+                  within one year) is used; the DOI it found is filled in and noted in the item's edit history. If nothing
+                  matches confidently, the pull says so and changes nothing. Pulls are saved immediately and logged in each
                   item's edit history. "No match" means the source was queried and found nothing.
                 </p>
 
@@ -421,11 +431,40 @@ export default async function GuidePage() {
                   </li>
                 </Bullets>
 
+                <H2 id="admin-item">Admin buttons on an item</H2>
+                <p>
+                  On a study or item page, admins see a second, shaded row of buttons labelled <Term>Admin</Term> under the
+                  buttons everyone sees. They follow the same order as the workflow:
+                </p>
+                <Bullets>
+                  <li>
+                    <Term>Edit title</Term> — rename the study (applies to all of its items).
+                  </li>
+                  <li>
+                    <Term>Link</Term> — opens Link items with this item's title already searched, to link it with other
+                    items or unlink it.
+                  </li>
+                  <li>
+                    <Term>Pull OpenAlex</Term> / <Term>Pull Crossref</Term> — fetch fresh details and review them before
+                    saving.
+                  </li>
+                  <li>
+                    <Term>JMIR badge</Term> (JMIR items only) and <Term>Scan PDF</Term> — record a JMIR badge, or scan the
+                    PDF for links to open data, code and materials.
+                  </li>
+                  <li>
+                    <Term>Edit metadata</Term> — edit the item's details directly.
+                  </li>
+                </Bullets>
+                <p>Hover over any button for a short explanation.</p>
+
                 <H2 id="admin-requests">Suggestions, fixes and reports</H2>
                 <Bullets>
                   <li>
                     <Link href="/admin/suggestions" className="link link-primary">Article suggestions</Link> — items users suggested that aren't in the database.
-                    Correct anything before adding; it then flows into the review queue. Or dismiss it.
+                    Correct anything before adding; it then flows into the review queue. Or dismiss it. If a suggestion has
+                    no DOI, use <Term>Find DOI by title</Term> to search OpenAlex and Crossref for likely matches — pick one
+                    to fill in its DOI, and a warning shows if something similar is already in the database.
                   </li>
                   <li>
                     <Link href="/admin/metadata" className="link link-primary">Metadata fixes</Link> — corrections users proposed on an item. Review the whole
@@ -466,7 +505,8 @@ export default async function GuidePage() {
                     re-running is safe.
                   </li>
                   <li>
-                    Crossref says "needs a DOI": add the DOI in <Term>Edit metadata</Term>, then pull again.
+                    A pull says "no confident title match": the item has no DOI and nothing matched closely enough. Add the
+                    DOI in <Term>Edit metadata</Term>, then pull again.
                   </li>
                   <li>
                     Unsure about a group: mark it <Term>Question</Term> with a note rather than guessing, so a teammate can
