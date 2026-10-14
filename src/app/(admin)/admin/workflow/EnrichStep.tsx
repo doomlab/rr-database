@@ -9,6 +9,32 @@ import { NO_THROW, type GroupPaper } from "./types"
 
 type Source = "openalex" | "crossref"
 
+// Same wording for both sources: "<Source> pulled <date>" once it's been
+// pulled, otherwise why it hasn't.
+function SourceBadge({
+  label,
+  pulledAt,
+  pulled = !!pulledAt,
+  noMatch = false,
+  needsDoi = false,
+}: {
+  label: string
+  pulledAt: string | null
+  pulled?: boolean
+  noMatch?: boolean
+  needsDoi?: boolean
+}) {
+  if (pulled) {
+    return (
+      <span className="badge badge-success">
+        {label} pulled{pulledAt ? ` ${new Date(pulledAt).toLocaleDateString()}` : ""}
+      </span>
+    )
+  }
+  if (noMatch) return <span className="badge badge-warning">{label} no match</span>
+  return <span className="badge badge-info">{label} {needsDoi ? "needs a DOI" : "not pulled"}</span>
+}
+
 export function EnrichStep({ papers }: { papers: GroupPaper[] }) {
   const [pull] = useMutation(pullPaperData, NO_THROW)
   const router = useRouter()
@@ -60,12 +86,14 @@ export function EnrichStep({ papers }: { papers: GroupPaper[] }) {
                 #{paper.id} — {paper.title}
               </p>
               <div className="flex flex-wrap items-center gap-2 mt-1">
-                <span className={`badge ${paper.openAlexFetchedAt ? "badge-success" : "badge-ghost"}`}>
-                  OpenAlex {paper.openAlexFetchedAt ? `pulled ${new Date(paper.openAlexFetchedAt).toLocaleDateString()}` : "not pulled"}
-                </span>
-                <span className={`badge ${paper.crossrefFound ? "badge-success" : paper.crossrefQueried ? "badge-warning" : "badge-ghost"}`}>
-                  Crossref {paper.crossrefFound ? "found" : paper.crossrefQueried ? "no match" : !paper.doi ? "needs a DOI" : "not queried"}
-                </span>
+                <SourceBadge label="OpenAlex" pulledAt={paper.openAlexFetchedAt} />
+                <SourceBadge
+                  label="Crossref"
+                  pulledAt={paper.crossrefPulledAt}
+                  pulled={paper.crossrefFound}
+                  noMatch={paper.crossrefQueried && !paper.crossrefFound}
+                  needsDoi={!paper.doi}
+                />
               </div>
               {(["openalex", "crossref"] as const).map(
                 (source) =>
@@ -80,7 +108,7 @@ export function EnrichStep({ papers }: { papers: GroupPaper[] }) {
               {(["openalex", "crossref"] as const).map((source) => (
                 <button
                   key={source}
-                  className="btn btn-primary btn-sm text-base w-40 whitespace-nowrap"
+                  className={`btn btn-sm text-base w-40 whitespace-nowrap ${source === "openalex" ? "btn-primary" : "btn-secondary"}`}
                   disabled={running !== null || (source === "crossref" && !paper.doi)}
                   title={source === "crossref" && !paper.doi ? "Crossref looks papers up by DOI, and this one has none" : undefined}
                   onClick={() => pullOne(paper.id, source)}
@@ -100,7 +128,7 @@ export function EnrichStep({ papers }: { papers: GroupPaper[] }) {
       </ul>
       {papers.length > 1 && (
         <div className="flex items-center gap-2">
-          <button className="btn btn-primary btn-sm text-base whitespace-nowrap" disabled={running !== null} onClick={pullAll}>
+          <button className="btn btn-accent btn-sm text-base whitespace-nowrap" disabled={running !== null} onClick={pullAll}>
             Pull everything for all papers
           </button>
         </div>

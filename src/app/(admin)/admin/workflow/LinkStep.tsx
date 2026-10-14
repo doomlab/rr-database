@@ -93,6 +93,7 @@ export function LinkStep({ papers }: { papers: GroupPaper[] }) {
           openAlexFetchedAt: null,
           crossrefQueried: false,
           crossrefFound: false,
+          crossrefPulledAt: null,
           metadataVerifiedAt: null,
         },
       ])
@@ -233,12 +234,12 @@ export function LinkStep({ papers }: { papers: GroupPaper[] }) {
             onChange={(e) => setNewDoi(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && newDoi.trim() && addToGroup({ doi: newDoi })}
           />
-          <button className="btn btn-primary btn-sm text-base w-44 whitespace-nowrap" disabled={busy || !newDoi.trim()} onClick={() => addToGroup({ doi: newDoi })}>
+          <button className="btn btn-secondary btn-sm text-base w-44 whitespace-nowrap" disabled={busy || !newDoi.trim()} onClick={() => addToGroup({ doi: newDoi })}>
             Add by DOI
           </button>
 
           <span className="text-base text-base-content/60">No DOI, or want to type the metadata yourself?</span>
-          <button className="btn btn-primary btn-sm text-base w-44 whitespace-nowrap" disabled={busy} onClick={() => setManualOpen(true)}>
+          <button className="btn btn-accent btn-sm text-base w-44 whitespace-nowrap" disabled={busy} onClick={() => setManualOpen(true)}>
             Add manually
           </button>
         </div>
@@ -288,7 +289,7 @@ export function LinkStep({ papers }: { papers: GroupPaper[] }) {
             ))}
             {error && <span className="text-base text-error">{error}</span>}
             <div className="modal-action flex items-center gap-2">
-              <button className="btn btn-neutral btn-sm text-base" disabled={busy} onClick={() => setManualOpen(false)}>
+              <button className="btn btn-secondary btn-sm text-base" disabled={busy} onClick={() => setManualOpen(false)}>
                 Cancel
               </button>
               <button

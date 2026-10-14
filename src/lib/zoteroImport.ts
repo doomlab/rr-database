@@ -1,4 +1,5 @@
 import db, { Prisma } from "db"
+import { findOrCreateAuthor } from "./authors"
 
 const HEADERS_BASE = { "User-Agent": "mailto:buchananlab@gmail.com" }
 const OPENALEX_ID_RE = /OpenAlex ID:\s*(\S+)/
@@ -99,17 +100,14 @@ export async function upsertAuthors(paperId: number, authorInputs: AuthorInput[]
     return true
   })
 
-  for (let position = 0; position < deduped.length; position++) {
-    const { name, orcid, openalexAuthorId } = deduped[position]!
-    const author = await db.author.upsert({
-      where: { name },
-      update: {
-        ...(orcid ? { orcid } : {}),
-        ...(openalexAuthorId ? { openalexAuthorId } : {}),
-      },
-      create: { name, orcid: orcid ?? null, openalexAuthorId: openalexAuthorId ?? null },
-    })
+  const seenAuthorIds = new Set<number>()
+  let position = 0
+  for (const a of deduped) {
+    const author = await findOrCreateAuthor(db, a)
+    if (seenAuthorIds.has(author.id)) continue
+    seenAuthorIds.add(author.id)
     await db.paperAuthor.create({ data: { paperId, authorId: author.id, position } })
+    position++
   }
 }
 

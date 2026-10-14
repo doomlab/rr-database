@@ -23,13 +23,30 @@ const QUEUE_WHERE = {
   workflowMarker: null,
 } satisfies Prisma.PaperWhereInput
 
+// Approved through the workflow (or the Review page) but not yet marked — the
+// ones someone has started on. Legacy imported papers are IMPORTED, not
+// APPROVED, so they don't show up here.
+const IN_PROGRESS_WHERE = {
+  status: "APPROVED",
+  canonicalPaperId: null,
+  workflowMarker: null,
+} satisfies Prisma.PaperWhereInput
+
+export type WorkflowView = "IN_PROGRESS" | WorkflowMarker
+
 // Highest relevance score first, matching the review queue's ordering.
 const QUEUE_ORDER = [{ modelScore: "desc" }, { createdAt: "desc" }] satisfies Prisma.PaperOrderByWithRelationInput[]
 
-export async function nextWorkflowSeedId(marker?: WorkflowMarker): Promise<number | null> {
+export async function nextWorkflowSeedId(view?: WorkflowView): Promise<number | null> {
+  const where: Prisma.PaperWhereInput =
+    view === "IN_PROGRESS"
+      ? IN_PROGRESS_WHERE
+      : view
+        ? { workflowMarker: view, canonicalPaperId: null }
+        : QUEUE_WHERE
   const seed = await db.paper.findFirst({
-    where: marker ? { workflowMarker: marker, canonicalPaperId: null } : QUEUE_WHERE,
-    orderBy: marker ? { workflowMarkedAt: "asc" } : QUEUE_ORDER,
+    where,
+    orderBy: view === "IN_PROGRESS" ? { reviewedAt: "asc" } : view ? { workflowMarkedAt: "asc" } : QUEUE_ORDER,
     select: { id: true },
   })
   return seed?.id ?? null
@@ -44,8 +61,12 @@ function countGroups(papers: { id: number; title: string; studyPaper: { studyId:
 }
 
 export async function workflowCounts() {
-  const [queuePapers, markedPapers] = await Promise.all([
+  const [queuePapers, inProgressPapers, markedPapers] = await Promise.all([
     db.paper.findMany({ where: QUEUE_WHERE, select: { id: true, title: true } }),
+    db.paper.findMany({
+      where: IN_PROGRESS_WHERE,
+      select: { id: true, title: true, studyPaper: { select: { studyId: true } } },
+    }),
     db.paper.findMany({
       where: { workflowMarker: { not: null }, canonicalPaperId: null },
       select: { id: true, title: true, workflowMarker: true, studyPaper: { select: { studyId: true } } },
@@ -53,10 +74,10 @@ export async function workflowCounts() {
   ])
   const markerCount = (m: WorkflowMarker) => countGroups(markedPapers.filter((p) => p.workflowMarker === m))
   const queue = clusterPapersByTitle(queuePapers, 1).length
-  const counts = { queue, LATER: markerCount("LATER"), QUESTION: markerCount("QUESTION"), DONE: markerCount("DONE") }
+  const counts = { queue, IN_PROGRESS: countGroups(inProgressPapers), LATER: markerCount("LATER"), QUESTION: markerCount("QUESTION"), DONE: markerCount("DONE") }
   // Everything that still needs someone's attention: not yet touched, or
   // parked for later / with a question. Only "Done" is finished.
-  return { ...counts, notDone: counts.queue + counts.LATER + counts.QUESTION }
+  return { ...counts, notDone: counts.queue + counts.IN_PROGRESS + counts.LATER + counts.QUESTION }
 }
 
 export async function loadWorkflowGroup(seedId: number): Promise<WorkflowPaper[] | null> {

@@ -75,7 +75,7 @@ export function FinishBar({
           Question — next group
         </button>
         {marker && (
-          <button className="btn btn-neutral btn-sm text-base" disabled={busy} onClick={() => apply(null)}>
+          <button className="btn btn-secondary btn-sm text-base" disabled={busy} onClick={() => apply(null)}>
             Clear marker
           </button>
         )}

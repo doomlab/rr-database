@@ -43,7 +43,7 @@ export function WorkflowSteps({
       </div>
 
       <div className="flex items-center gap-2">
-        <button className="btn btn-neutral btn-sm text-base" disabled={step === 0} onClick={() => setStep(step - 1)}>
+        <button className="btn btn-secondary btn-sm text-base" disabled={step === 0} onClick={() => setStep(step - 1)}>
           ← Back
         </button>
         <button className="btn btn-primary btn-sm text-base" disabled={step === STEPS.length - 1} onClick={() => setStep(step + 1)}>

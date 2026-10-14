@@ -16,6 +16,9 @@ export type GroupPaper = {
   openAlexFetchedAt: string | null
   crossrefQueried: boolean
   crossrefFound: boolean
+  // Crossref has no timestamp column, so this is the latest "crossref" entry
+  // in the paper's edit history.
+  crossrefPulledAt: string | null
   metadataVerifiedAt: string | null
 }
 

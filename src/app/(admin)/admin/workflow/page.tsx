@@ -1,10 +1,11 @@
-import { WorkflowMarker } from "db"
+import db from "db"
 import { redirect } from "next/navigation"
-import { loadWorkflowGroup, nextWorkflowSeedId, workflowCounts } from "src/lib/workflow"
+import { loadWorkflowGroup, nextWorkflowSeedId, workflowCounts, type WorkflowView } from "src/lib/workflow"
 import { WorkflowSteps } from "./WorkflowSteps"
 import { MARKER_LABELS, type GroupPaper, type Marker } from "./types"
 
-const MARKERS = ["LATER", "QUESTION", "DONE"] as const
+const VIEWS = ["IN_PROGRESS", "LATER", "QUESTION", "DONE"] as const
+const VIEW_LABELS = { IN_PROGRESS: "In progress", ...MARKER_LABELS } as const
 
 export const metadata = { title: "One group at a time – Admin" }
 
@@ -14,7 +15,7 @@ export default async function WorkflowPage({
   searchParams: Promise<{ g?: string; marker?: string }>
 }) {
   const params = await searchParams
-  const filter = MARKERS.find((m) => m === params.marker) as WorkflowMarker | undefined
+  const filter: WorkflowView | undefined = VIEWS.find((v) => v === params.marker)
   const queueHref = `/admin/workflow${filter ? `?marker=${filter}` : ""}`
 
   const counts = await workflowCounts()
@@ -26,12 +27,21 @@ export default async function WorkflowPage({
         Take one group of papers all the way through: review, link, enrich, and verify metadata.
       </p>
       <div className="flex flex-wrap items-center gap-2 mb-6">
-        <a href="/admin/workflow" className={`btn btn-sm text-base ${filter ? "btn-neutral" : "btn-primary"}`}>
-          Queue ({counts.queue})
-        </a>
-        {MARKERS.map((m) => (
-          <a key={m} href={`/admin/workflow?marker=${m}`} className={`btn btn-sm text-base ${filter === m ? "btn-primary" : "btn-neutral"}`}>
-            {MARKER_LABELS[m]} ({counts[m]})
+        {(
+          [
+            { key: null, label: "Queue", count: counts.queue, color: "btn-primary" },
+            { key: "IN_PROGRESS", label: VIEW_LABELS.IN_PROGRESS, count: counts.IN_PROGRESS, color: "btn-secondary" },
+            { key: "LATER", label: MARKER_LABELS.LATER, count: counts.LATER, color: "btn-warning" },
+            { key: "QUESTION", label: MARKER_LABELS.QUESTION, count: counts.QUESTION, color: "btn-info" },
+            { key: "DONE", label: MARKER_LABELS.DONE, count: counts.DONE, color: "btn-success" },
+          ] as const
+        ).map((chip) => (
+          <a
+            key={chip.label}
+            href={chip.key ? `/admin/workflow?marker=${chip.key}` : "/admin/workflow"}
+            className={`btn btn-sm text-base ${chip.color} ${(filter ?? null) === chip.key ? "ring-2 ring-base-content ring-offset-2 ring-offset-base-100" : ""}`}
+          >
+            {chip.label} ({chip.count})
           </a>
         ))}
       </div>
@@ -46,7 +56,11 @@ export default async function WorkflowPage({
       <div>
         {header}
         <p className="text-lg text-base-content/40 text-center py-16">
-          {filter ? `Nothing marked ${MARKER_LABELS[filter]}.` : "The queue is empty — no papers are awaiting review."}
+          {filter === "IN_PROGRESS"
+            ? "Nothing in progress — no approved papers are waiting to be finished."
+            : filter
+              ? `Nothing marked ${MARKER_LABELS[filter]}.`
+              : "The queue is empty — no papers are awaiting review."}
         </p>
       </div>
     )
@@ -62,6 +76,13 @@ export default async function WorkflowPage({
       </div>
     )
   }
+
+  const crossrefPulls = await db.paperEditHistory.groupBy({
+    by: ["paperId"],
+    where: { paperId: { in: group.map((p) => p.id) }, source: "crossref" },
+    _max: { createdAt: true },
+  })
+  const crossrefPulledAt = new Map(crossrefPulls.map((r) => [r.paperId, r._max.createdAt]))
 
   const seed = group.find((p) => p.id === seedParam) ?? group[0]!
   const papers: GroupPaper[] = group.map((p) => ({
@@ -80,6 +101,7 @@ export default async function WorkflowPage({
     openAlexFetchedAt: p.openAlexFetchedAt?.toISOString() ?? null,
     crossrefQueried: p.crossrefQueried,
     crossrefFound: p.crossrefFound,
+    crossrefPulledAt: crossrefPulledAt.get(p.id)?.toISOString() ?? null,
     metadataVerifiedAt: p.metadataVerifiedAt?.toISOString() ?? null,
   }))
 

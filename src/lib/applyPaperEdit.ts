@@ -1,6 +1,7 @@
 import { z } from "zod"
 import db from "db"
 import { fetchAndStoreCitations } from "./fetchAndStoreCitations"
+import { findOrCreateAuthor } from "./authors"
 
 export const AuthorInput = z.object({
   id: z.number().nullable(),
@@ -65,23 +66,14 @@ export async function applyPaperEdit({ paperId, source, authors, ...data }: Save
 
     await tx.paperAuthor.deleteMany({ where: { paperId } })
     let position = 0
+    const seenAuthorIds = new Set<number>()
     for (const a of authors) {
-      const name = a.name.trim()
-      if (!name) continue
-      const authorData = { name, orcid: a.orcid, openalexAuthorId: a.openalexAuthorId }
-      // An id-matched row is a trusted direct edit — overwrite. The
-      // upsert-by-name fallback might coincidentally match an unrelated
-      // existing Author, so it only fills in blanks, never clobbers.
-      const author = a.id
-        ? await tx.author.update({ where: { id: a.id }, data: authorData })
-        : await tx.author.upsert({
-            where: { name },
-            create: authorData,
-            update: {
-              ...(a.orcid ? { orcid: a.orcid } : {}),
-              ...(a.openalexAuthorId ? { openalexAuthorId: a.openalexAuthorId } : {}),
-            },
-          })
+      if (!a.name.trim()) continue
+      const author = await findOrCreateAuthor(tx, a)
+      // Two entries can resolve to the same person (same OpenAlex ID, or the
+      // same name); a paper lists each author once.
+      if (seenAuthorIds.has(author.id)) continue
+      seenAuthorIds.add(author.id)
       await tx.paperAuthor.create({ data: { paperId, authorId: author.id, position } })
       position++
     }

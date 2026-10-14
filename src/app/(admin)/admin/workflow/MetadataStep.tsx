@@ -45,7 +45,7 @@ export function MetadataStep({ papers }: { papers: GroupPaper[] }) {
               </span>
             </div>
             <div className="flex items-center gap-2 shrink-0">
-              <a href={`/papers/${paper.id}`} target="_blank" rel="noreferrer" className="btn btn-neutral btn-sm text-base">
+              <a href={`/papers/${paper.id}`} target="_blank" rel="noreferrer" className="btn btn-info btn-sm text-base">
                 Open paper
               </a>
               <button
