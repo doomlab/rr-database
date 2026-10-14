@@ -7,7 +7,7 @@ import verifyPaperMetadata from "../../mutations/verifyPaperMetadata"
 import { NO_THROW, type GroupPaper } from "./types"
 
 
-export function MetadataStep({ papers }: { papers: GroupPaper[] }) {
+export function MetadataStep({ papers, backHref }: { papers: GroupPaper[]; backHref: string }) {
   const [verify] = useMutation(verifyPaperMetadata, NO_THROW)
   const router = useRouter()
   const [busy, setBusy] = useState(false)
@@ -45,8 +45,14 @@ export function MetadataStep({ papers }: { papers: GroupPaper[] }) {
               </span>
             </div>
             <div className="flex items-center gap-2 shrink-0">
-              <a href={`/papers/${paper.id}`} target="_blank" rel="noreferrer" className="btn btn-info btn-sm text-base">
-                Open paper
+              <a href={`/papers/${paper.id}`} target="_blank" rel="noreferrer" className="btn btn-info btn-sm text-base whitespace-nowrap">
+                View paper
+              </a>
+              <a
+                href={`/papers/${paper.id}/suggest-edit?back=${encodeURIComponent(backHref)}`}
+                className="btn btn-accent btn-sm text-base whitespace-nowrap"
+              >
+                Edit metadata
               </a>
               <button
                 className={`btn btn-sm text-base ${paper.metadataVerifiedAt ? "btn-warning" : "btn-success"}`}

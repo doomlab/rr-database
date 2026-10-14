@@ -1,8 +1,8 @@
 import db from "db"
 import { redirect } from "next/navigation"
-import { loadWorkflowGroup, nextWorkflowSeedId, workflowCounts, type WorkflowView } from "src/lib/workflow"
+import { listWorkflowGroups, loadWorkflowGroup, nextWorkflowSeedId, workflowCounts, type WorkflowView } from "src/lib/workflow"
 import { WorkflowSteps } from "./WorkflowSteps"
-import { MARKER_LABELS, type GroupPaper, type Marker } from "./types"
+import { MARKER_LABELS, STEP_KEYS, type GroupPaper, type Marker } from "./types"
 
 const VIEWS = ["IN_PROGRESS", "LATER", "QUESTION", "DONE"] as const
 const VIEW_LABELS = { IN_PROGRESS: "In progress", ...MARKER_LABELS } as const
@@ -12,11 +12,14 @@ export const metadata = { title: "One group at a time – Admin" }
 export default async function WorkflowPage({
   searchParams,
 }: {
-  searchParams: Promise<{ g?: string; marker?: string }>
+  searchParams: Promise<{ g?: string; marker?: string; next?: string; step?: string }>
 }) {
   const params = await searchParams
   const filter: WorkflowView | undefined = VIEWS.find((v) => v === params.marker)
-  const queueHref = `/admin/workflow${filter ? `?marker=${filter}` : ""}`
+  const viewQuery = filter ? `&marker=${filter}` : ""
+  // Finishing a group lands here, which opens the next group in the same view.
+  const queueHref = `/admin/workflow?next=1${viewQuery}`
+  const listHref = `/admin/workflow${filter ? `?marker=${filter}` : ""}`
 
   const counts = await workflowCounts()
 
@@ -50,18 +53,80 @@ export default async function WorkflowPage({
 
   const seedParam = Number(params.g)
   if (!seedParam) {
-    const next = await nextWorkflowSeedId(filter)
-    if (next) redirect(`/admin/workflow?g=${next}${filter ? `&marker=${filter}` : ""}`)
+    if (params.next) {
+      const next = await nextWorkflowSeedId(filter)
+      if (next) redirect(`/admin/workflow?g=${next}${viewQuery}`)
+    }
+
+    const { rows, total } = await listWorkflowGroups(filter)
+    const showMarked = filter === "LATER" || filter === "QUESTION" || filter === "DONE"
     return (
       <div>
         {header}
-        <p className="text-lg text-base-content/40 text-center py-16">
-          {filter === "IN_PROGRESS"
-            ? "Nothing in progress — no approved papers are waiting to be finished."
-            : filter
-              ? `Nothing marked ${MARKER_LABELS[filter]}.`
-              : "The queue is empty — no papers are awaiting review."}
-        </p>
+        {rows.length === 0 ? (
+          <p className="text-lg text-base-content/40 text-center py-16">
+            {filter === "IN_PROGRESS"
+              ? "Nothing in progress — no approved papers are waiting to be finished."
+              : filter
+                ? `Nothing marked ${MARKER_LABELS[filter]}.`
+                : "The queue is empty — no papers are awaiting review."}
+          </p>
+        ) : (
+          <>
+            <div className="flex items-center gap-2 mb-4">
+              <a href={`/admin/workflow?next=1${viewQuery}`} className="btn btn-primary btn-sm text-base">
+                Start the first group
+              </a>
+              <span className="text-base text-base-content/60">
+                {total} group{total === 1 ? "" : "s"}
+                {total > rows.length ? ` (showing the first ${rows.length})` : ""}
+              </span>
+            </div>
+            <div className="overflow-x-auto">
+              <table className="table text-base">
+                <thead>
+                  <tr className="text-base">
+                    <th>Group</th>
+                    <th>Papers</th>
+                    <th>Year</th>
+                    {!filter && <th>Score</th>}
+                    {showMarked && <th>Marked</th>}
+                    <th />
+                  </tr>
+                </thead>
+                <tbody>
+                  {rows.map((row) => (
+                    <tr key={row.seedId} className="hover">
+                      <td className="max-w-xl">
+                        <a href={`/admin/workflow?g=${row.seedId}${viewQuery}`} className="font-medium link link-hover">
+                          {row.title}
+                        </a>
+                        {row.authors.length > 0 && (
+                          <p className="text-base text-base-content/60">{row.authors.join(", ")}</p>
+                        )}
+                        {row.note && <p className="text-base text-base-content/60 italic">{row.note}</p>}
+                      </td>
+                      <td>{row.paperCount}</td>
+                      <td>{row.year ?? "—"}</td>
+                      {!filter && <td>{row.modelScore != null ? row.modelScore.toFixed(2) : "—"}</td>}
+                      {showMarked && (
+                        <td>
+                          {row.markedBy ?? "—"}
+                          {row.markedAt ? ` · ${row.markedAt.toLocaleDateString()}` : ""}
+                        </td>
+                      )}
+                      <td className="text-right">
+                        <a href={`/admin/workflow?g=${row.seedId}${viewQuery}`} className="btn btn-primary btn-sm text-base">
+                          Start
+                        </a>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </>
+        )}
       </div>
     )
   }
@@ -72,7 +137,7 @@ export default async function WorkflowPage({
       <div>
         {header}
         <p className="text-base text-error">Paper #{seedParam} wasn't found.</p>
-        <a href={queueHref} className="link link-primary text-base">Back to the queue</a>
+        <a href={listHref} className="link link-primary text-base">Back to the list</a>
       </div>
     )
   }
@@ -124,6 +189,8 @@ export default async function WorkflowPage({
         marker={(seed.workflowMarker as Marker | null) ?? null}
         note={seed.workflowNote}
         queueHref={queueHref}
+        initialStep={Math.max(0, STEP_KEYS.findIndex((k) => k === params.step))}
+        backBase={`/admin/workflow?g=${seed.id}${viewQuery}`}
       />
     </div>
   )

@@ -33,3 +33,6 @@ export const MARKER_LABELS: Record<Marker, string> = {
 export const REJECTED_STATUSES = ["REJECTED", "DUPLICATE"]
 
 export { NO_THROW } from "src/lib/mutationOptions"
+
+export const STEP_KEYS = ["review", "link", "enrich", "metadata"] as const
+export type StepKey = (typeof STEP_KEYS)[number]
