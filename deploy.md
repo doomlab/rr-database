@@ -91,6 +91,41 @@ With Docker installed, swap set up, and DNS/firewall pointed at the box,
 continue with the steps below exactly as written — they're the same
 regardless of host.
 
+## Connecting to the server (day to day)
+
+The server is the Lightsail instance from section 0. To log in from a
+terminal you need its address and the private key file (`.pem`) that was
+downloaded when the instance was created.
+
+- **Address:** the instance's static IP (Lightsail console → the instance →
+  *Networking* tab), or the `APP_DOMAIN` name, which points at the same IP.
+- **Key:** `wordnorms_update.pem`. A copy sits in the root of this repo folder
+  on Erin's machine; it's covered by `*.pem` in `.gitignore` (and
+  `.dockerignore`), so it can't be committed or baked into the image. **Never
+  commit it, paste it into chat or tickets, or email it** — anyone who has the
+  file can log in as `ubuntu`. Share it only through a password manager, and
+  ask Erin if you need access.
+
+SSH refuses a key that other users on your machine can read, so lock the file
+down once (on macOS/Linux):
+
+```bash
+chmod 400 wordnorms_update.pem
+```
+
+Then, from the folder that holds the key:
+
+```bash
+ssh -i wordnorms_update.pem ubuntu@<static-ip-or-APP_DOMAIN>
+```
+
+The default user on the Ubuntu blueprint is `ubuntu`. The app lives in the
+folder you cloned it into during step 1; `cd` there before running any
+`docker compose` command. `Permission denied (publickey)` means the wrong key,
+wrong user, or a key file that isn't `chmod 400`. If the key is lost, the
+Lightsail console's "Connect using SSH" button still works for anyone with
+access to the AWS account.
+
 ## 1. Clone and configure
 
 ```bash
