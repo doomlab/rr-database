@@ -10,7 +10,7 @@ import db from "db"
 import { studyTitle } from "src/lib/studyTitle"
 import { STUDY_PAPER_ROLE_LABELS } from "src/lib/studyPaperRoles"
 import { InfoTip } from "../../components/InfoTip"
-import { StudyTitleEditor } from "../../components/StudyTitleEditor"
+import { StudyTitleProvider, StudyTitle, EditTitleButton } from "../../components/StudyTitleEditor"
 
 
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }) {
@@ -84,8 +84,9 @@ export default async function StudyDetailPage({
   const hasStage1 = study.papers.some(({ role }) => role === "STAGE1_ARTICLE")
   const stage2Count = study.papers.filter(({ role }) => role === "STAGE2_ARTICLE").length
   const isProgrammatic = stage2Count > 1
+  const hasCustomTitle = !!study.title?.trim()
 
-  return (
+  const page = (
     <div className="min-h-screen bg-base-100 flex flex-col">
       <Navbar />
 
@@ -95,13 +96,9 @@ export default async function StudyDetailPage({
             ← Back to browse
           </a>
 
-          <div className="flex items-start justify-between gap-4 mb-8">
+          <div className="flex items-start justify-between gap-4 mb-3">
             {isAdmin ? (
-              <StudyTitleEditor
-                studyId={study.id}
-                title={studyTitle(study)}
-                hasCustomTitle={!!study.title?.trim()}
-              />
+              <StudyTitle />
             ) : (
               <h1 className="text-3xl font-bold leading-snug">{studyTitle(study)}</h1>
             )}
@@ -114,95 +111,85 @@ export default async function StudyDetailPage({
             </div>
           </div>
 
-          {(study.registrationUrl || study.biasLevel || !hasStage1 || isProgrammatic) && (
-            <div className="flex flex-wrap gap-2 mb-8">
-              {study.registrationUrl && (
-                <a
-                  href={study.registrationUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="btn btn-outline btn-sm"
-                >
-                  View registration{study.registrationPlatform ? ` (${study.registrationPlatform})` : ""}
-                </a>
-              )}
+          {(study.biasLevel || !hasStage1 || isProgrammatic || (isAdmin && hasCustomTitle)) && (
+            <div className="flex flex-wrap items-center gap-2 mb-6">
               {study.biasLevel && <span className="badge badge-info">{study.biasLevel}</span>}
               {!hasStage1 && <span className="badge badge-warning">No Stage 1 found</span>}
               {isProgrammatic && (
                 <span className="badge badge-secondary">Programmatic ({stage2Count} Stage 2 manuscripts)</span>
               )}
+              {isAdmin && hasCustomTitle && <span className="badge badge-info">custom title</span>}
             </div>
           )}
 
-          <div className="flex items-center gap-2 mb-4">
-            <h2 className="text-xl font-semibold">
-              {study.papers.length} item{study.papers.length === 1 ? "" : "s"} in this study
-            </h2>
-            <InfoTip
-              label="What are items?"
-              text="Items are the individual outputs that make up a study: the Stage 1 and Stage 2 articles, any preprints, supplemental materials (code, data or materials in a repository such as an OSF project), and any Peer Community In Registered Reports recommendation, reviews, author responses and decisions. Each item has its own tab and its own details."
-            />
-          </div>
-
-          {study.papers.length > 1 ? (
-            <div className="tabs">
-              {study.papers.map(({ paper, role }, idx) => (
-                <Fragment key={paper.id}>
-                  <input
-                    type="radio"
-                    name={`study-${study.id}-tabs`}
-                    className="tab text-base font-medium"
-                    aria-label={STUDY_PAPER_ROLE_LABELS[role] ?? role}
-                    defaultChecked={
-                      study.papers.some((sp) => sp.paper.id === Number(activePaper))
-                        ? paper.id === Number(activePaper)
-                        : idx === 0
-                    }
-                  />
-                  <div className="tab-content">
-                    <PaperRecordSection
-                      paper={paper}
-                      roleLabel={STUDY_PAPER_ROLE_LABELS[role] ?? role}
-                      citationData={citationDataByPaperId.get(paper.id)!}
-                      isAdmin={isAdmin}
-                      hasOpenAlexApiKey={hasOpenAlexApiKey}
-                      userId={userId}
-                      isReported={reportedIds.has(paper.id)}
-                      keywordBasePath="/"
-                      suggestEditHref={
-                        userId
-                          ? `/papers/${paper.id}/suggest-edit`
-                          : `/login?next=/papers/${paper.id}/suggest-edit`
-                      }
-                    />
-                  </div>
-                </Fragment>
-              ))}
-            </div>
-          ) : (
-            <div className="divide-y divide-base-200">
-              {study.papers.map(({ paper, role }) => (
-                <PaperRecordSection
-                  key={paper.id}
-                  paper={paper}
-                  roleLabel={STUDY_PAPER_ROLE_LABELS[role] ?? role}
-                  citationData={citationDataByPaperId.get(paper.id)!}
-                  isAdmin={isAdmin}
-                  hasOpenAlexApiKey={hasOpenAlexApiKey}
-                  userId={userId}
-                  isReported={reportedIds.has(paper.id)}
-                  keywordBasePath="/"
-                  suggestEditHref={
-                    userId
-                      ? `/papers/${paper.id}/suggest-edit`
-                      : `/login?next=/papers/${paper.id}/suggest-edit`
+          <div className="tabs gap-2 [&>.tab]:h-11 [&>.tab]:px-5 [&>.tab]:rounded-lg [&>.tab]:bg-base-300 [&>.tab]:text-base-content [&>.tab]:font-semibold [&>.tab]:shadow-md [&>.tab]:hover:bg-base-content/25 [&>.tab:checked]:bg-primary [&>.tab:checked]:text-primary-content [&>.tab:checked]:shadow-lg">
+            {study.papers.map(({ paper, role }, idx) => (
+              <Fragment key={paper.id}>
+                <input
+                  type="radio"
+                  name={`study-${study.id}-tabs`}
+                  className="tab text-base"
+                  aria-label={STUDY_PAPER_ROLE_LABELS[role] ?? role}
+                  defaultChecked={
+                    study.papers.some((sp) => sp.paper.id === Number(activePaper))
+                      ? paper.id === Number(activePaper)
+                      : idx === 0
                   }
                 />
-              ))}
-            </div>
-          )}
+                <div className="tab-content border-0 border-t-2 border-base-content/30 rounded-none mt-4 p-0">
+                  <PaperRecordSection
+                    paper={paper}
+                    roleLabel={STUDY_PAPER_ROLE_LABELS[role] ?? role}
+                    showRoleLabel={false}
+                    adminStudyActions={isAdmin ? <EditTitleButton /> : undefined}
+                    studyActions={
+                      <>
+                        {study.registrationUrl && study.registrationUrl !== paper.registrationUrl && (
+                          <a
+                            href={study.registrationUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="btn btn-secondary btn-md text-base"
+                          >
+                            View registration
+                            {study.registrationPlatform ? ` (${study.registrationPlatform})` : ""}
+                          </a>
+                        )}
+                      </>
+                    }
+                    citationData={citationDataByPaperId.get(paper.id)!}
+                    isAdmin={isAdmin}
+                    hasOpenAlexApiKey={hasOpenAlexApiKey}
+                    userId={userId}
+                    isReported={reportedIds.has(paper.id)}
+                    keywordBasePath="/"
+                    suggestEditHref={
+                      userId
+                        ? `/papers/${paper.id}/suggest-edit`
+                        : `/login?next=/papers/${paper.id}/suggest-edit`
+                    }
+                  />
+                </div>
+              </Fragment>
+            ))}
+            <span className="self-center pl-3">
+              <InfoTip
+                small
+                label="What are these tabs?"
+                text="Each tab is one item that makes up this study: the Stage 1 and Stage 2 articles, any preprints, supplemental materials (code, data or materials in a repository such as an OSF project), and any Peer Community In Registered Reports recommendation, reviews, author responses and decisions. Click a tab to see that item's details."
+              />
+            </span>
+          </div>
         </div>
       </div>
     </div>
+  )
+
+  return isAdmin ? (
+    <StudyTitleProvider studyId={study.id} title={studyTitle(study)} hasCustomTitle={hasCustomTitle}>
+      {page}
+    </StudyTitleProvider>
+  ) : (
+    page
   )
 }

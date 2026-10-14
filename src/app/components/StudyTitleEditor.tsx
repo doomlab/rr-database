@@ -1,21 +1,47 @@
 "use client"
 
+import { createContext, useContext, useState, type ReactNode } from "react"
 import { useMutation } from "@blitzjs/rpc"
 import { useRouter } from "next/navigation"
-import { useState } from "react"
 import setStudyTitle from "../(admin)/mutations/setStudyTitle"
 import { NO_THROW } from "src/lib/mutationOptions"
 
-// The study page heading for admins: shows the title with an Edit button, and
-// lets them type a custom one or reset to the paper-derived default.
-export function StudyTitleEditor({
+// Admin-only study title editing, split into three pieces that share state so
+// the heading and the "Edit title" button can live in different parts of the
+// page: <StudyTitleProvider> wraps the page, <StudyTitle> is the heading (a
+// textarea with save/reset/cancel while editing), and <EditTitleButton> sits
+// in the action-button row.
+type TitleEditorState = {
+  title: string
+  hasCustomTitle: boolean
+  editing: boolean
+  value: string
+  setValue: (v: string) => void
+  busy: boolean
+  error: string | null
+  startEditing: () => void
+  cancel: () => void
+  run: (next: string | null) => Promise<void>
+}
+
+const TitleEditorContext = createContext<TitleEditorState | null>(null)
+
+function useTitleEditor(): TitleEditorState {
+  const ctx = useContext(TitleEditorContext)
+  if (!ctx) throw new Error("Study title components must be inside <StudyTitleProvider>")
+  return ctx
+}
+
+export function StudyTitleProvider({
   studyId,
   title,
   hasCustomTitle,
+  children,
 }: {
   studyId: number
   title: string
   hasCustomTitle: boolean
+  children: ReactNode
 }) {
   const [save] = useMutation(setStudyTitle, NO_THROW)
   const router = useRouter()
@@ -38,24 +64,34 @@ export function StudyTitleEditor({
     }
   }
 
+  return (
+    <TitleEditorContext.Provider
+      value={{
+        title,
+        hasCustomTitle,
+        editing,
+        value,
+        setValue,
+        busy,
+        error,
+        startEditing: () => {
+          setValue(title)
+          setEditing(true)
+        },
+        cancel: () => setEditing(false),
+        run,
+      }}
+    >
+      {children}
+    </TitleEditorContext.Provider>
+  )
+}
+
+export function StudyTitle() {
+  const { title, hasCustomTitle, editing, value, setValue, busy, error, cancel, run } = useTitleEditor()
+
   if (!editing) {
-    return (
-      <div className="flex flex-col gap-2 min-w-0">
-        <h1 className="text-3xl font-bold leading-snug">{title}</h1>
-        <div className="flex flex-wrap items-center gap-2">
-          <button
-            className="btn btn-accent btn-sm text-base"
-            onClick={() => {
-              setValue(title)
-              setEditing(true)
-            }}
-          >
-            Edit title
-          </button>
-          {hasCustomTitle && <span className="badge badge-info">custom title</span>}
-        </div>
-      </div>
-    )
+    return <h1 className="text-3xl font-bold leading-snug min-w-0">{title}</h1>
   }
 
   return (
@@ -76,11 +112,21 @@ export function StudyTitleEditor({
             Reset to the default title
           </button>
         )}
-        <button className="btn btn-secondary btn-sm text-base" disabled={busy} onClick={() => setEditing(false)}>
+        <button className="btn btn-secondary btn-sm text-base" disabled={busy} onClick={cancel}>
           Cancel
         </button>
         {error && <span className="text-base text-error">{error}</span>}
       </div>
     </div>
+  )
+}
+
+export function EditTitleButton() {
+  const { editing, startEditing } = useTitleEditor()
+  if (editing) return null
+  return (
+    <button type="button" className="btn btn-primary btn-md text-base" onClick={startEditing}>
+      Edit title
+    </button>
   )
 }

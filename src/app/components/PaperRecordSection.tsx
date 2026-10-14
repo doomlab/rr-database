@@ -1,3 +1,4 @@
+import type { ReactNode } from "react"
 import { ReportButton } from "./ReportButton"
 import { PaperHistoryCard } from "./PaperHistoryCard"
 import { CollapsibleSection } from "./CollapsibleSection"
@@ -11,6 +12,7 @@ import { JMIR_BADGE_OPTIONS } from "src/lib/jmirBadgeOptions"
 
 type RecordPaper = {
   id: number
+  title: string
   doi: string | null
   url: string | null
   pdfUrl: string | null
@@ -74,6 +76,9 @@ export function PaperRecordSection({
   suggestEditHref,
   citationsDefaultOpen = false,
   reviewNext,
+  showRoleLabel = true,
+  studyActions,
+  adminStudyActions,
 }: {
   paper: RecordPaper
   roleLabel: string
@@ -87,6 +92,12 @@ export function PaperRecordSection({
   suggestEditHref: string
   citationsDefaultOpen?: boolean
   reviewNext?: string
+  // The study page shows the role as the tab label, so it hides this heading.
+  showRoleLabel?: boolean
+  // Study-level buttons everyone sees (e.g. study registration), first in the public row.
+  studyActions?: ReactNode
+  // Study-level admin buttons (e.g. edit title), first in the admin row. Only rendered for admins.
+  adminStudyActions?: ReactNode
 }) {
   const { references, referencesInDbCount, citedBy, citedByInDbCount, citedByTotal } = citationData
 
@@ -96,12 +107,15 @@ export function PaperRecordSection({
 
   return (
     <div className="py-6">
-      <h2 className="text-sm font-semibold uppercase tracking-wider text-base-content/40 mb-3">
-        {roleLabel}
-      </h2>
+      {showRoleLabel && (
+        <h2 className="text-sm font-semibold uppercase tracking-wider text-base-content/40 mb-3">
+          {roleLabel}
+        </h2>
+      )}
 
       <div className="flex flex-wrap items-start justify-between gap-2 mb-3">
         <div className="flex flex-wrap items-start gap-2">
+          {studyActions}
           {paper.doi && (
             <a
               href={`https://doi.org/${paper.doi}`}
@@ -172,25 +186,41 @@ export function PaperRecordSection({
               Open materials
             </a>
           )}
-          {isAdmin && paper.doi?.startsWith("10.2196/") && (
-            <JmirBadgeButton paperId={paper.id} alreadyChecked={!!paper.jmirBadgeCheckedAt} />
+          {!isAdmin && (
+            <a href={suggestEditHref} className="btn btn-warning btn-md text-base">
+              Suggest edit
+            </a>
           )}
-          {isAdmin && !paper.openSciencePracticesScannedAt && (
-            <ScanPaperPdfButton paperId={paper.id} hasPdfUrl={!!paper.pdfUrl} />
-          )}
-          {isAdmin && (
-            <AdminEnrichPanel
-              paperId={paper.id}
-              hasOpenAlexApiKey={hasOpenAlexApiKey}
-              reviewNext={reviewNext}
-            />
-          )}
-          <a href={suggestEditHref} className="btn btn-warning btn-md text-base">
-            {isAdmin ? "Edit metadata" : "Suggest edit"}
-          </a>
         </div>
         <ReportButton paperId={paper.id} initialReported={isReported} isLoggedIn={!!userId} />
       </div>
+
+      {isAdmin && (
+        <div className="flex flex-wrap items-center gap-2 rounded-box bg-base-200 p-3 mb-3">
+          <span className="text-base font-semibold uppercase tracking-wider text-base-content/60 mr-2">
+            Admin
+          </span>
+          {/* Same order as the admin workflow: title, link, enrich, metadata. */}
+          {adminStudyActions}
+          <a href={`/admin/link?q=${encodeURIComponent(paper.title)}`} className="btn btn-secondary btn-md text-base">
+            Link
+          </a>
+          <AdminEnrichPanel
+            paperId={paper.id}
+            hasOpenAlexApiKey={hasOpenAlexApiKey}
+            reviewNext={reviewNext}
+          />
+          {paper.doi?.startsWith("10.2196/") && (
+            <JmirBadgeButton paperId={paper.id} alreadyChecked={!!paper.jmirBadgeCheckedAt} />
+          )}
+          {!paper.openSciencePracticesScannedAt && (
+            <ScanPaperPdfButton paperId={paper.id} hasPdfUrl={!!paper.pdfUrl} />
+          )}
+          <a href={suggestEditHref} className="btn btn-warning btn-md text-base">
+            Edit metadata
+          </a>
+        </div>
+      )}
 
       {isAdmin && paper.metadataVerifiedAt && (
         <p className="text-base text-success mb-3">
