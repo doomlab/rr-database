@@ -20,6 +20,8 @@ import { RunAuthorMetaBackfillButton } from "../components/RunAuthorMetaBackfill
 
 // Registered reports as a format only really got going around 2013.
 const EARLIEST_RR_YEAR = 2013
+// PCI Registered Reports launched in 2022.
+const EARLIEST_PCIRR_YEAR = 2022
 
 export default async function AdminHomePage() {
   const ctx = await getBlitzContext()
@@ -161,7 +163,7 @@ export default async function AdminHomePage() {
               run={pcirrYearRun}
               nested
             >
-              <DiscoverPcirrYearButton years={years} runHistory={pcirrYearRunHistoryByYear} />
+              <DiscoverPcirrYearButton years={years.filter((y) => y >= EARLIEST_PCIRR_YEAR)} runHistory={pcirrYearRunHistoryByYear} />
             </RunCard>
           </div>
         </WorkflowCard>
