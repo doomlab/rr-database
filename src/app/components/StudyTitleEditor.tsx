@@ -3,6 +3,7 @@
 import { createContext, useContext, useState, type ReactNode } from "react"
 import { useMutation } from "@blitzjs/rpc"
 import { useRouter } from "next/navigation"
+import { ButtonTip } from "./ButtonTip"
 import setStudyTitle from "../(admin)/mutations/setStudyTitle"
 import { NO_THROW } from "src/lib/mutationOptions"
 
@@ -125,8 +126,10 @@ export function EditTitleButton() {
   const { editing, startEditing } = useTitleEditor()
   if (editing) return null
   return (
-    <button type="button" className="btn btn-primary btn-md text-base" onClick={startEditing}>
-      Edit title
-    </button>
+    <ButtonTip tip="Rename this study (applies to all of its items)">
+      <button type="button" className="btn btn-primary btn-md text-base" onClick={startEditing}>
+        Edit title
+      </button>
+    </ButtonTip>
   )
 }

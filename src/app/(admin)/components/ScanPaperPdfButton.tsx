@@ -3,6 +3,7 @@
 import { useMutation } from "@blitzjs/rpc"
 import { useRouter } from "next/navigation"
 import { useRef, useState } from "react"
+import { ButtonTip } from "../../components/ButtonTip"
 import scanOpenSciencePracticesForPaper from "../mutations/scanOpenSciencePracticesForPaper"
 
 function fileToBase64(file: File): Promise<string> {
@@ -55,9 +56,11 @@ export function ScanPaperPdfButton({
     <>
       {hasPdfUrl ? (
         <div className="dropdown">
-          <button tabIndex={0} type="button" className="btn btn-success btn-md text-base" disabled={isRunning}>
-            {isRunning ? <span className="loading loading-spinner loading-xs" /> : "Scan PDF ▾"}
-          </button>
+          <ButtonTip tip="Scan the paper's PDF for links to open data, code and materials">
+            <button tabIndex={0} type="button" className="btn btn-success btn-md text-base" disabled={isRunning}>
+              {isRunning ? <span className="loading loading-spinner loading-xs" /> : "Scan PDF ▾"}
+            </button>
+          </ButtonTip>
           <ul
             tabIndex={0}
             className="dropdown-content z-20 menu p-2 mt-1 shadow-md bg-base-100 border border-base-300 rounded-lg w-56"
@@ -75,14 +78,16 @@ export function ScanPaperPdfButton({
           </ul>
         </div>
       ) : (
-        <button
-          type="button"
-          className="btn btn-warning btn-md text-base"
-          disabled={isRunning}
-          onClick={() => fileInputRef.current?.click()}
-        >
-          {isRunning ? <span className="loading loading-spinner loading-xs" /> : "Upload PDF/Word doc to scan"}
-        </button>
+        <ButtonTip tip="No PDF is stored for this item — upload a PDF or Word doc to scan for open data, code and materials links">
+          <button
+            type="button"
+            className="btn btn-warning btn-md text-base"
+            disabled={isRunning}
+            onClick={() => fileInputRef.current?.click()}
+          >
+            {isRunning ? <span className="loading loading-spinner loading-xs" /> : "Upload to scan"}
+          </button>
+        </ButtonTip>
       )}
       <input
         ref={fileInputRef}

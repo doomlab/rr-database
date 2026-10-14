@@ -9,6 +9,7 @@ import { resolveCitations } from "src/lib/resolveCitations"
 import db from "db"
 import { studyTitle } from "src/lib/studyTitle"
 import { STUDY_PAPER_ROLE_LABELS } from "src/lib/studyPaperRoles"
+import { ButtonTip } from "../../components/ButtonTip"
 import { InfoTip } from "../../components/InfoTip"
 import { StudyTitleProvider, StudyTitle, EditTitleButton } from "../../components/StudyTitleEditor"
 
@@ -145,15 +146,17 @@ export default async function StudyDetailPage({
                     studyActions={
                       <>
                         {study.registrationUrl && study.registrationUrl !== paper.registrationUrl && (
-                          <a
-                            href={study.registrationUrl}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="btn btn-secondary btn-md text-base"
-                          >
-                            View registration
-                            {study.registrationPlatform ? ` (${study.registrationPlatform})` : ""}
-                          </a>
+                          <ButtonTip tip="Open the preregistration for the whole study">
+                            <a
+                              href={study.registrationUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="btn btn-secondary btn-md text-base"
+                            >
+                              Study registration
+                              {study.registrationPlatform ? ` (${study.registrationPlatform})` : ""}
+                            </a>
+                          </ButtonTip>
                         )}
                       </>
                     }

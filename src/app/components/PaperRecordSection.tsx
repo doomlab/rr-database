@@ -1,5 +1,6 @@
 import type { ReactNode } from "react"
 import { ReportButton } from "./ReportButton"
+import { ButtonTip } from "./ButtonTip"
 import { PaperHistoryCard } from "./PaperHistoryCard"
 import { CollapsibleSection } from "./CollapsibleSection"
 import { CitationCard, type CitationEntry } from "./CitationCard"
@@ -117,79 +118,97 @@ export function PaperRecordSection({
         <div className="flex flex-wrap items-start gap-2">
           {studyActions}
           {paper.doi && (
-            <a
-              href={`https://doi.org/${paper.doi}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="btn btn-primary btn-md text-base"
-            >
-              View article (DOI)
-            </a>
+            <ButtonTip tip="Open the article on the publisher's site through its DOI">
+              <a
+                href={`https://doi.org/${paper.doi}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="btn btn-primary btn-md text-base"
+              >
+                Article
+              </a>
+            </ButtonTip>
           )}
           {paper.pdfUrl && (
-            <a
-              href={paper.pdfUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="btn btn-secondary btn-md text-base"
+            <ButtonTip
+              tip={paper.openAccess ? "Free, open-access full text (PDF)" : "Full text as a PDF — may need a subscription"}
             >
-              {paper.openAccess ? "Open access PDF" : "View PDF"}
-            </a>
+              <a
+                href={paper.pdfUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="btn btn-secondary btn-md text-base"
+              >
+                PDF
+              </a>
+            </ButtonTip>
           )}
-          {paper.url && (
-            <a
-              href={paper.url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="btn btn-info btn-md text-base"
-            >
-              Go to page
-            </a>
+          {paper.url && paper.url.toLowerCase() !== `https://doi.org/${paper.doi}`.toLowerCase() && (
+            <ButtonTip tip="Open this item's own page on the publisher or repository website, where we found it">
+              <a
+                href={paper.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="btn btn-info btn-md text-base"
+              >
+                Source page
+              </a>
+            </ButtonTip>
           )}
           {paper.registrationUrl && (
-            <a
-              href={paper.registrationUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="btn btn-secondary btn-md text-base"
-            >
-              View registration{paper.registrationPlatform ? ` (${paper.registrationPlatform})` : ""}
-            </a>
+            <ButtonTip tip="Open the preregistration for this item">
+              <a
+                href={paper.registrationUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="btn btn-secondary btn-md text-base"
+              >
+                Registration{paper.registrationPlatform ? ` (${paper.registrationPlatform})` : ""}
+              </a>
+            </ButtonTip>
           )}
           {paper.openDataUrl && (
-            <a
-              href={paper.openDataUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="btn btn-success btn-md text-base"
-            >
-              Open data
-            </a>
+            <ButtonTip tip="Open the shared data, hosted in a repository">
+              <a
+                href={paper.openDataUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="btn btn-success btn-md text-base"
+              >
+                Data
+              </a>
+            </ButtonTip>
           )}
           {paper.openCodeUrl && (
-            <a
-              href={paper.openCodeUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="btn btn-accent btn-md text-base"
-            >
-              Open code
-            </a>
+            <ButtonTip tip="Open the shared analysis code, hosted in a repository">
+              <a
+                href={paper.openCodeUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="btn btn-accent btn-md text-base"
+              >
+                Code
+              </a>
+            </ButtonTip>
           )}
           {paper.openMaterialsUrl && (
-            <a
-              href={paper.openMaterialsUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="btn btn-success btn-md text-base"
-            >
-              Open materials
-            </a>
+            <ButtonTip tip="Open the shared study materials, hosted in a repository">
+              <a
+                href={paper.openMaterialsUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="btn btn-success btn-md text-base"
+              >
+                Materials
+              </a>
+            </ButtonTip>
           )}
           {!isAdmin && (
-            <a href={suggestEditHref} className="btn btn-warning btn-md text-base">
-              Suggest edit
-            </a>
+            <ButtonTip tip="Suggest a correction to this item's details — an admin will review it">
+              <a href={suggestEditHref} className="btn btn-warning btn-md text-base">
+                Suggest edit
+              </a>
+            </ButtonTip>
           )}
         </div>
         <ReportButton paperId={paper.id} initialReported={isReported} isLoggedIn={!!userId} />
@@ -202,9 +221,11 @@ export function PaperRecordSection({
           </span>
           {/* Same order as the admin workflow: title, link, enrich, metadata. */}
           {adminStudyActions}
-          <a href={`/admin/link?q=${encodeURIComponent(paper.title)}`} className="btn btn-secondary btn-md text-base">
-            Link
-          </a>
+          <ButtonTip tip="Link this item with others (Stage 1/2, preprint, supplemental materials) into one study, or unlink it">
+            <a href={`/admin/link?q=${encodeURIComponent(paper.title)}`} className="btn btn-secondary btn-md text-base">
+              Link
+            </a>
+          </ButtonTip>
           <AdminEnrichPanel
             paperId={paper.id}
             hasOpenAlexApiKey={hasOpenAlexApiKey}
@@ -216,9 +237,11 @@ export function PaperRecordSection({
           {!paper.openSciencePracticesScannedAt && (
             <ScanPaperPdfButton paperId={paper.id} hasPdfUrl={!!paper.pdfUrl} />
           )}
-          <a href={suggestEditHref} className="btn btn-warning btn-md text-base">
-            Edit metadata
-          </a>
+          <ButtonTip tip="Edit this item's details directly">
+            <a href={suggestEditHref} className="btn btn-warning btn-md text-base">
+              Edit metadata
+            </a>
+          </ButtonTip>
         </div>
       )}
 

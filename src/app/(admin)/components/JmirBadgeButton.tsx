@@ -1,5 +1,6 @@
 "use client"
 
+import { ButtonTip } from "../../components/ButtonTip"
 import { useMutation } from "@blitzjs/rpc"
 import { useRouter } from "next/navigation"
 import { useState } from "react"
@@ -24,9 +25,11 @@ export function JmirBadgeButton({
 
   if (!open) {
     return (
-      <button type="button" className="btn btn-secondary btn-md text-base" onClick={() => setOpen(true)}>
-        {alreadyChecked ? "Edit JMIR badge info" : "Get JMIR info"}
-      </button>
+      <ButtonTip tip="Record the Registered / Results Available badge shown on this item's JMIR page (it can't be read automatically)">
+        <button type="button" className="btn btn-secondary btn-md text-base" onClick={() => setOpen(true)}>
+          JMIR badge
+        </button>
+      </ButtonTip>
     )
   }
 
