@@ -30,6 +30,13 @@ function diceCoefficient(a: Set<string>, b: Set<string>): number {
   return (2 * intersection) / (a.size + b.size)
 }
 
+// Dice similarity between two titles' significant words, 0-1. Exposed for
+// callers that need a score rather than a yes/no match (e.g. ranking search
+// results from an external source against a title we already have).
+export function titleSimilarity(a: string, b: string): number {
+  return diceCoefficient(significantWords(normalizeTitle(a)), significantWords(normalizeTitle(b)))
+}
+
 const SIMILARITY_THRESHOLD = 0.6
 
 // Short titles have too few significant words for the Dice ratio to be

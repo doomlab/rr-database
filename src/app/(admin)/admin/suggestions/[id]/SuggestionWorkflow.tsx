@@ -4,6 +4,7 @@ import { useState } from "react"
 import { useMutation } from "@blitzjs/rpc"
 import addSuggestedPaper from "../../../mutations/addSuggestedPaper"
 import resolveSuggestion from "../../../mutations/resolveSuggestion"
+import findPaperByTitle from "../../../mutations/findPaperByTitle"
 import { NO_THROW } from "src/lib/mutationOptions"
 
 type Suggestion = {
@@ -31,6 +32,22 @@ export function SuggestionWorkflow({
 
   const [addPaper, { isPending: isAdding }] = useMutation(addSuggestedPaper, NO_THROW)
   const [dismiss, { isPending: isDismissing }] = useMutation(resolveSuggestion, NO_THROW)
+
+  const [findByTitle, { isPending: isFinding }] = useMutation(findPaperByTitle, NO_THROW)
+  const [lookup, setLookup] = useState<{
+    candidates: {
+      source: "openalex" | "crossref"
+      doi: string
+      title: string
+      year: number | null
+      venue: string | null
+      authors: string[]
+      score: number
+    }[]
+    errors: string[]
+    searchedOpenAlex: boolean
+    existing: { id: number; title: string } | null
+  } | null>(null)
 
   const [result, setResult] = useState<{ paperId: number; title: string; created: boolean } | null>(
     null
@@ -61,6 +78,19 @@ export function SuggestionWorkflow({
       setResult(res)
     } catch (e: any) {
       setError(e.message ?? "Failed to add")
+    }
+  }
+
+  const handleFindByTitle = async () => {
+    setError(null)
+    try {
+      const authors = authorsStr
+        .split(",")
+        .map((s) => s.trim())
+        .filter(Boolean)
+      setLookup(await findByTitle({ title: title.trim(), authors }))
+    } catch (e: any) {
+      setError(e.message ?? "Title search failed")
     }
   }
 
@@ -174,6 +204,74 @@ export function SuggestionWorkflow({
           onChange={(e) => setUrl(e.target.value)}
         />
       </div>
+
+      {!doi.trim() && title.trim() && (
+        <div className="flex flex-col gap-3">
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              className="btn btn-accent btn-md text-base"
+              disabled={isFinding}
+              onClick={handleFindByTitle}
+            >
+              {isFinding ? <span className="loading loading-spinner loading-sm" /> : "Find DOI by title"}
+            </button>
+            <span className="text-base text-base-content/50">
+              Fuzzy-matches the title against {lookup && !lookup.searchedOpenAlex ? "" : "OpenAlex and "}
+              Crossref.
+            </span>
+          </div>
+
+          {lookup && (
+            <div className="flex flex-col gap-2">
+              {lookup.existing && (
+                <p className="text-base text-warning">
+                  Something similar is already in the database:{" "}
+                  <a href={`/admin/review/${lookup.existing.id}`} className="link">
+                    "{lookup.existing.title}"
+                  </a>
+                </p>
+              )}
+              {!lookup.searchedOpenAlex && (
+                <p className="text-base text-base-content/50">
+                  OpenAlex wasn't searched — add your key on your Account page to include it.
+                </p>
+              )}
+              {lookup.errors.map((msg) => (
+                <p key={msg} className="text-base text-error">
+                  {msg}
+                </p>
+              ))}
+              {lookup.candidates.length === 0 && lookup.errors.length === 0 && (
+                <p className="text-base text-base-content/60">No close title matches found.</p>
+              )}
+              {lookup.candidates.map((c) => (
+                <div key={c.doi} className="flex items-start gap-3 rounded-box border border-base-300 p-3">
+                  <div className="flex-1">
+                    <p className="text-base font-medium">{c.title}</p>
+                    <p className="text-base text-base-content/60">
+                      {[c.authors.slice(0, 3).join(", ") + (c.authors.length > 3 ? " et al." : ""), c.year, c.venue]
+                        .filter(Boolean)
+                        .join(" · ")}
+                    </p>
+                    <p className="text-base text-base-content/50">
+                      {c.doi} · {Math.round(c.score * 100)}% title match ·{" "}
+                      {c.source === "openalex" ? "OpenAlex" : "Crossref"}
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    className="btn btn-primary btn-md text-base shrink-0"
+                    onClick={() => setDoi(c.doi)}
+                  >
+                    Use this DOI
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
 
       <p className="text-base text-base-content/50">
         {doi

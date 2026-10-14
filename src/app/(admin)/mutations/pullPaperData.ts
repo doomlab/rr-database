@@ -2,7 +2,7 @@ import { resolver } from "@blitzjs/rpc"
 import { z } from "zod"
 import db from "db"
 import { applyPaperEdit } from "src/lib/applyPaperEdit"
-import { fetchCrossrefFields, fetchOpenAlexFields } from "src/lib/enrichment"
+import { fetchCrossrefFields, fetchOpenAlexFields, titleHint } from "src/lib/enrichment"
 import { userHasOpenAlexApiKey } from "src/lib/apiKeyPool"
 
 const PullPaperData = z.object({
@@ -31,7 +31,9 @@ export default resolver.pipe(
     })
     if (!paper) throw new Error("Item not found.")
 
-    const f = source === "openalex" ? await fetchOpenAlexFields(paper) : await fetchCrossrefFields(paper)
+    const hint = titleHint(paper)
+    const f =
+      source === "openalex" ? await fetchOpenAlexFields(paper, hint) : await fetchCrossrefFields(paper, hint)
 
     const currentAuthors = paper.authors.map((pa) => ({
       id: pa.author.id,
@@ -59,7 +61,7 @@ export default resolver.pipe(
         source,
         authors,
         title: f.title ?? paper.title,
-        doi: paper.doi,
+        doi: paper.doi ?? f.doi ?? null,
         abstract: f.abstract ?? paper.abstract,
         year: f.year ?? paper.year,
         venue: f.venue ?? paper.venue,
@@ -88,7 +90,14 @@ export default resolver.pipe(
         tags: paper.tags,
         keywords: (f.keywords ?? paper.keywords).map((k) => k.toLowerCase().trim()),
       },
-      userId
+      userId,
+      f.matchedByTitle
+        ? {
+            summary: `No DOI on file — matched by title to "${f.matchedByTitle.title}" (${Math.round(
+              f.matchedByTitle.score * 100
+            )}%) and set DOI ${f.doi}`,
+          }
+        : {}
     )
 
     return { success: true }

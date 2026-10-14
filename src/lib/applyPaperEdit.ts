@@ -49,7 +49,11 @@ export type SavePaperEditInput = z.infer<typeof SavePaperEdit>
 
 // Shared by the manual edit form and the workflow's inline pull, so both write
 // the paper, its authors and its edit history the same way.
-export async function applyPaperEdit({ paperId, source, authors, ...data }: SavePaperEditInput, userId: number) {
+export async function applyPaperEdit(
+  { paperId, source, authors, ...data }: SavePaperEditInput,
+  userId: number,
+  opts: { summary?: string } = {}
+) {
   const updated = await db.$transaction(async (tx) => {
     const paper = await tx.paper.update({
       where: { id: paperId },
@@ -61,7 +65,7 @@ export async function applyPaperEdit({ paperId, source, authors, ...data }: Save
       },
     })
     await tx.paperEditHistory.create({
-      data: { paperId, userId, source },
+      data: { paperId, userId, source, ...(opts.summary ? { summary: opts.summary } : {}) },
     })
 
     await tx.paperAuthor.deleteMany({ where: { paperId } })

@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation"
 import Link from "next/link"
 import db from "db"
-import { fetchCrossrefFields, fetchOpenAlexFields, type EnrichmentFields } from "src/lib/enrichment"
+import { fetchCrossrefFields, fetchOpenAlexFields, titleHint, type EnrichmentFields } from "src/lib/enrichment"
 import { userHasOpenAlexApiKey } from "src/lib/apiKeyPool"
 import { getBlitzContext } from "src/app/blitz-server"
 import { PaperEditForm, type FieldKey } from "./PaperEditForm"
@@ -71,7 +71,8 @@ export default async function PullDataPage({
   let fetched: EnrichmentFields = {}
   let fetchError: string | null = null
   try {
-    fetched = source === "openalex" ? await fetchOpenAlexFields(paper) : await fetchCrossrefFields(paper)
+    const hint = titleHint(paper)
+    fetched = source === "openalex" ? await fetchOpenAlexFields(paper, hint) : await fetchCrossrefFields(paper, hint)
   } catch (e: any) {
     fetchError = e.message ?? "Lookup failed"
   }
@@ -148,6 +149,14 @@ export default async function PullDataPage({
         Review data from {source === "openalex" ? "OpenAlex" : "Crossref"}
       </h1>
       <p className="text-base-content/60 mb-8">{paper.title}</p>
+
+      {fetched.matchedByTitle && (
+        <p className="text-base text-warning mb-6">
+          This item has no DOI, so it was matched by title to "{fetched.matchedByTitle.title}" (
+          {Math.round(fetched.matchedByTitle.score * 100)}% match) and its DOI is filled in below.
+          Check that it's the right paper before saving.
+        </p>
+      )}
 
       {fetchError ? (
         <p className="text-error">{fetchError}</p>
