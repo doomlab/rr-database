@@ -11,7 +11,7 @@ export function normalizeDoi(raw: string): string {
 // approved article suggestions, etc).
 export async function fetchOrCreatePaperByDoi(
   doi: string,
-  opts: { discoveredVia?: "ZOTERO_IMPORT" | "OPENALEX" | "GOOGLE_SCHOLAR" | "PCIRR" | "USER_SUGGESTION" } = {}
+  opts: { discoveredVia?: "ZOTERO_IMPORT" | "OPENALEX" | "GOOGLE_SCHOLAR" | "PCIRR" | "USER_SUGGESTION" | "WEB_OF_SCIENCE" } = {}
 ): Promise<{ id: number; title: string; created: boolean }> {
   const existing = await db.paper.findFirst({ where: { doi }, select: { id: true, title: true } })
   if (existing) return { ...existing, created: false }

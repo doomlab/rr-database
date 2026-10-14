@@ -58,6 +58,9 @@ export async function Navbar() {
                 <Link href="/searches">My Searches</Link>
               </li>
             )}
+            <li>
+              <Link href="/guide">User guide</Link>
+            </li>
           </ul>
         </div>
         {userId ? (
@@ -118,6 +121,9 @@ export async function Navbar() {
                       <span>Article suggestions</span>
                       {suggestionsCount > 0 && <span className="badge badge-warning badge-sm">{suggestionsCount}</span>}
                     </Link>
+                  </li>
+                  <li>
+                    <Link href="/guide#admin-overview">Admin guide</Link>
                   </li>
                   <li>
                     <Link href="/admin/users">Users</Link>

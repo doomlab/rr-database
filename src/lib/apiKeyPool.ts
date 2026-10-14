@@ -34,3 +34,16 @@ export async function userHasOpenAlexApiKey(userId: number): Promise<boolean> {
   const user = await db.user.findUnique({ where: { id: userId }, select: { openAlexApiKey: true } })
   return !!user?.openAlexApiKey
 }
+
+// Web of Science keys aren't pooled: the free Starter tier allows only 50
+// requests/day per key, so a search always runs on the requesting admin's
+// own key. Returns null if they haven't added one.
+export async function getUserWosApiKey(userId: number): Promise<string | null> {
+  const user = await db.user.findUnique({ where: { id: userId }, select: { wosApiKey: true } })
+  return user?.wosApiKey ? decryptApiKey(user.wosApiKey) : null
+}
+
+export async function userHasWosApiKey(userId: number): Promise<boolean> {
+  const user = await db.user.findUnique({ where: { id: userId }, select: { wosApiKey: true } })
+  return !!user?.wosApiKey
+}

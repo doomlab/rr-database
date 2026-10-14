@@ -50,3 +50,7 @@ export function googleScholarYearRunHistory() {
 export function pcirrYearRunHistory() {
   return yearRunHistory("QUERY_PCIRR", "pcirr")
 }
+
+export function wosYearRunHistory() {
+  return yearRunHistory("QUERY_WOS", "wos")
+}

@@ -6,8 +6,9 @@ import {
   openAlexYearRunHistory,
   googleScholarYearRunHistory,
   pcirrYearRunHistory,
+  wosYearRunHistory,
 } from "src/lib/pipelineRuns"
-import { userHasOpenAlexApiKey } from "src/lib/apiKeyPool"
+import { userHasOpenAlexApiKey, userHasWosApiKey } from "src/lib/apiKeyPool"
 import { countLinkNeedsReviewGroups } from "src/lib/duplicateClusters"
 import { workflowCounts } from "src/lib/workflow"
 import { WorkflowCard } from "../components/WorkflowCard"
@@ -16,6 +17,7 @@ import { RunImportButton } from "../components/RunImportButton"
 import { DiscoverOpenAlexYearButton } from "../components/DiscoverOpenAlexYearButton"
 import { DiscoverOpenAlexRecentButton } from "../components/DiscoverOpenAlexRecentButton"
 import { DiscoverGoogleScholarYearButton } from "../components/DiscoverGoogleScholarYearButton"
+import { DiscoverWebOfScienceYearButton } from "../components/DiscoverWebOfScienceYearButton"
 import { DiscoverPcirrYearButton } from "../components/DiscoverPcirrYearButton"
 import { RunAuthorMetaBackfillButton } from "../components/RunAuthorMetaBackfillButton"
 
@@ -29,6 +31,7 @@ export default async function AdminHomePage() {
   const userId = ctx.session.userId as number | undefined
   const isSuperAdmin = ctx.session.role === "SUPER_ADMIN"
   const hasOpenAlexApiKey = userId ? await userHasOpenAlexApiKey(userId) : false
+  const hasWosApiKey = userId ? await userHasWosApiKey(userId) : false
 
   const currentYear = new Date().getFullYear()
   const years = Array.from(
@@ -43,10 +46,12 @@ export default async function AdminHomePage() {
     openAlexRecentRun,
     googleScholarYearRun,
     pcirrYearRun,
+    wosYearRun,
     authorMetaBackfillRun,
     yearRunHistory,
     scholarYearRunHistory,
     pcirrYearRunHistoryByYear,
+    wosYearRunHistoryByYear,
     reviewCount,
     linkGroupCount,
     metadataReviewCount,
@@ -60,10 +65,12 @@ export default async function AdminHomePage() {
     lastPipelineRun("QUERY_OPENALEX", "[openalex:recent]"),
     lastPipelineRun("QUERY_GOOGLE_SCHOLAR", "[scholar:year:"),
     lastPipelineRun("QUERY_PCIRR", "[pcirr:year:"),
+    lastPipelineRun("QUERY_WOS", "[wos:year:"),
     lastPipelineRun("ENRICH", "[author-meta-backfill]"),
     openAlexYearRunHistory(),
     googleScholarYearRunHistory(),
     pcirrYearRunHistory(),
+    wosYearRunHistory(),
     db.paper.count({ where: { status: "PENDING_REVIEW", canonicalPaperId: null } }),
     countLinkNeedsReviewGroups(),
     db.paper.count({
@@ -168,6 +175,23 @@ export default async function AdminHomePage() {
             >
               <DiscoverPcirrYearButton years={years.filter((y) => y >= EARLIEST_PCIRR_YEAR)} runHistory={pcirrYearRunHistoryByYear} />
             </RunCard>
+
+            {hasWosApiKey ? (
+              <RunCard
+                title="Pull a specific year from Web of Science"
+                description={`Searches Web of Science (Starter API) for the same RR phrases in the chosen year. This runs on your own API key, and the free tier allows only 50 requests a day (50 records each), so a run stops early with a message if the limit is hit. Web of Science doesn't return abstracts or citation counts on the free tier — OpenAlex fills those in later. Anything already in the database (by DOI or a close title match) is skipped.`}
+                run={wosYearRun}
+                nested
+              >
+                <DiscoverWebOfScienceYearButton years={years} runHistory={wosYearRunHistoryByYear} />
+              </RunCard>
+            ) : (
+              <div className="tooltip" data-tip="Add a Web of Science key on your Account page to enable searching">
+                <button type="button" className="btn btn-accent btn-sm text-base" disabled>
+                  Search Web of Science
+                </button>
+              </div>
+            )}
           </div>
         </WorkflowCard>
 

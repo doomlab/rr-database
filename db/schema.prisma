@@ -33,6 +33,10 @@ model User {
   // pipeline calls can round-robin across multiple keys instead of
   // hammering a single shared one.
   openAlexApiKey String?
+  // A personal Web of Science Starter API key. Unlike OpenAlex this isn't
+  // pooled — the free tier is capped at 50 requests/day per key, so each
+  // search runs on the requesting admin's own key.
+  wosApiKey      String?
 
   reviewedPapers  Paper[]         @relation("PaperReviewedBy")
   verifiedMetadataPapers Paper[]  @relation("PaperMetadataVerifiedBy")
@@ -118,6 +122,7 @@ enum DiscoverySource {
   GOOGLE_SCHOLAR
   PCIRR
   USER_SUGGESTION
+  WEB_OF_SCIENCE
 }
 
 enum ZoteroSyncStatus {
@@ -408,6 +413,7 @@ enum PipelineStep {
   QUERY_OPENALEX
   QUERY_GOOGLE_SCHOLAR
   QUERY_PCIRR
+  QUERY_WOS
   MERGE
   DEDUP
   ENRICH
