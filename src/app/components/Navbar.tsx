@@ -4,6 +4,7 @@ import { getBlitzContext } from "../blitz-server"
 import { LogoutButton } from "../(auth)/components/LogoutButton"
 import { ThemeToggle } from "./ThemeToggle"
 import { countLinkNeedsReviewGroups } from "src/lib/duplicateClusters"
+import { workflowCounts } from "src/lib/workflow"
 
 export async function Navbar() {
   const ctx = await getBlitzContext()
@@ -11,7 +12,7 @@ export async function Navbar() {
   const role = ctx.session.role
   const isAdmin = role === "ADMIN" || role === "SUPER_ADMIN"
 
-  const [reviewCount, reportsCount, suggestionsCount, linkGroupCount, metadataReviewCount] = isAdmin
+  const [reviewCount, reportsCount, suggestionsCount, linkGroupCount, metadataReviewCount, workflowNotDone] = isAdmin
     ? await Promise.all([
         db.paper.count({ where: { status: "PENDING_REVIEW" } }),
         db.paperReport.count({ where: { resolved: false } }),
@@ -20,8 +21,9 @@ export async function Navbar() {
         db.paper.count({
           where: { canonicalPaperId: null, status: { in: ["IMPORTED", "APPROVED"] }, metadataVerifiedAt: null },
         }),
+        workflowCounts().then((c) => c.notDone),
       ])
-    : [0, 0, 0, 0, 0]
+    : [0, 0, 0, 0, 0, 0]
 
   return (
     <div className="navbar bg-base-200 px-6 shadow-sm sticky top-0 z-50">
@@ -74,6 +76,14 @@ export async function Navbar() {
                   </li>
                   <li>
                     <Link href="/admin/stats">Stats</Link>
+                  </li>
+                  <li>
+                    <Link href="/admin/workflow" className="flex justify-between">
+                      <span>One group at a time</span>
+                      {workflowNotDone > 0 && (
+                        <span className="badge badge-warning badge-sm">{workflowNotDone}</span>
+                      )}
+                    </Link>
                   </li>
                   <li>
                     <Link href="/admin/review" className="flex justify-between">

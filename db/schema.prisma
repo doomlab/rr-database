@@ -36,6 +36,7 @@ model User {
 
   reviewedPapers  Paper[]         @relation("PaperReviewedBy")
   verifiedMetadataPapers Paper[]  @relation("PaperMetadataVerifiedBy")
+  workflowMarkedPapers   Paper[]  @relation("PaperWorkflowMarkedBy")
   pipelineRuns    PipelineRun[]   @relation("PipelineRunStartedBy")
   favoriteStudies StudyFavorite[]
   favoritePapers  PaperFavorite[]
@@ -96,6 +97,14 @@ enum PaperStatus {
   APPROVED // admin approved; eligible to sync to Zotero
   REJECTED // admin rejected; will not sync
   SYNCED // successfully pushed to a Zotero library
+}
+
+// Where an admin left a group in the workflow. Rejecting is a review
+// decision (status REJECTED), not a marker.
+enum WorkflowMarker {
+  DONE // finished — reviewed, linked, enriched and verified
+  LATER // skipped for now; come back to it
+  QUESTION // needs a second opinion (see the note)
 }
 
 enum Stage {
@@ -187,6 +196,14 @@ model Paper {
   metadataVerifiedById Int?
   metadataVerifiedBy   User?     @relation("PaperMetadataVerifiedBy", fields: [metadataVerifiedById], references: [id])
   metadataVerifiedAt   DateTime?
+
+  // Admin-only progress marker for the one-group-at-a-time workflow. Set on
+  // every paper in a group together; null means untouched.
+  workflowMarker     WorkflowMarker?
+  workflowNote       String?
+  workflowMarkedById Int?
+  workflowMarkedBy   User?           @relation("PaperWorkflowMarkedBy", fields: [workflowMarkedById], references: [id])
+  workflowMarkedAt   DateTime?
 
   // Source-tracking / provenance
   openalexId              String? @unique

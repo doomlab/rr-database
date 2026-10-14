@@ -9,6 +9,7 @@ import {
 } from "src/lib/pipelineRuns"
 import { userHasOpenAlexApiKey } from "src/lib/apiKeyPool"
 import { countLinkNeedsReviewGroups } from "src/lib/duplicateClusters"
+import { workflowCounts } from "src/lib/workflow"
 import { WorkflowCard } from "../components/WorkflowCard"
 import { RunCard } from "../components/RunCard"
 import { RunImportButton } from "../components/RunImportButton"
@@ -51,6 +52,7 @@ export default async function AdminHomePage() {
     metadataReviewCount,
     articleSuggestionCount,
     metadataEditCount,
+    workflowStats,
   ] = await Promise.all([
     isSuperAdmin ? lastZoteroRun("[production]") : Promise.resolve(null),
     isSuperAdmin ? lastZoteroRun("[stagingCollections]") : Promise.resolve(null),
@@ -69,6 +71,7 @@ export default async function AdminHomePage() {
     }),
     db.articleSuggestion.count({ where: { resolved: false } }),
     db.metadataEditSuggestion.count({ where: { resolved: false } }),
+    workflowCounts(),
   ])
 
   return (
@@ -166,6 +169,16 @@ export default async function AdminHomePage() {
               <DiscoverPcirrYearButton years={years.filter((y) => y >= EARLIEST_PCIRR_YEAR)} runHistory={pcirrYearRunHistoryByYear} />
             </RunCard>
           </div>
+        </WorkflowCard>
+
+        <WorkflowCard
+          title="One group at a time"
+          badge={workflowStats.notDone}
+          description="The steps below each run across every paper. This takes a single group of papers (a cluster of similar titles, or a study) through review, linking, enrichment and metadata verification in one place, then moves on to the next. Mark each group Done, Later or Question so the team can see where things stand."
+        >
+          <a href="/admin/workflow" className="btn btn-primary btn-sm text-base w-fit">
+            Open the workflow
+          </a>
         </WorkflowCard>
 
         <WorkflowCard
