@@ -8,20 +8,10 @@ import { getBlitzContext } from "../../blitz-server"
 import { resolveCitations } from "src/lib/resolveCitations"
 import db from "db"
 import { studyTitle } from "src/lib/studyTitle"
+import { STUDY_PAPER_ROLE_LABELS } from "src/lib/studyPaperRoles"
 import { InfoTip } from "../../components/InfoTip"
 import { StudyTitleEditor } from "../../components/StudyTitleEditor"
 
-const ROLE_LABELS: Record<string, string> = {
-  STAGE1_ARTICLE: "Stage 1 article",
-  STAGE1_MATERIALS: "Stage 1 materials",
-  STAGE2_ARTICLE: "Stage 2 article",
-  STAGE2_MATERIALS: "Stage 2 materials",
-  PCIRR_PAGE: "PCI RR recommendation",
-  PCIRR_REVIEW: "PCI RR review",
-  PCIRR_AUTHOR_RESPONSE: "PCI RR author response",
-  PCIRR_DECISION: "PCI RR decision",
-  OTHER: "Other",
-}
 
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
@@ -91,9 +81,7 @@ export default async function StudyDetailPage({
       : Promise.resolve(new Set<number>()),
   ])
 
-  const hasStage1 = study.papers.some(
-    ({ role }) => role === "STAGE1_ARTICLE" || role === "STAGE1_MATERIALS"
-  )
+  const hasStage1 = study.papers.some(({ role }) => role === "STAGE1_ARTICLE")
   const stage2Count = study.papers.filter(({ role }) => role === "STAGE2_ARTICLE").length
   const isProgrammatic = stage2Count > 1
 
@@ -152,7 +140,7 @@ export default async function StudyDetailPage({
             </h2>
             <InfoTip
               label="What are items?"
-              text="Items are the individual outputs that make up a study: the Stage 1 and Stage 2 articles, their materials (such as an OSF project), and any Peer Community In Registered Reports recommendation, reviews, author responses and decisions. Each item has its own tab and its own details."
+              text="Items are the individual outputs that make up a study: the Stage 1 and Stage 2 articles, any preprints, supplemental materials (code, data or materials in a repository such as an OSF project), and any Peer Community In Registered Reports recommendation, reviews, author responses and decisions. Each item has its own tab and its own details."
             />
           </div>
 
@@ -164,7 +152,7 @@ export default async function StudyDetailPage({
                     type="radio"
                     name={`study-${study.id}-tabs`}
                     className="tab text-base font-medium"
-                    aria-label={ROLE_LABELS[role] ?? role}
+                    aria-label={STUDY_PAPER_ROLE_LABELS[role] ?? role}
                     defaultChecked={
                       study.papers.some((sp) => sp.paper.id === Number(activePaper))
                         ? paper.id === Number(activePaper)
@@ -174,7 +162,7 @@ export default async function StudyDetailPage({
                   <div className="tab-content">
                     <PaperRecordSection
                       paper={paper}
-                      roleLabel={ROLE_LABELS[role] ?? role}
+                      roleLabel={STUDY_PAPER_ROLE_LABELS[role] ?? role}
                       citationData={citationDataByPaperId.get(paper.id)!}
                       isAdmin={isAdmin}
                       hasOpenAlexApiKey={hasOpenAlexApiKey}
@@ -197,7 +185,7 @@ export default async function StudyDetailPage({
                 <PaperRecordSection
                   key={paper.id}
                   paper={paper}
-                  roleLabel={ROLE_LABELS[role] ?? role}
+                  roleLabel={STUDY_PAPER_ROLE_LABELS[role] ?? role}
                   citationData={citationDataByPaperId.get(paper.id)!}
                   isAdmin={isAdmin}
                   hasOpenAlexApiKey={hasOpenAlexApiKey}

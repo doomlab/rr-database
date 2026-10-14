@@ -308,9 +308,9 @@ model Study {
 // most one Study.
 enum StudyPaperRole {
   STAGE1_ARTICLE
-  STAGE1_MATERIALS
   STAGE2_ARTICLE
-  STAGE2_MATERIALS
+  PREPRINT
+  SUPPLEMENTAL // code, data, materials or a project page hosted in a repository (OSF, Zenodo, etc.)
   PCIRR_PAGE // the recommendation text itself — DOI has no .rev/.ar/.d suffix
   PCIRR_REVIEW // DOI ends .rev<n>
   PCIRR_AUTHOR_RESPONSE // DOI ends .ar<n>

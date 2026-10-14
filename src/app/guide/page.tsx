@@ -92,8 +92,8 @@ export default async function GuidePage() {
             <H2 id="concepts">Key concepts</H2>
             <Bullets>
               <li>
-                <Term>Item</Term> — one record: a Stage 1 article, a Stage 2 article, a set of materials (such as an
-                OSF project), or a Peer Community In Registered Reports (PCI RR) page with its recommendation, reviews
+                <Term>Item</Term> — one record: a Stage 1 article, a Stage 2 article, a preprint, supplemental materials
+                (code, data or materials in a repository such as an OSF project), or a Peer Community In Registered Reports (PCI RR) page with its recommendation, reviews
                 and decisions.
               </li>
               <li>
@@ -143,7 +143,7 @@ export default async function GuidePage() {
               </li>
             </Bullets>
             <p>
-              Every result card shows badges for stage, materials, open access status, verification, and open
+              Every result card shows badges for stage, supplemental materials, open access status, verification, and open
               practices, so you can scan the list without opening each study. Filters live in the address bar, so you
               can bookmark or share a filtered view.
             </p>
@@ -151,7 +151,7 @@ export default async function GuidePage() {
             <H2 id="study">Study and item pages</H2>
             <p>
               Click <Term>View</Term> on a result to open the study. The study page shows its title, badges and
-              abstract, then one tab per item (Stage 1 article, Stage 2 article, materials, PCI RR page, and so on).
+              abstract, then one tab per item (Stage 1 article, Stage 2 article, preprint, supplemental materials, PCI RR page, and so on).
               Each tab has that item's authors (with ORCID and OpenAlex badges where known), venue, DOI and links,
               open science links (preregistration, data, code, materials), and citation information. Admins can also
               rename a study from its page.
@@ -227,7 +227,7 @@ export default async function GuidePage() {
                     <Term>Review</Term> each candidate: approve real registered reports, reject the rest.
                   </li>
                   <li>
-                    <Term>Link</Term> related items (preprint, published article, materials) into one study.
+                    <Term>Link</Term> related items (preprint, published article, supplemental materials) into one study.
                   </li>
                   <li>
                     <Term>Enrich</Term> by pulling fresh data from OpenAlex and Crossref.
@@ -351,8 +351,8 @@ export default async function GuidePage() {
 
                 <H3>Step 2 — Link</H3>
                 <p>
-                  For each item choose what it is: <Term>Stage 1 article</Term>, <Term>Stage 1 materials</Term>,{" "}
-                  <Term>Stage 2 article</Term>, <Term>Stage 2 materials</Term>, <Term>Duplicate of…</Term> another item in
+                  For each item choose what it is: <Term>Stage 1 article</Term>, <Term>Stage 2 article</Term>,{" "}
+                  <Term>Preprint</Term>, <Term>Supplemental materials</Term>, <Term>Duplicate of…</Term> another item in
                   the group, <Term>Unlink from study</Term>, or <Term>Leave as-is</Term>. Saving links everything into one
                   study. A sensible guess is pre-selected from an existing role, PCI RR's own classification, or the
                   item's stage. You can also give the study a title (otherwise one is derived from its items).
@@ -410,7 +410,7 @@ export default async function GuidePage() {
                   </li>
                   <li>
                     <Link href="/admin/link" className="link link-primary">Link items</Link> — groups of matching titles to link as Stage 1, Stage 2,
-                    materials or duplicate. Search for any item to edit or unlink a study it is already part of, even if it
+                    supplemental materials or duplicate. Search for any item to edit or unlink a study it is already part of, even if it
                     was not grouped automatically.
                   </li>
                   <li>

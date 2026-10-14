@@ -2,12 +2,9 @@ import db, { Prisma, PaperStatus, StudyPaperRole } from "db"
 import { OA_STATUS_OPTIONS } from "src/lib/openAccessStatus"
 
 export const CONFIRMED_STATUSES: PaperStatus[] = [PaperStatus.IMPORTED, PaperStatus.APPROVED]
-export const STAGE1_ROLES: StudyPaperRole[] = [StudyPaperRole.STAGE1_ARTICLE, StudyPaperRole.STAGE1_MATERIALS]
-export const STAGE2_ROLES: StudyPaperRole[] = [StudyPaperRole.STAGE2_ARTICLE, StudyPaperRole.STAGE2_MATERIALS]
-export const MATERIALS_ROLES: StudyPaperRole[] = [
-  StudyPaperRole.STAGE1_MATERIALS,
-  StudyPaperRole.STAGE2_MATERIALS,
-]
+export const STAGE1_ROLES: StudyPaperRole[] = [StudyPaperRole.STAGE1_ARTICLE]
+export const STAGE2_ROLES: StudyPaperRole[] = [StudyPaperRole.STAGE2_ARTICLE]
+export const MATERIALS_ROLES: StudyPaperRole[] = [StudyPaperRole.SUPPLEMENTAL]
 const OA_STATUS_VALUES = OA_STATUS_OPTIONS.map((o) => o.value)
 
 export const PRACTICE_OPTIONS: { value: string; label: string }[] = [

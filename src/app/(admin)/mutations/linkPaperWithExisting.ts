@@ -1,34 +1,11 @@
 import { resolver } from "@blitzjs/rpc"
 import { z } from "zod"
 import db from "db"
-
-const ROLE_VALUES = [
-  "STAGE1_ARTICLE",
-  "STAGE1_MATERIALS",
-  "STAGE2_ARTICLE",
-  "STAGE2_MATERIALS",
-  "PCIRR_PAGE",
-  "PCIRR_REVIEW",
-  "PCIRR_AUTHOR_RESPONSE",
-  "PCIRR_DECISION",
-  "OTHER",
-] as const
-
-const ROLE_LABELS: Record<(typeof ROLE_VALUES)[number], string> = {
-  STAGE1_ARTICLE: "Stage 1 article",
-  STAGE1_MATERIALS: "Stage 1 materials",
-  STAGE2_ARTICLE: "Stage 2 article",
-  STAGE2_MATERIALS: "Stage 2 materials",
-  PCIRR_PAGE: "PCI RR recommendation",
-  PCIRR_REVIEW: "PCI RR review",
-  PCIRR_AUTHOR_RESPONSE: "PCI RR author response",
-  PCIRR_DECISION: "PCI RR decision",
-  OTHER: "Other",
-}
+import { STUDY_PAPER_ROLE_LABELS, STUDY_PAPER_ROLE_VALUES } from "src/lib/studyPaperRoles"
 
 const LinkPaperWithExisting = z.object({
   paperId: z.number(),
-  role: z.enum(ROLE_VALUES),
+  role: z.enum(STUDY_PAPER_ROLE_VALUES),
   targetPaperId: z.number(),
 })
 
@@ -83,7 +60,7 @@ export default resolver.pipe(
         paperId,
         userId,
         source: "link",
-        summary: `Linked as ${ROLE_LABELS[role]} with item #${targetPaperId}`,
+        summary: `Linked as ${STUDY_PAPER_ROLE_LABELS[role]} with item #${targetPaperId}`,
       },
     })
 

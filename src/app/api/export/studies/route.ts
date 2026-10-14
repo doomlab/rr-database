@@ -67,7 +67,7 @@ export async function GET(request: NextRequest) {
     "URL",
     "PDF URL",
     "Stage",
-    "Materials",
+    "Supplemental materials",
     "Open access",
     "Open access status",
     "Registration URL",

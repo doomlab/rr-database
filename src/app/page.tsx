@@ -214,7 +214,7 @@ export default async function Home({
                               </span>
                             )}
                             {hasMaterials && (
-                              <span className="badge badge-neutral badge-sm shrink-0">materials</span>
+                              <span className="badge badge-neutral badge-sm shrink-0">supplemental</span>
                             )}
                             {oaStatusLabel && (
                               <span className="badge badge-success badge-sm shrink-0">{oaStatusLabel}</span>

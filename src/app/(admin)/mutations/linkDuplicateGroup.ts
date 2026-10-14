@@ -1,21 +1,10 @@
 import { resolver } from "@blitzjs/rpc"
 import { z } from "zod"
 import db from "db"
-
-const ROLE_VALUES = [
-  "STAGE1_ARTICLE",
-  "STAGE1_MATERIALS",
-  "STAGE2_ARTICLE",
-  "STAGE2_MATERIALS",
-  "PCIRR_PAGE",
-  "PCIRR_REVIEW",
-  "PCIRR_AUTHOR_RESPONSE",
-  "PCIRR_DECISION",
-  "OTHER",
-] as const
+import { STUDY_PAPER_ROLE_LABELS, STUDY_PAPER_ROLE_VALUES } from "src/lib/studyPaperRoles"
 
 const Assignment = z.discriminatedUnion("action", [
-  z.object({ action: z.literal("role"), paperId: z.number(), role: z.enum(ROLE_VALUES) }),
+  z.object({ action: z.literal("role"), paperId: z.number(), role: z.enum(STUDY_PAPER_ROLE_VALUES) }),
   z.object({ action: z.literal("duplicate"), paperId: z.number(), duplicateOfPaperId: z.number() }),
   z.object({ action: z.literal("unlink"), paperId: z.number() }),
 ])
@@ -23,18 +12,6 @@ const Assignment = z.discriminatedUnion("action", [
 const LinkDuplicateGroup = z.object({
   assignments: z.array(Assignment).min(1),
 })
-
-const ROLE_LABELS: Record<(typeof ROLE_VALUES)[number], string> = {
-  STAGE1_ARTICLE: "Stage 1 article",
-  STAGE1_MATERIALS: "Stage 1 materials",
-  STAGE2_ARTICLE: "Stage 2 article",
-  STAGE2_MATERIALS: "Stage 2 materials",
-  PCIRR_PAGE: "PCI RR recommendation",
-  PCIRR_REVIEW: "PCI RR review",
-  PCIRR_AUTHOR_RESPONSE: "PCI RR author response",
-  PCIRR_DECISION: "PCI RR decision",
-  OTHER: "Other",
-}
 
 // Deletes a paper's current StudyPaper link (if any) and, if that leaves its
 // old Study with no papers left, deletes the now-empty Study too. Most
@@ -101,7 +78,7 @@ export default resolver.pipe(
             paperId: a.paperId,
             userId,
             source: "link",
-            summary: `Linked as ${ROLE_LABELS[a.role]}`,
+            summary: `Linked as ${STUDY_PAPER_ROLE_LABELS[a.role]}`,
           },
         })
       }
