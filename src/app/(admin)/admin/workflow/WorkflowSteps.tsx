@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useSearchParams } from "next/navigation"
 import { ReviewStep } from "./ReviewStep"
 import { LinkStep } from "./LinkStep"
 import { EnrichStep } from "./EnrichStep"
@@ -26,15 +26,18 @@ export function WorkflowSteps({
   // This group's workflow URL, without a step, for pages that send you back here.
   backBase: string
 }) {
-  const [step, setStepState] = useState(initialStep)
-  // Keep the step in the address so a reload, or coming back from editing a
-  // paper, lands on the same step instead of the first one.
+  // The step lives in the address, not in component state, so a refresh after
+  // an action (or anything else that remounts this) can't send you back to
+  // Review. Next keeps useSearchParams in sync with history.replaceState.
+  const searchParams = useSearchParams()
+  const fromUrl = STEP_KEYS.findIndex((k) => k === searchParams.get("step"))
+  const step = fromUrl >= 0 ? fromUrl : initialStep
   const setStep = (next: number) => {
-    setStepState(next)
     const url = new URL(window.location.href)
     url.searchParams.set("step", STEP_KEYS[next]!)
     window.history.replaceState(null, "", url)
   }
+
   // Enrich and Metadata only make sense for papers that survived review.
   const kept = papers.filter((p) => !REJECTED_STATUSES.includes(p.status))
 

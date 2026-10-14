@@ -42,7 +42,7 @@ export default async function SuggestEditPage({
     back && isAdmin && back.startsWith("/")
       ? back
       : paper.studyPaper && isConfirmed
-        ? `/studies/${paper.studyPaper.studyId}`
+        ? `/studies/${paper.studyPaper.studyId}?paper=${paper.id}`
         : `/papers/${paper.id}`
 
   const initial = {

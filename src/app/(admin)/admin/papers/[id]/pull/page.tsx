@@ -43,7 +43,7 @@ export default async function PullDataPage({
     paper.status === "PENDING_REVIEW"
       ? `/admin/review/${paper.id}${next ? `?next=${next}` : ""}`
       : paper.studyPaper && isConfirmed
-        ? `/studies/${paper.studyPaper.studyId}`
+        ? `/studies/${paper.studyPaper.studyId}?paper=${paper.id}`
         : `/papers/${paper.id}`
 
   if (source === "openalex") {

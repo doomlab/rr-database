@@ -32,10 +32,13 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
 
 export default async function StudyDetailPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string }>
+  searchParams: Promise<{ paper?: string }>
 }) {
   const { id } = await params
+  const { paper: activePaper } = await searchParams
   const ctx = await getBlitzContext()
   const userId = ctx.session.userId as number | undefined
   const isAdmin = ctx.session.role === "ADMIN" || ctx.session.role === "SUPER_ADMIN"
@@ -142,7 +145,11 @@ export default async function StudyDetailPage({
                     name={`study-${study.id}-tabs`}
                     className="tab text-base font-medium"
                     aria-label={ROLE_LABELS[role] ?? role}
-                    defaultChecked={idx === 0}
+                    defaultChecked={
+                      study.papers.some((sp) => sp.paper.id === Number(activePaper))
+                        ? paper.id === Number(activePaper)
+                        : idx === 0
+                    }
                   />
                   <div className="tab-content">
                     <PaperRecordSection
