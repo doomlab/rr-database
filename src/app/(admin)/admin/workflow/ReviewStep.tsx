@@ -45,7 +45,7 @@ export function ReviewStep({ papers }: { papers: GroupPaper[] }) {
           <li key={paper.id} className="py-4 flex flex-col md:flex-row md:items-start gap-3">
             <div className="flex-1 min-w-0">
               <a
-                href={`/admin/review/${paper.id}`}
+                href={`/papers/${paper.id}`}
                 target="_blank"
                 rel="noreferrer"
                 className="font-semibold text-base leading-snug link link-hover"
