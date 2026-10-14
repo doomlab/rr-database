@@ -3,7 +3,7 @@
 // as separate records) so an admin can link them into one Study, or mark the
 // extras as duplicates of a chosen canonical paper.
 
-import db from "db"
+import db, { Stage } from "db"
 
 const STOPWORDS = new Set([
   "the", "and", "for", "with", "from", "into", "onto", "over", "under",
@@ -164,7 +164,7 @@ export function bestTitleMatch<T extends ClusterablePaper>(title: string, candid
 // own commentary documents).
 export async function findMatchingPaper(
   title: string
-): Promise<{ id: number; title: string; studyPaper: { studyId: number } | null } | null> {
+): Promise<{ id: number; title: string; stage: Stage | null; studyPaper: { studyId: number } | null } | null> {
   const words = Array.from(significantWords(normalizeTitle(title)))
     .sort((a, b) => b.length - a.length)
     .slice(0, 3)
@@ -175,7 +175,7 @@ export async function findMatchingPaper(
       OR: words.map((w) => ({ title: { contains: w, mode: "insensitive" as const } })),
       status: { notIn: ["REJECTED", "DUPLICATE"] },
     },
-    select: { id: true, title: true, studyPaper: { select: { studyId: true } } },
+    select: { id: true, title: true, stage: true, studyPaper: { select: { studyId: true } } },
     take: 50,
   })
 

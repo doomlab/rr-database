@@ -5,6 +5,7 @@ import {
   lastPipelineRun,
   openAlexYearRunHistory,
   googleScholarYearRunHistory,
+  pcirrYearRunHistory,
 } from "src/lib/pipelineRuns"
 import { userHasOpenAlexApiKey } from "src/lib/apiKeyPool"
 import { countLinkNeedsReviewGroups } from "src/lib/duplicateClusters"
@@ -14,6 +15,7 @@ import { RunImportButton } from "../components/RunImportButton"
 import { DiscoverOpenAlexYearButton } from "../components/DiscoverOpenAlexYearButton"
 import { DiscoverOpenAlexRecentButton } from "../components/DiscoverOpenAlexRecentButton"
 import { DiscoverGoogleScholarYearButton } from "../components/DiscoverGoogleScholarYearButton"
+import { DiscoverPcirrYearButton } from "../components/DiscoverPcirrYearButton"
 import { RunAuthorMetaBackfillButton } from "../components/RunAuthorMetaBackfillButton"
 
 // Registered reports as a format only really got going around 2013.
@@ -37,9 +39,11 @@ export default async function AdminHomePage() {
     openAlexYearRun,
     openAlexRecentRun,
     googleScholarYearRun,
+    pcirrYearRun,
     authorMetaBackfillRun,
     yearRunHistory,
     scholarYearRunHistory,
+    pcirrYearRunHistoryByYear,
     reviewCount,
     linkGroupCount,
     metadataReviewCount,
@@ -51,9 +55,11 @@ export default async function AdminHomePage() {
     lastPipelineRun("QUERY_OPENALEX", "[openalex:year:"),
     lastPipelineRun("QUERY_OPENALEX", "[openalex:recent]"),
     lastPipelineRun("QUERY_GOOGLE_SCHOLAR", "[scholar:year:"),
+    lastPipelineRun("QUERY_PCIRR", "[pcirr:year:"),
     lastPipelineRun("ENRICH", "[author-meta-backfill]"),
     openAlexYearRunHistory(),
     googleScholarYearRunHistory(),
+    pcirrYearRunHistory(),
     db.paper.count({ where: { status: "PENDING_REVIEW", canonicalPaperId: null } }),
     countLinkNeedsReviewGroups(),
     db.paper.count({
@@ -147,6 +153,15 @@ export default async function AdminHomePage() {
               nested
             >
               <DiscoverGoogleScholarYearButton years={years} runHistory={scholarYearRunHistory} />
+            </RunCard>
+
+            <RunCard
+              title="Pull a specific year from PCI Registered Reports"
+              description="Reads PCI RR's public feed of recommended studies for the chosen year, then visits each study's page to get its title, authors, Stage 1 or 2, report link and Stage 1 protocol link. Anything already in the database (by report DOI, earlier PCI RR import, or a close title match) is skipped automatically. Pages are fetched one per second, so a busy year takes a minute or two."
+              run={pcirrYearRun}
+              nested
+            >
+              <DiscoverPcirrYearButton years={years} runHistory={pcirrYearRunHistoryByYear} />
             </RunCard>
           </div>
         </WorkflowCard>

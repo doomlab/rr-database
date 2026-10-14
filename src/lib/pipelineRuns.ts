@@ -46,3 +46,7 @@ export function openAlexYearRunHistory() {
 export function googleScholarYearRunHistory() {
   return yearRunHistory("QUERY_GOOGLE_SCHOLAR", "scholar")
 }
+
+export function pcirrYearRunHistory() {
+  return yearRunHistory("QUERY_PCIRR", "pcirr")
+}
