@@ -18,6 +18,7 @@ import { DiscoverOpenAlexYearButton } from "../components/DiscoverOpenAlexYearBu
 import { DiscoverOpenAlexRecentButton } from "../components/DiscoverOpenAlexRecentButton"
 import { DiscoverGoogleScholarYearButton } from "../components/DiscoverGoogleScholarYearButton"
 import { DiscoverWebOfScienceYearButton } from "../components/DiscoverWebOfScienceYearButton"
+import { DiscoverLifecycleJournalButton } from "../components/DiscoverLifecycleJournalButton"
 import { DiscoverPcirrYearButton } from "../components/DiscoverPcirrYearButton"
 import { RunAuthorMetaBackfillButton } from "../components/RunAuthorMetaBackfillButton"
 
@@ -47,6 +48,7 @@ export default async function AdminHomePage() {
     googleScholarYearRun,
     pcirrYearRun,
     wosYearRun,
+    lifecycleRun,
     authorMetaBackfillRun,
     yearRunHistory,
     scholarYearRunHistory,
@@ -66,6 +68,7 @@ export default async function AdminHomePage() {
     lastPipelineRun("QUERY_GOOGLE_SCHOLAR", "[scholar:year:"),
     lastPipelineRun("QUERY_PCIRR", "[pcirr:year:"),
     lastPipelineRun("QUERY_WOS", "[wos:year:"),
+    lastPipelineRun("QUERY_LIFECYCLE", "[lifecycle]"),
     lastPipelineRun("ENRICH", "[author-meta-backfill]"),
     openAlexYearRunHistory(),
     googleScholarYearRunHistory(),
@@ -174,6 +177,15 @@ export default async function AdminHomePage() {
               nested
             >
               <DiscoverPcirrYearButton years={years.filter((y) => y >= EARLIEST_PCIRR_YEAR)} runHistory={pcirrYearRunHistoryByYear} />
+            </RunCard>
+
+            <RunCard
+              title="Pull from Lifecycle Journal"
+              description="Lists every article published in the Center for Open Science's Lifecycle Journal (via its Crossref DOIs — no key needed) and brings new ones in as Pending review. The journal isn't limited to registered reports and doesn't label them, so expect to reject some. Each version of an article is its own DOI and its own item; link them into one study on the Link items page. Safe to re-run — anything already in the database (by DOI) is skipped."
+              run={lifecycleRun}
+              nested
+            >
+              <DiscoverLifecycleJournalButton />
             </RunCard>
 
             {hasWosApiKey ? (

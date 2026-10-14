@@ -123,6 +123,7 @@ enum DiscoverySource {
   PCIRR
   USER_SUGGESTION
   WEB_OF_SCIENCE
+  LIFECYCLE_JOURNAL
 }
 
 enum ZoteroSyncStatus {
@@ -414,6 +415,7 @@ enum PipelineStep {
   QUERY_GOOGLE_SCHOLAR
   QUERY_PCIRR
   QUERY_WOS
+  QUERY_LIFECYCLE
   MERGE
   DEDUP
   ENRICH
