@@ -7,6 +7,8 @@ import { userHasOpenAlexApiKey } from "src/lib/apiKeyPool"
 import { getBlitzContext } from "../../blitz-server"
 import { resolveCitations } from "src/lib/resolveCitations"
 import db from "db"
+import { studyTitle } from "src/lib/studyTitle"
+import { StudyTitleEditor } from "../../components/StudyTitleEditor"
 
 const ROLE_LABELS: Record<string, string> = {
   STAGE1_ARTICLE: "Stage 1 article",
@@ -24,9 +26,9 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
   const { id } = await params
   const study = await db.study.findUnique({
     where: { id: Number(id) },
-    include: { papers: { include: { paper: { select: { title: true } } } } },
+    include: { papers: { include: { paper: { select: { title: true } } }, orderBy: { role: "asc" } } },
   })
-  const title = study?.papers[0]?.paper.title
+  const title = study ? studyTitle(study) : null
   return { title: title ? `${title} – RR Database` : "Registered Report – RR Database" }
 }
 
@@ -88,7 +90,6 @@ export default async function StudyDetailPage({
       : Promise.resolve(new Set<number>()),
   ])
 
-  const headlinePaper = study.papers[0]?.paper
   const hasStage1 = study.papers.some(
     ({ role }) => role === "STAGE1_ARTICLE" || role === "STAGE1_MATERIALS"
   )
@@ -106,7 +107,15 @@ export default async function StudyDetailPage({
           </a>
 
           <div className="flex items-start justify-between gap-4 mb-8">
-            <h1 className="text-3xl font-bold leading-snug">{headlinePaper?.title}</h1>
+            {isAdmin ? (
+              <StudyTitleEditor
+                studyId={study.id}
+                title={studyTitle(study)}
+                hasCustomTitle={!!study.title?.trim()}
+              />
+            ) : (
+              <h1 className="text-3xl font-bold leading-snug">{studyTitle(study)}</h1>
+            )}
             <div className="flex items-center gap-2 shrink-0 pt-1">
               <FavoriteButton
                 studyId={study.id}

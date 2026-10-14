@@ -6,7 +6,7 @@ import { LinkStep } from "./LinkStep"
 import { EnrichStep } from "./EnrichStep"
 import { MetadataStep } from "./MetadataStep"
 import { FinishBar } from "./FinishBar"
-import { REJECTED_STATUSES, STEP_KEYS, type GroupPaper, type Marker } from "./types"
+import { REJECTED_STATUSES, STEP_KEYS, type GroupPaper, type GroupStudy, type Marker } from "./types"
 
 const STEPS = ["Review", "Link", "Enrich", "Metadata"] as const
 
@@ -15,6 +15,7 @@ export function WorkflowSteps({
   marker,
   note,
   queueHref,
+  study,
   initialStep,
   backBase,
 }: {
@@ -22,6 +23,7 @@ export function WorkflowSteps({
   marker: Marker | null
   note: string | null
   queueHref: string
+  study: GroupStudy | null
   initialStep: number
   // This group's workflow URL, without a step, for pages that send you back here.
   backBase: string
@@ -61,7 +63,7 @@ export function WorkflowSteps({
 
       <div>
         {step === 0 && <ReviewStep papers={papers} />}
-        {step === 1 && <LinkStep papers={papers} />}
+        {step === 1 && <LinkStep papers={papers} study={study} />}
         {step === 2 && <EnrichStep papers={kept} />}
         {step === 3 && <MetadataStep papers={kept} backHref={`${backBase}&step=metadata`} />}
       </div>

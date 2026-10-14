@@ -2,7 +2,8 @@ import db from "db"
 import { redirect } from "next/navigation"
 import { listWorkflowGroups, loadWorkflowGroup, nextWorkflowSeedId, workflowCounts, type WorkflowView } from "src/lib/workflow"
 import { WorkflowSteps } from "./WorkflowSteps"
-import { MARKER_LABELS, STEP_KEYS, type GroupPaper, type Marker } from "./types"
+import { studyTitle } from "src/lib/studyTitle"
+import { MARKER_LABELS, STEP_KEYS, type GroupPaper, type GroupStudy, type Marker } from "./types"
 
 const VIEWS = ["IN_PROGRESS", "LATER", "QUESTION", "DONE"] as const
 const VIEW_LABELS = { IN_PROGRESS: "In progress", ...MARKER_LABELS } as const
@@ -149,6 +150,22 @@ export default async function WorkflowPage({
   })
   const crossrefPulledAt = new Map(crossrefPulls.map((r) => [r.paperId, r._max.createdAt]))
 
+  const studyId = group.find((p) => p.studyPaper)?.studyPaper?.studyId ?? null
+  const studyRow = studyId ? await db.study.findUnique({ where: { id: studyId }, select: { title: true } }) : null
+  const study: GroupStudy | null =
+    studyId && studyRow
+      ? {
+          id: studyId,
+          title: studyRow.title,
+          defaultTitle: studyTitle({
+            title: null,
+            papers: group
+              .filter((p) => p.studyPaper?.studyId === studyId && !["REJECTED", "DUPLICATE"].includes(p.status))
+              .map((p) => ({ role: p.studyPaper!.role, paper: { title: p.title } })),
+          }),
+        }
+      : null
+
   const seed = group.find((p) => p.id === seedParam) ?? group[0]!
   const papers: GroupPaper[] = group.map((p) => ({
     id: p.id,
@@ -189,6 +206,7 @@ export default async function WorkflowPage({
         marker={(seed.workflowMarker as Marker | null) ?? null}
         note={seed.workflowNote}
         queueHref={queueHref}
+        study={study}
         initialStep={Math.max(0, STEP_KEYS.findIndex((k) => k === params.step))}
         backBase={`/admin/workflow?g=${seed.id}${viewQuery}`}
       />

@@ -180,11 +180,17 @@ export async function buildStudyWhere(filters: ParsedStudyFilters) {
     ...(q
       ? [
           {
-            papers: {
-              some: {
-                paper: { status: { in: CONFIRMED_STATUSES }, id: { in: qMatchedPaperIds } },
+            // Any matching paper, or the study's own admin-set title.
+            OR: [
+              {
+                papers: {
+                  some: {
+                    paper: { status: { in: CONFIRMED_STATUSES }, id: { in: qMatchedPaperIds } },
+                  },
+                },
               },
-            },
+              { title: { contains: q, mode: "insensitive" as const } },
+            ],
           },
         ]
       : []),

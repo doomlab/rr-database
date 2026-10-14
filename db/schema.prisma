@@ -283,6 +283,10 @@ model Study {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  // Optional admin-set headline. When null, the title of the Stage 1 article
+  // (else Stage 2, else any paper) is used — see src/lib/studyTitle.ts.
+  title String?
+
   registrationUrl      String?
   registrationPlatform String?
   biasLevel            String?

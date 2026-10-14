@@ -7,7 +7,8 @@ import linkDuplicateGroup from "../../mutations/linkDuplicateGroup"
 import searchPapersToLink from "../../mutations/searchPapersToLink"
 import addPaperToWorkflow from "../../mutations/addPaperToWorkflow"
 import { STUDY_PAPER_ROLE_OPTIONS } from "src/lib/studyPaperRoles"
-import { NO_THROW, type GroupPaper } from "./types"
+import setStudyTitle from "../../mutations/setStudyTitle"
+import { NO_THROW, type GroupPaper, type GroupStudy } from "./types"
 
 
 type Choice = string // a StudyPaperRole, "skip", "unlink" or "duplicate"
@@ -32,10 +33,11 @@ function suggestedChoice(p: GroupPaper): Choice {
 
 type SearchHit = { id: number; title: string; year: number | null; doi: string | null }
 
-export function LinkStep({ papers }: { papers: GroupPaper[] }) {
+export function LinkStep({ papers, study }: { papers: GroupPaper[]; study: GroupStudy | null }) {
   const [link] = useMutation(linkDuplicateGroup, NO_THROW)
   const [search] = useMutation(searchPapersToLink, NO_THROW)
   const [add] = useMutation(addPaperToWorkflow, NO_THROW)
+  const [saveTitle] = useMutation(setStudyTitle, NO_THROW)
   const router = useRouter()
 
   const [extra, setExtra] = useState<GroupPaper[]>([])
@@ -51,6 +53,9 @@ export function LinkStep({ papers }: { papers: GroupPaper[] }) {
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [saved, setSaved] = useState(false)
+  const [titleValue, setTitleValue] = useState(study?.title ?? "")
+  const [titleBusy, setTitleBusy] = useState(false)
+  const [titleMessage, setTitleMessage] = useState<string | null>(null)
 
   const shown = [...papers, ...extra.filter((e) => !papers.some((p) => p.id === e.id))].filter(
     (p) => p.status !== "REJECTED" && p.status !== "DUPLICATE"
@@ -121,6 +126,22 @@ export function LinkStep({ papers }: { papers: GroupPaper[] }) {
       setError(e.message ?? "Search failed")
     } finally {
       setBusy(false)
+    }
+  }
+
+  const updateTitle = async (next: string | null) => {
+    if (!study) return
+    setTitleMessage(null)
+    setTitleBusy(true)
+    try {
+      await saveTitle({ studyId: study.id, title: next })
+      if (next === null) setTitleValue("")
+      setTitleMessage(next ? "Title saved." : "Reset to the paper's title.")
+      router.refresh()
+    } catch (e: any) {
+      setTitleMessage(e.message ?? "Could not save the title")
+    } finally {
+      setTitleBusy(false)
     }
   }
 
@@ -208,6 +229,43 @@ export function LinkStep({ papers }: { papers: GroupPaper[] }) {
         </button>
         {saved && <span className="text-base text-success">Saved.</span>}
         {error && <span className="text-base text-error">{error}</span>}
+      </div>
+
+      <div className="rounded-lg bg-base-200 p-4 flex flex-col gap-3">
+        <h3 className="font-semibold text-base">Study title</h3>
+        {study ? (
+          <>
+            <p className="text-base text-base-content/60">
+              Shown on the study page, the browse list and exports. Leave it blank to use the Stage 1
+              article's title.
+            </p>
+            <input
+              className="input input-bordered input-sm text-base w-full max-w-3xl"
+              placeholder={study.defaultTitle}
+              value={titleValue}
+              onChange={(e) => setTitleValue(e.target.value)}
+            />
+            <div className="flex flex-wrap items-center gap-2">
+              <button
+                className="btn btn-primary btn-sm text-base whitespace-nowrap"
+                disabled={titleBusy || !titleValue.trim()}
+                onClick={() => updateTitle(titleValue)}
+              >
+                Save title
+              </button>
+              {study.title && (
+                <button className="btn btn-warning btn-sm text-base whitespace-nowrap" disabled={titleBusy} onClick={() => updateTitle(null)}>
+                  Reset to default
+                </button>
+              )}
+              {titleMessage && <span className="text-base text-base-content/70">{titleMessage}</span>}
+            </div>
+          </>
+        ) : (
+          <p className="text-base text-base-content/60">
+            Save links above first. That creates the study, and then you can set its title here.
+          </p>
+        )}
       </div>
 
       <div className="rounded-lg bg-base-200 p-4 flex flex-col gap-3">

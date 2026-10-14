@@ -36,3 +36,6 @@ export { NO_THROW } from "src/lib/mutationOptions"
 
 export const STEP_KEYS = ["review", "link", "enrich", "metadata"] as const
 export type StepKey = (typeof STEP_KEYS)[number]
+
+// The group's study, if its papers are linked into one.
+export type GroupStudy = { id: number; title: string | null; defaultTitle: string }

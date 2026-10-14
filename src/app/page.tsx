@@ -14,6 +14,7 @@ import {
   STAGE2_ROLES,
   MATERIALS_ROLES,
 } from "src/lib/studyFilters"
+import { studyTitle } from "src/lib/studyTitle"
 import { OA_STATUS_OPTIONS } from "src/lib/openAccessStatus"
 
 const OA_STATUS_BADGE_LABELS: Record<string, string> = Object.fromEntries(
@@ -206,7 +207,7 @@ export default async function Home({
                       <div className="flex items-start justify-between gap-4">
                         <div className="min-w-0">
                           <div className="flex items-center gap-2 mb-1">
-                            <h2 className="font-semibold text-base leading-snug">{paper.title}</h2>
+                            <h2 className="font-semibold text-base leading-snug">{studyTitle(study)}</h2>
                             {stageBadge && (
                               <span className={`badge ${stageBadge.color} badge-sm shrink-0`}>
                                 {stageBadge.label}

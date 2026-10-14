@@ -9,6 +9,7 @@ import {
   MATERIALS_ROLES,
 } from "src/lib/studyFilters"
 import { OA_STATUS_OPTIONS } from "src/lib/openAccessStatus"
+import { studyTitle } from "src/lib/studyTitle"
 import { JMIR_BADGE_OPTIONS } from "src/lib/jmirBadgeOptions"
 import { humanizeItemType } from "src/app/components/PaperFields"
 
@@ -105,7 +106,7 @@ export async function GET(request: NextRequest) {
       const url = `${request.nextUrl.origin}/studies/${study.id}`
 
       return [
-        csvCell(paper.title),
+        csvCell(studyTitle(study)),
         csvCell(authors),
         csvCell(paper.abstract),
         csvCell(paper.year),

@@ -7,6 +7,8 @@ import { Pagination } from "../components/Pagination"
 import { getBlitzContext } from "../blitz-server"
 import db from "db"
 
+import { studyTitle } from "src/lib/studyTitle"
+
 const PAGE_SIZE = 50
 
 function primaryPaper(papers: { role: string; paper: any }[]) {
@@ -111,7 +113,7 @@ export default async function FavoritesPage({
                         >
                           <div className="flex items-start justify-between gap-4">
                             <div className="min-w-0">
-                              <h3 className="font-semibold text-base leading-snug mb-1">{paper.title}</h3>
+                              <h3 className="font-semibold text-base leading-snug mb-1">{studyTitle(fav.study)}</h3>
                               <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-base-content/50">
                                 {paper.authors.length > 0 && (
                                   <>
