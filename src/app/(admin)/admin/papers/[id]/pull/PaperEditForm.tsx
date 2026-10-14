@@ -8,6 +8,7 @@ import savePaperEdit from "../../../../mutations/savePaperEdit"
 import { OpenAccessStatusField } from "../../../../../components/OpenAccessStatusField"
 import { AuthorsEditField, type AuthorRow } from "../../../../../components/AuthorsEditField"
 import { JMIR_BADGE_OPTIONS } from "src/lib/jmirBadgeOptions"
+import { NO_THROW } from "src/lib/mutationOptions"
 
 export type FieldKey =
   | "title"
@@ -134,7 +135,7 @@ export function PaperEditForm({
   const [values, setValues] = useState<FormValues>(initial)
   const [authors, setAuthors] = useState<AuthorRow[]>(initialAuthors)
   const [error, setError] = useState<string | null>(null)
-  const [save, saveState] = useMutation(savePaperEdit)
+  const [save, saveState] = useMutation(savePaperEdit, NO_THROW)
   const isSaving = (saveState as any).isLoading
 
   const setField = (key: FieldKey, value: string | boolean | null) => {

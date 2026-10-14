@@ -4,6 +4,7 @@ import { useMutation } from "@blitzjs/rpc"
 import { useRouter } from "next/navigation"
 import { useRef, useState } from "react"
 import reportPaper from "../(dashboard)/mutations/reportPaper"
+import { NO_THROW } from "src/lib/mutationOptions"
 
 const REASONS = [
   { value: "WRONG_CLASSIFICATION", label: "Incorrectly classified" },
@@ -26,7 +27,7 @@ export function ReportButton({
   const [reason, setReason] = useState("WRONG_CLASSIFICATION")
   const [note, setNote] = useState("")
   const [submitting, setSubmitting] = useState(false)
-  const [report] = useMutation(reportPaper)
+  const [report] = useMutation(reportPaper, NO_THROW)
 
   const handleOpen = (e: React.MouseEvent) => {
     e.preventDefault()

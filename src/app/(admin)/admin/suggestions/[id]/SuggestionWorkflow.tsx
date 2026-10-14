@@ -4,6 +4,7 @@ import { useState } from "react"
 import { useMutation } from "@blitzjs/rpc"
 import addSuggestedPaper from "../../../mutations/addSuggestedPaper"
 import resolveSuggestion from "../../../mutations/resolveSuggestion"
+import { NO_THROW } from "src/lib/mutationOptions"
 
 type Suggestion = {
   id: number
@@ -28,8 +29,8 @@ export function SuggestionWorkflow({
   const [doi, setDoi] = useState(suggestion.doi ?? "")
   const [url, setUrl] = useState(suggestion.url ?? "")
 
-  const [addPaper, { isPending: isAdding }] = useMutation(addSuggestedPaper)
-  const [dismiss, { isPending: isDismissing }] = useMutation(resolveSuggestion)
+  const [addPaper, { isPending: isAdding }] = useMutation(addSuggestedPaper, NO_THROW)
+  const [dismiss, { isPending: isDismissing }] = useMutation(resolveSuggestion, NO_THROW)
 
   const [result, setResult] = useState<{ paperId: number; title: string; created: boolean } | null>(
     null

@@ -5,7 +5,8 @@ import { useRouter } from "next/navigation"
 import type { Route } from "next"
 import { useState } from "react"
 import setWorkflowMarker from "../../mutations/setWorkflowMarker"
-import { MARKER_LABELS, type GroupPaper, type Marker } from "./types"
+import { MARKER_LABELS, type GroupPaper, type Marker, NO_THROW } from "./types"
+
 
 export function FinishBar({
   papers,
@@ -18,7 +19,7 @@ export function FinishBar({
   note: string | null
   queueHref: string
 }) {
-  const [mark] = useMutation(setWorkflowMarker)
+  const [mark] = useMutation(setWorkflowMarker, NO_THROW)
   const router = useRouter()
   const [note, setNote] = useState(initialNote ?? "")
   const [busy, setBusy] = useState(false)

@@ -4,6 +4,7 @@ import { useMutation } from "@blitzjs/rpc"
 import { useRouter } from "next/navigation"
 import { useState } from "react"
 import submitArticleSuggestion from "../(dashboard)/mutations/submitArticleSuggestion"
+import { NO_THROW } from "src/lib/mutationOptions"
 
 export function SuggestArticleForm() {
   const router = useRouter()
@@ -15,7 +16,7 @@ export function SuggestArticleForm() {
   const [note, setNote] = useState("")
   const [error, setError] = useState<string | null>(null)
   const [done, setDone] = useState(false)
-  const [submit, submitState] = useMutation(submitArticleSuggestion)
+  const [submit, submitState] = useMutation(submitArticleSuggestion, NO_THROW)
   const isSubmitting = (submitState as any).isLoading
 
   const handleSubmit = async (e: React.FormEvent) => {

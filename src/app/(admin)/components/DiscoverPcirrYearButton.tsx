@@ -4,6 +4,7 @@ import { useMutation } from "@blitzjs/rpc"
 import { useRouter } from "next/navigation"
 import { useState } from "react"
 import discoverPcirr from "../mutations/discoverPcirr"
+import { NO_THROW } from "src/lib/mutationOptions"
 
 type YearRun = { createdAt: string; status: string }
 
@@ -15,7 +16,7 @@ export function DiscoverPcirrYearButton({
   runHistory: Record<number, YearRun>
 }) {
   const [year, setYear] = useState(years[0]!)
-  const [run] = useMutation(discoverPcirr)
+  const [run] = useMutation(discoverPcirr, NO_THROW)
   const router = useRouter()
   const [error, setError] = useState<string | null>(null)
   const [isRunning, setIsRunning] = useState(false)

@@ -6,6 +6,7 @@ import { useMemo, useState } from "react"
 import linkDuplicateGroup from "../../mutations/linkDuplicateGroup"
 import { LinkWithExistingForm } from "./LinkWithExistingForm"
 import { STUDY_PAPER_ROLE_OPTIONS, STUDY_PAPER_ROLE_VALUES } from "src/lib/studyPaperRoles"
+import { NO_THROW } from "src/lib/mutationOptions"
 
 export type LinkablePaper = {
   id: number
@@ -58,7 +59,7 @@ export function DuplicateGroupCard({
   )
   const [choices, setChoices] = useState<Record<number, Choice>>({})
   const [duplicateOf, setDuplicateOf] = useState<Record<number, number>>({})
-  const [link] = useMutation(linkDuplicateGroup)
+  const [link] = useMutation(linkDuplicateGroup, NO_THROW)
   const router = useRouter()
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)

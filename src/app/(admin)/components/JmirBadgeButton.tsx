@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation"
 import { useState } from "react"
 import saveJmirBadge from "../mutations/saveJmirBadge"
 import { JMIR_BADGE_OPTIONS as BADGE_OPTIONS, type JmirBadgeType as BadgeType } from "src/lib/jmirBadgeOptions"
+import { NO_THROW } from "src/lib/mutationOptions"
 
 export function JmirBadgeButton({
   paperId,
@@ -16,7 +17,7 @@ export function JmirBadgeButton({
   const [open, setOpen] = useState(false)
   const [badgeType, setBadgeType] = useState<BadgeType>("REGISTERED")
   const [doi, setDoi] = useState("")
-  const [save, { isPending }] = useMutation(saveJmirBadge)
+  const [save, { isPending }] = useMutation(saveJmirBadge, NO_THROW)
   const router = useRouter()
   const [error, setError] = useState<string | null>(null)
   const [result, setResult] = useState<string | null>(null)

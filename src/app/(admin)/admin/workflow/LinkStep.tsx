@@ -7,7 +7,8 @@ import linkDuplicateGroup from "../../mutations/linkDuplicateGroup"
 import searchPapersToLink from "../../mutations/searchPapersToLink"
 import addPaperToWorkflow from "../../mutations/addPaperToWorkflow"
 import { STUDY_PAPER_ROLE_OPTIONS } from "src/lib/studyPaperRoles"
-import type { GroupPaper } from "./types"
+import { NO_THROW, type GroupPaper } from "./types"
+
 
 type Choice = string // a StudyPaperRole, "skip", "unlink" or "duplicate"
 
@@ -32,9 +33,9 @@ function suggestedChoice(p: GroupPaper): Choice {
 type SearchHit = { id: number; title: string; year: number | null; doi: string | null }
 
 export function LinkStep({ papers }: { papers: GroupPaper[] }) {
-  const [link] = useMutation(linkDuplicateGroup)
-  const [search] = useMutation(searchPapersToLink)
-  const [add] = useMutation(addPaperToWorkflow)
+  const [link] = useMutation(linkDuplicateGroup, NO_THROW)
+  const [search] = useMutation(searchPapersToLink, NO_THROW)
+  const [add] = useMutation(addPaperToWorkflow, NO_THROW)
   const router = useRouter()
 
   const [extra, setExtra] = useState<GroupPaper[]>([])
@@ -210,10 +211,10 @@ export function LinkStep({ papers }: { papers: GroupPaper[] }) {
 
       <div className="rounded-lg bg-base-200 p-4 flex flex-col gap-3">
         <h3 className="font-semibold text-base">Add another paper to this group</h3>
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-2 gap-y-3 max-w-3xl">
           <input
-            className="input input-bordered input-sm text-base w-72"
-            placeholder="Search by title, DOI, or a link (OSF, etc.)"
+            className="input input-bordered input-sm text-base w-full"
+            placeholder="Search by title, DOI, or link"
             value={query}
             onChange={(e) => {
               setQuery(e.target.value)
@@ -221,45 +222,46 @@ export function LinkStep({ papers }: { papers: GroupPaper[] }) {
             }}
             onKeyDown={(e) => e.key === "Enter" && runSearch()}
           />
-          <button className="btn btn-primary btn-sm text-base w-32" disabled={busy} onClick={runSearch}>
+          <button className="btn btn-primary btn-sm text-base w-44 whitespace-nowrap" disabled={busy || query.trim().length < 2} onClick={runSearch}>
             Search
           </button>
+
+          <input
+            className="input input-bordered input-sm text-base w-full"
+            placeholder="Not in the database? Paste a DOI"
+            value={newDoi}
+            onChange={(e) => setNewDoi(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && newDoi.trim() && addToGroup({ doi: newDoi })}
+          />
+          <button className="btn btn-primary btn-sm text-base w-44 whitespace-nowrap" disabled={busy || !newDoi.trim()} onClick={() => addToGroup({ doi: newDoi })}>
+            Add by DOI
+          </button>
+
+          <span className="text-base text-base-content/60">No DOI, or want to type the metadata yourself?</span>
+          <button className="btn btn-primary btn-sm text-base w-44 whitespace-nowrap" disabled={busy} onClick={() => setManualOpen(true)}>
+            Add manually
+          </button>
         </div>
+
         {searched && hits.length === 0 && (
           <p className="text-base text-base-content/60">Nothing found for that search.</p>
         )}
         {hits.length > 0 && (
-          <ul className="flex flex-col divide-y divide-base-300">
+          <ul className="flex flex-col divide-y divide-base-300 max-w-3xl">
             {hits.map((h) => (
               <li key={h.id} className="py-2 flex items-center justify-between gap-3">
                 <span className="text-base min-w-0">
                   #{h.id} — {h.title} {h.year ? `(${h.year})` : ""}
                 </span>
-                <button className="btn btn-primary btn-sm text-base w-32 shrink-0" disabled={busy} onClick={() => addToGroup({ paperId: h.id })}>
-                  Add
+                <button className="btn btn-primary btn-sm text-base w-44 whitespace-nowrap shrink-0" disabled={busy} onClick={() => addToGroup({ paperId: h.id })}>
+                  Add to group
                 </button>
               </li>
             ))}
           </ul>
         )}
-        <div className="flex flex-wrap items-center gap-2">
-          <input
-            className="input input-bordered input-sm text-base w-72"
-            placeholder="Not in the database? Paste a DOI"
-            value={newDoi}
-            onChange={(e) => setNewDoi(e.target.value)}
-          />
-          <button className="btn btn-primary btn-sm text-base w-32" disabled={busy || !newDoi.trim()} onClick={() => addToGroup({ doi: newDoi })}>
-            Add by DOI
-          </button>
-        </div>
-        <div className="flex flex-wrap items-center gap-2">
-          <button className="btn btn-primary btn-sm text-base w-32" disabled={busy} onClick={() => setManualOpen(true)}>
-            Add manually
-          </button>
-          <span className="text-base text-base-content/60">No DOI, or want to type the metadata yourself</span>
-        </div>
       </div>
+
       {manualOpen && (
         <dialog className="modal modal-open">
           <div className="modal-box max-w-2xl flex flex-col gap-3">

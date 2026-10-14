@@ -10,6 +10,7 @@ import { AuthorsEditField, type AuthorRow } from "../../../components/AuthorsEdi
 import { JMIR_BADGE_OPTIONS } from "src/lib/jmirBadgeOptions"
 import { STUDY_PAPER_ROLE_OPTIONS } from "src/lib/studyPaperRoles"
 import updatePaperRole from "../../../(admin)/mutations/updatePaperRole"
+import { NO_THROW } from "src/lib/mutationOptions"
 
 type FieldKey =
   | "title"
@@ -141,8 +142,8 @@ export function SuggestEditForm({
   const [role, setRole] = useState(initialRole ?? "OTHER")
   const [note, setNote] = useState("")
   const [error, setError] = useState<string | null>(null)
-  const [submit, submitState] = useMutation(suggestMetadataEdit)
-  const [saveRole] = useMutation(updatePaperRole)
+  const [submit, submitState] = useMutation(suggestMetadataEdit, NO_THROW)
+  const [saveRole] = useMutation(updatePaperRole, NO_THROW)
   const isSubmitting = (submitState as any).isLoading
 
   const setField = (key: FieldKey, value: string | boolean | null) => {

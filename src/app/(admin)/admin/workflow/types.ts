@@ -28,3 +28,5 @@ export const MARKER_LABELS: Record<Marker, string> = {
 }
 
 export const REJECTED_STATUSES = ["REJECTED", "DUPLICATE"]
+
+export { NO_THROW } from "src/lib/mutationOptions"

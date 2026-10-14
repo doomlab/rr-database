@@ -4,7 +4,8 @@ import { useMutation } from "@blitzjs/rpc"
 import { useRouter } from "next/navigation"
 import { useState } from "react"
 import reviewPaper from "../../mutations/reviewPaper"
-import type { GroupPaper } from "./types"
+import { NO_THROW, type GroupPaper } from "./types"
+
 
 const STATUS_BADGE: Record<string, string> = {
   PENDING_REVIEW: "badge-warning",
@@ -15,7 +16,7 @@ const STATUS_BADGE: Record<string, string> = {
 }
 
 export function ReviewStep({ papers }: { papers: GroupPaper[] }) {
-  const [review] = useMutation(reviewPaper)
+  const [review] = useMutation(reviewPaper, NO_THROW)
   const router = useRouter()
   const [busyId, setBusyId] = useState<number | null>(null)
   const [error, setError] = useState<string | null>(null)

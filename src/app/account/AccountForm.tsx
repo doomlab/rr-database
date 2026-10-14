@@ -4,6 +4,7 @@ import { useMutation } from "@blitzjs/rpc"
 import { useState } from "react"
 import updateProfile from "../(dashboard)/mutations/updateProfile"
 import { PasswordInput } from "../components/PasswordInput"
+import { NO_THROW } from "src/lib/mutationOptions"
 
 type AccountFormProps = {
   initialFirstName: string
@@ -26,7 +27,7 @@ export function AccountForm({
   const [hasOpenAlex, setHasOpenAlex] = useState(hasOpenAlexApiKey)
   const [error, setError] = useState<string | null>(null)
   const [saved, setSaved] = useState(false)
-  const [submit, submitState] = useMutation(updateProfile)
+  const [submit, submitState] = useMutation(updateProfile, NO_THROW)
   const isSubmitting = (submitState as any).isLoading
 
   const handleSubmit = async (e: React.FormEvent) => {

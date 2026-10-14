@@ -4,10 +4,11 @@ import { useMutation } from "@blitzjs/rpc"
 import { useRouter } from "next/navigation"
 import { useState } from "react"
 import verifyPaperMetadata from "../../mutations/verifyPaperMetadata"
-import type { GroupPaper } from "./types"
+import { NO_THROW, type GroupPaper } from "./types"
+
 
 export function MetadataStep({ papers }: { papers: GroupPaper[] }) {
-  const [verify] = useMutation(verifyPaperMetadata)
+  const [verify] = useMutation(verifyPaperMetadata, NO_THROW)
   const router = useRouter()
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)

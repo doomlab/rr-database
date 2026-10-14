@@ -6,6 +6,7 @@ import { useState } from "react"
 import linkPaperWithExisting from "../../mutations/linkPaperWithExisting"
 import searchPapersToLink from "../../mutations/searchPapersToLink"
 import { STUDY_PAPER_ROLE_OPTIONS } from "src/lib/studyPaperRoles"
+import { NO_THROW } from "src/lib/mutationOptions"
 
 const ROLE_OPTIONS = STUDY_PAPER_ROLE_OPTIONS
 
@@ -23,8 +24,8 @@ export function LinkWithExistingForm({
     suggestion ? { id: suggestion.id, title: suggestion.title, year: null, doi: null } : null
   )
   const [role, setRole] = useState<Role>("STAGE1_ARTICLE")
-  const [link, { isPending }] = useMutation(linkPaperWithExisting)
-  const [search, { isPending: isSearching }] = useMutation(searchPapersToLink)
+  const [link, { isPending }] = useMutation(linkPaperWithExisting, NO_THROW)
+  const [search, { isPending: isSearching }] = useMutation(searchPapersToLink, NO_THROW)
   const router = useRouter()
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState<string | null>(null)
