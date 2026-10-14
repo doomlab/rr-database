@@ -157,7 +157,7 @@ export default async function AdminHomePage() {
 
             <RunCard
               title="Pull a specific year from PCI Registered Reports"
-              description="Reads PCI RR's public feed of recommended studies for the chosen year, then visits each study's page to get its title, authors, Stage 1 or 2, report link and Stage 1 protocol link. Anything already in the database (by report DOI, earlier PCI RR import, or a close title match) is skipped automatically. Pages are fetched one per second, so a busy year takes a minute or two."
+              description="Reads PCI RR's public feed of recommended studies for the chosen year, then visits each study's page to get its title, authors, Stage 1 or 2, report link and Stage 1 protocol link. Studies already in the database (matched by report DOI or a close title match) aren't duplicated — any blank stage, protocol link, or authors on them are filled in, but nothing already there is overwritten. Pages are fetched one per second, so a busy year takes a minute or two."
               run={pcirrYearRun}
               nested
             >

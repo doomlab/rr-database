@@ -1,4 +1,4 @@
-import db from "db"
+import db, { Prisma } from "db"
 import { findMatchingPaper } from "./duplicateClusters"
 import { upsertAuthors } from "./zoteroImport"
 
@@ -126,12 +126,39 @@ async function get(url: string): Promise<string> {
   return res.text()
 }
 
+// Finds the paper already in the database for a PCI RR study: by report DOI,
+// else by title. A title match that is itself a PCI RR commentary document
+// (recommendation/review/etc., which carry a `role`) is not the study.
+async function findExistingPaper(doi: string | null, title: string) {
+  const select = {
+    id: true,
+    stage: true,
+    registrationUrl: true,
+    url: true,
+    pcirrMetadata: true,
+    discoveredVia: true,
+    _count: { select: { authors: true } },
+  } satisfies Prisma.PaperSelect
+
+  if (doi) {
+    const byDoi = await db.paper.findFirst({ where: { doi }, select })
+    if (byDoi) return byDoi
+  }
+  const match = await findMatchingPaper(title)
+  if (!match) return null
+  const paper = await db.paper.findUnique({ where: { id: match.id }, select })
+  const meta = paper?.pcirrMetadata as { role?: string } | null
+  return meta?.role ? null : paper
+}
+
 export async function discoverPcirrCandidates(
-  year: number
-): Promise<{ found: number; created: number; skipped: number }> {
+  year: number,
+  userId: number
+): Promise<{ found: number; created: number; updated: number; skipped: number }> {
   const feed = parseFeed(await get(FEED_URL)).filter((i) => i.recommendedAt?.getUTCFullYear() === year)
 
   let created = 0
+  let updated = 0
   let skipped = 0
 
   for (const item of feed) {
@@ -152,9 +179,48 @@ export async function discoverPcirrCandidates(
     }
 
     const doi = doiFromUrl(article.reportUrl)
-    const existing = doi ? await db.paper.findFirst({ where: { doi }, select: { id: true } }) : null
-    if (existing || (await findMatchingPaper(article.title))) {
-      skipped++
+    const pcirrMetadata = {
+      pcirrId: item.pcirrId,
+      recommendationUrl: item.recommendationUrl,
+      recommendationDoi: item.recommendationDoi,
+      recommender: item.recommender,
+      reviewers: item.reviewers,
+      recommendedAt: item.recommendedAt?.toISOString() ?? null,
+      biasLevel: article.biasLevel,
+    }
+
+    const existing = await findExistingPaper(doi, article.title)
+    if (existing) {
+      // Only fill gaps — never overwrite what's already on the paper, since
+      // it may have been reviewed, edited or enriched since it was imported.
+      const patch: Prisma.PaperUpdateInput = {}
+      if (!existing.stage && article.stage) patch.stage = article.stage
+      if (!existing.registrationUrl && article.stage1ProtocolUrl) patch.registrationUrl = article.stage1ProtocolUrl
+      if (!existing.url && article.reportUrl) patch.url = article.reportUrl
+      if (!existing.pcirrMetadata) patch.pcirrMetadata = pcirrMetadata
+      if (!existing.discoveredVia.includes("PCIRR")) patch.discoveredVia = { push: "PCIRR" }
+
+      const fields = Object.keys(patch)
+      if (fields.length === 0) {
+        skipped++
+        continue
+      }
+      await db.paper.update({ where: { id: existing.id }, data: patch })
+      if (existing._count.authors === 0 && article.authors.length > 0) {
+        await upsertAuthors(
+          existing.id,
+          article.authors.map((name) => ({ name, orcid: null, openalexAuthorId: null }))
+        )
+      }
+      await db.paperEditHistory.create({
+        data: {
+          paperId: existing.id,
+          userId,
+          source: "pcirr",
+          summary: `PCI RR discovery filled in: ${fields.join(", ")}`,
+        },
+      })
+      updated++
       continue
     }
 
@@ -168,15 +234,7 @@ export async function discoverPcirrCandidates(
         registrationUrl: article.stage1ProtocolUrl,
         status: "PENDING_REVIEW",
         discoveredVia: ["PCIRR"],
-        pcirrMetadata: {
-          pcirrId: item.pcirrId,
-          recommendationUrl: item.recommendationUrl,
-          recommendationDoi: item.recommendationDoi,
-          recommender: item.recommender,
-          reviewers: item.reviewers,
-          recommendedAt: item.recommendedAt?.toISOString() ?? null,
-          biasLevel: article.biasLevel,
-        },
+        pcirrMetadata,
       },
     })
     await upsertAuthors(
@@ -186,5 +244,5 @@ export async function discoverPcirrCandidates(
     created++
   }
 
-  return { found: feed.length, created, skipped }
+  return { found: feed.length, created, updated, skipped }
 }
