@@ -97,8 +97,9 @@ The server is the Lightsail instance from section 0. To log in from a
 terminal you need its address and the private key file (`.pem`) that was
 downloaded when the instance was created.
 
-- **Address:** the instance's static IP (Lightsail console → the instance →
-  *Networking* tab), or the `APP_DOMAIN` name, which points at the same IP.
+- **Address:** `52.57.129.51` — the instance's static IP (Lightsail console →
+  the instance → *Networking* tab). The `APP_DOMAIN` name points at the same IP
+  and works in its place.
 - **Key:** `wordnorms_update.pem`. A copy sits in the root of this repo folder
   on Erin's machine; it's covered by `*.pem` in `.gitignore` (and
   `.dockerignore`), so it can't be committed or baked into the image. **Never
@@ -116,7 +117,7 @@ chmod 400 wordnorms_update.pem
 Then, from the folder that holds the key:
 
 ```bash
-ssh -i wordnorms_update.pem ubuntu@<static-ip-or-APP_DOMAIN>
+ssh -i wordnorms_update.pem ubuntu@52.57.129.51
 ```
 
 The default user on the Ubuntu blueprint is `ubuntu`. The app lives in the
