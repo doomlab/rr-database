@@ -40,19 +40,19 @@ export default resolver.pipe(
   resolver.authorize(["ADMIN", "SUPER_ADMIN"]),
   async ({ paperId, role, targetPaperId }, ctx) => {
     const userId = ctx.session.userId as number
-    if (paperId === targetPaperId) throw new Error("Pick a different paper to link with.")
+    if (paperId === targetPaperId) throw new Error("Pick a different item to link with.")
 
     const target = await db.paper.findUnique({
       where: { id: targetPaperId },
       select: { id: true, title: true, studyPaper: { select: { studyId: true } } },
     })
-    if (!target) throw new Error(`No paper with ID #${targetPaperId} exists.`)
+    if (!target) throw new Error(`No item with ID #${targetPaperId} exists.`)
 
     const paper = await db.paper.findUnique({
       where: { id: paperId },
       select: { id: true, status: true, studyPaper: { select: { studyId: true } } },
     })
-    if (!paper) throw new Error("Paper not found.")
+    if (!paper) throw new Error("Item not found.")
 
     const studyId = target.studyPaper?.studyId ?? (await db.study.create({ data: {} })).id
     if (!target.studyPaper) {
@@ -83,7 +83,7 @@ export default resolver.pipe(
         paperId,
         userId,
         source: "link",
-        summary: `Linked as ${ROLE_LABELS[role]} with paper #${targetPaperId}`,
+        summary: `Linked as ${ROLE_LABELS[role]} with item #${targetPaperId}`,
       },
     })
 

@@ -10,7 +10,7 @@ import db from "db"
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
   const paper = await db.paper.findUnique({ where: { id: Number(id) }, select: { title: true } })
-  return { title: paper ? `${paper.title} – RR Database` : "Paper – RR Database" }
+  return { title: paper ? `${paper.title} – RR Database` : "Item – RR Database" }
 }
 
 export default async function PaperDetailPage({ params }: { params: Promise<{ id: string }> }) {

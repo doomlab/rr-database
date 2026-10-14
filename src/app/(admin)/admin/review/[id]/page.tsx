@@ -90,7 +90,7 @@ export default async function ReviewDetailPage({
       </div>
 
       <div className="border-t border-base-200 mt-6 pt-8 text-center">
-        <p className="text-base text-base-content/60 mb-3">Include this paper?</p>
+        <p className="text-base text-base-content/60 mb-3">Include this item?</p>
         <PaperActions paperId={paper.id} nextHref={nextHref} />
       </div>
     </div>

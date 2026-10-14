@@ -37,7 +37,7 @@ export function ReviewStep({ papers }: { papers: GroupPaper[] }) {
   return (
     <div className="flex flex-col gap-4">
       <p className="text-base text-base-content/60">
-        Approve the papers that are real registered reports and reject the rest. Rejected papers
+        Approve the items that are real registered reports and reject the rest. Rejected items
         drop out of the later steps.
       </p>
       <ul className="flex flex-col divide-y divide-base-300">

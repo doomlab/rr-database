@@ -25,7 +25,7 @@ export default resolver.pipe(
 
     try {
       const { found, created, updated, skipped } = await discoverPcirrCandidates(year, userId)
-      const output = `${label} ${found} found, ${created} new paper(s) added for review, ${updated} existing paper(s) filled in, ${skipped} already up to date.`
+      const output = `${label} ${found} found, ${created} new item(s) added for review, ${updated} existing item(s) filled in, ${skipped} already up to date.`
       return db.pipelineRun.update({ where: { id: run.id }, data: { status: "DONE", output } })
     } catch (e: any) {
       await db.pipelineRun.update({

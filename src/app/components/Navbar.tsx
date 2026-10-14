@@ -93,7 +93,7 @@ export async function Navbar() {
                   </li>
                   <li>
                     <Link href="/admin/link" className="flex justify-between">
-                      <span>Link papers</span>
+                      <span>Link items</span>
                       {linkGroupCount > 0 && (
                         <span className="badge badge-warning badge-sm">{linkGroupCount}</span>
                       )}

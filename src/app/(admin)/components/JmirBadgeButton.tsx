@@ -38,8 +38,8 @@ export function JmirBadgeButton({
       if (res.linked) {
         setResult(
           res.created
-            ? `Linked with newly-added paper "${res.counterpartTitle}".`
-            : `Linked with existing paper "${res.counterpartTitle}".`
+            ? `Linked with newly-added item "${res.counterpartTitle}".`
+            : `Linked with existing item "${res.counterpartTitle}".`
         )
       } else {
         setResult("Saved.")
@@ -77,7 +77,7 @@ export function JmirBadgeButton({
         />
       </div>
       <p className="text-base text-base-content/50">
-        If the badge links to a DOI, paste it here — we'll link that paper (adding it first if it's
+        If the badge links to a DOI, paste it here — we'll link that item (adding it first if it's
         not already in the database).
       </p>
       <div className="flex items-center gap-3">

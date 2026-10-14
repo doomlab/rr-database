@@ -98,8 +98,8 @@ export default async function MetadataReviewPage({
     <div>
       <h1 className="text-2xl font-semibold mb-1">Metadata review</h1>
       <p className="text-base text-base-content/60 mb-6">
-        Confirm each paper's metadata is correct — tags, open science links, JMIR badge info, and
-        anything else that's been added or edited. Open a paper and click "Mark metadata verified"
+        Confirm each item's metadata is correct — tags, open science links, JMIR badge info, and
+        anything else that's been added or edited. Open an item and click "Mark metadata verified"
         once it looks right.
       </p>
 

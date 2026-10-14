@@ -31,7 +31,7 @@ export function MetadataStep({ papers, backHref }: { papers: GroupPaper[]; backH
   return (
     <div className="flex flex-col gap-4">
       <p className="text-base text-base-content/60">
-        Check each paper's metadata (tags, open science links, authors), then mark it verified.
+        Check each item's metadata (tags, open science links, authors), then mark it verified.
       </p>
       <ul className="flex flex-col divide-y divide-base-300">
         {papers.map((paper) => (
@@ -46,7 +46,7 @@ export function MetadataStep({ papers, backHref }: { papers: GroupPaper[]; backH
             </div>
             <div className="flex items-center gap-2 shrink-0">
               <a href={`/papers/${paper.id}`} target="_blank" rel="noreferrer" className="btn btn-info btn-sm text-base whitespace-nowrap">
-                View paper
+                View item
               </a>
               <a
                 href={`/papers/${paper.id}/suggest-edit?back=${encodeURIComponent(backHref)}`}

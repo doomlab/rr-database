@@ -8,6 +8,7 @@ import { getBlitzContext } from "../../blitz-server"
 import { resolveCitations } from "src/lib/resolveCitations"
 import db from "db"
 import { studyTitle } from "src/lib/studyTitle"
+import { InfoTip } from "../../components/InfoTip"
 import { StudyTitleEditor } from "../../components/StudyTitleEditor"
 
 const ROLE_LABELS: Record<string, string> = {
@@ -144,6 +145,16 @@ export default async function StudyDetailPage({
               )}
             </div>
           )}
+
+          <div className="flex items-center gap-2 mb-4">
+            <h2 className="text-xl font-semibold">
+              {study.papers.length} item{study.papers.length === 1 ? "" : "s"} in this study
+            </h2>
+            <InfoTip
+              label="What are items?"
+              text="Items are the individual outputs that make up a study: the Stage 1 and Stage 2 articles, their materials (such as an OSF project), and any Peer Community In Registered Reports recommendation, reviews, author responses and decisions. Each item has its own tab and its own details."
+            />
+          </div>
 
           {study.papers.length > 1 ? (
             <div className="tabs">

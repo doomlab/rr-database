@@ -18,7 +18,7 @@ export default resolver.pipe(resolver.authorize(["ADMIN", "SUPER_ADMIN"]), async
 
   try {
     const { papersChecked, authorsUpdated } = await backfillAuthorMeta()
-    const output = `${LABEL} checked ${papersChecked} paper(s), filled in ORCID/OpenAlex IDs for ${authorsUpdated} author(s).`
+    const output = `${LABEL} checked ${papersChecked} item(s), filled in ORCID/OpenAlex IDs for ${authorsUpdated} author(s).`
     return db.pipelineRun.update({ where: { id: run.id }, data: { status: "DONE", output } })
   } catch (e: any) {
     await db.pipelineRun.update({

@@ -109,7 +109,7 @@ export function LinkStep({ papers, study }: { papers: GroupPaper[]; study: Group
       setManual({ title: "", authors: "", year: "", venue: "", doi: "", url: "" })
       setManualOpen(false)
     } catch (e: any) {
-      setError(e.message ?? "Could not add that paper")
+      setError(e.message ?? "Could not add that item")
     } finally {
       setBusy(false)
     }
@@ -136,7 +136,7 @@ export function LinkStep({ papers, study }: { papers: GroupPaper[]; study: Group
     try {
       await saveTitle({ studyId: study.id, title: next })
       if (next === null) setTitleValue("")
-      setTitleMessage(next ? "Title saved." : "Reset to the paper's title.")
+      setTitleMessage(next ? "Title saved." : "Reset to the item's title.")
       router.refresh()
     } catch (e: any) {
       setTitleMessage(e.message ?? "Could not save the title")
@@ -165,8 +165,8 @@ export function LinkStep({ papers, study }: { papers: GroupPaper[]; study: Group
   return (
     <div className="flex flex-col gap-4">
       <p className="text-base text-base-content/60">
-        Tag each paper as Stage 1, Stage 2, materials and so on. Saving puts everything you tag into
-        one study (and approves any that were still pending). You can also pull in a paper that
+        Tag each item as Stage 1, Stage 2, materials and so on. Saving puts everything you tag into
+        one study (and approves any that were still pending). You can also pull in an item that
         wasn't clustered, by searching or adding it directly.
       </p>
 
@@ -206,7 +206,7 @@ export function LinkStep({ papers, study }: { papers: GroupPaper[]; study: Group
                     onChange={(e) => setDuplicateOf((prev) => ({ ...prev, [paper.id]: Number(e.target.value) }))}
                   >
                     <option value="" disabled>
-                      which paper?
+                      which item?
                     </option>
                     {shown
                       .filter((p) => p.id !== paper.id)
@@ -269,7 +269,7 @@ export function LinkStep({ papers, study }: { papers: GroupPaper[]; study: Group
       </div>
 
       <div className="rounded-lg bg-base-200 p-4 flex flex-col gap-3">
-        <h3 className="font-semibold text-base">Add another paper to this group</h3>
+        <h3 className="font-semibold text-base">Add another item to this group</h3>
         <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-2 gap-y-3 max-w-3xl">
           <input
             className="input input-bordered input-sm text-base w-full"
@@ -324,7 +324,7 @@ export function LinkStep({ papers, study }: { papers: GroupPaper[]; study: Group
       {manualOpen && (
         <dialog className="modal modal-open">
           <div className="modal-box max-w-2xl flex flex-col gap-3">
-            <h3 className="font-semibold text-lg">Add a paper manually</h3>
+            <h3 className="font-semibold text-lg">Add an item manually</h3>
             {(
               [
                 ["title", "Title (required)", "Full title"],

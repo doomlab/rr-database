@@ -92,7 +92,7 @@ export function DuplicateGroupCard({
   const handleSave = async () => {
     setError(null)
     if (assignments.length === 0) {
-      setError("Change at least one paper before saving.")
+      setError("Change at least one item before saving.")
       return
     }
     setSaving(true)
@@ -127,7 +127,7 @@ export function DuplicateGroupCard({
           <div>
             <h3 className="text-xl font-semibold leading-snug">{papers[0]!.title}</h3>
             <p className="text-base text-base-content/60 mt-1">
-              {papers.length} paper{papers.length === 1 ? "" : "s"} in this group
+              {papers.length} item{papers.length === 1 ? "" : "s"} in this group
             </p>
           </div>
         </button>
@@ -196,7 +196,7 @@ export function DuplicateGroupCard({
                       }
                     >
                       <option value="" disabled>
-                        which paper?
+                        which item?
                       </option>
                       {papers
                         .filter((p) => p.id !== paper.id)

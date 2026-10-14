@@ -48,9 +48,9 @@ export default async function LinkDuplicatesPage({
 
   return (
     <div>
-      <h1 className="text-2xl font-semibold mb-1">Link papers</h1>
+      <h1 className="text-2xl font-semibold mb-1">Link items</h1>
       <p className="text-base text-base-content/60 mb-8">
-        Papers with matching titles are grouped below automatically — probably the same
+        Items with matching titles are grouped below automatically — probably the same
         registered report indexed more than once (a preprint, the published article, a
         registration link). Mark each one as Stage 1, Stage 2, materials, or a duplicate of
         another paper in the group to link them into one Study. Search for a specific paper to
@@ -126,7 +126,7 @@ async function SearchResults({ q }: { q: string }) {
   })
 
   if (matches.length === 0) {
-    return <p className="text-base-content/40">No papers match "{q}".</p>
+    return <p className="text-base-content/40">No items match "{q}".</p>
   }
 
   const groups = await groupsForPaperIds(matches.map((p) => p.id))

@@ -48,7 +48,7 @@ export default resolver.pipe(
 
     try {
       const { found, created, skipped } = await discoverOpenAlexCandidates(fromDate, toDate, userId)
-      const output = `${label} ${found} found, ${created} new paper(s) added for review, ${skipped} already in the database.`
+      const output = `${label} ${found} found, ${created} new item(s) added for review, ${skipped} already in the database.`
       return db.pipelineRun.update({ where: { id: run.id }, data: { status: "DONE", output } })
     } catch (e: any) {
       await db.pipelineRun.update({

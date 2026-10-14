@@ -53,7 +53,7 @@ export function FinishBar({
       )}
       {(pending > 0 || unverified > 0) && (
         <p className="text-base text-warning">
-          {pending > 0 && `${pending} paper${pending === 1 ? " is" : "s are"} still pending review. `}
+          {pending > 0 && `${pending} item${pending === 1 ? " is" : "s are"} still pending review. `}
           {unverified > 0 && `${unverified} not metadata-verified.`}
         </p>
       )}

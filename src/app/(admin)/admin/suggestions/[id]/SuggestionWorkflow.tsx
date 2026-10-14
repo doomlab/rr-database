@@ -177,8 +177,8 @@ export function SuggestionWorkflow({
 
       <p className="text-base text-base-content/50">
         {doi
-          ? "A DOI is set, so we'll pull the paper's full details from Crossref and use those instead of the fields above (a Crossref match is more reliable than what's typed here)."
-          : "No DOI — the paper will be created from the fields above exactly as entered."}
+          ? "A DOI is set, so we'll pull the item's full details from Crossref and use those instead of the fields above (a Crossref match is more reliable than what's typed here)."
+          : "No DOI — the item will be created from the fields above exactly as entered."}
       </p>
 
       {error && <p className="text-base text-error">{error}</p>}

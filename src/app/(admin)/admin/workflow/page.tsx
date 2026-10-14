@@ -28,7 +28,7 @@ export default async function WorkflowPage({
     <>
       <h1 className="text-2xl font-semibold mb-1">One group at a time</h1>
       <p className="text-base text-base-content/60 mb-4">
-        Take one group of papers all the way through: review, link, enrich, and verify metadata.
+        Take one group of items all the way through: review, link, enrich, and verify metadata.
       </p>
       <div className="flex flex-wrap items-center gap-2 mb-6">
         {(
@@ -67,10 +67,10 @@ export default async function WorkflowPage({
         {rows.length === 0 ? (
           <p className="text-lg text-base-content/40 text-center py-16">
             {filter === "IN_PROGRESS"
-              ? "Nothing in progress — no approved papers are waiting to be finished."
+              ? "Nothing in progress — no approved items are waiting to be finished."
               : filter
                 ? `Nothing marked ${MARKER_LABELS[filter]}.`
-                : "The queue is empty — no papers are awaiting review."}
+                : "The queue is empty — no items are awaiting review."}
           </p>
         ) : (
           <>
@@ -88,7 +88,7 @@ export default async function WorkflowPage({
                 <thead>
                   <tr className="text-base">
                     <th>Group</th>
-                    <th>Papers</th>
+                    <th>Items</th>
                     <th>Year</th>
                     {!filter && <th>Score</th>}
                     {showMarked && <th>Marked</th>}
@@ -137,7 +137,7 @@ export default async function WorkflowPage({
     return (
       <div>
         {header}
-        <p className="text-base text-error">Paper #{seedParam} wasn't found.</p>
+        <p className="text-base text-error">Item #{seedParam} wasn't found.</p>
         <a href={listHref} className="link link-primary text-base">Back to the list</a>
       </div>
     )
@@ -193,7 +193,7 @@ export default async function WorkflowPage({
       <div className="mb-6">
         <h2 className="text-xl font-semibold leading-snug">{seed.title}</h2>
         <p className="text-base text-base-content/60 mt-1">
-          {group.length} paper{group.length === 1 ? "" : "s"} in this group
+          {group.length} item{group.length === 1 ? "" : "s"} in this group
           {seed.workflowMarker && seed.workflowMarkedBy
             ? ` · marked ${MARKER_LABELS[seed.workflowMarker]} by ${seed.workflowMarkedBy.name ?? seed.workflowMarkedBy.email}`
             : ""}

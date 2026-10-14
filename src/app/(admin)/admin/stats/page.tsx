@@ -93,15 +93,15 @@ export default async function AdminStatsPage() {
     <div>
       <h1 className="text-2xl font-semibold mb-1">Stats</h1>
       <p className="text-base text-base-content/60 mb-8">
-        A snapshot of where the database stands — how many papers are at each stage, how much
+        A snapshot of where the database stands — how many items are at each stage, how much
         Stage 1/Stage 2 linking is left, and what's waiting in each admin queue.
       </p>
 
       <div className="flex flex-col gap-8">
         <section>
-          <h2 className="text-lg font-semibold mb-3">Papers by status</h2>
+          <h2 className="text-lg font-semibold mb-3">Items by status</h2>
           <div className="stats stats-vertical sm:stats-horizontal shadow w-full flex-wrap bg-base-200 mb-4">
-            <StatCard label="Total papers" value={totalPapers} />
+            <StatCard label="Total items" value={totalPapers} />
             <StatCard label="Imported" value={countFor("IMPORTED")} hint="From production Zotero" />
             <StatCard label="Pending review" value={countFor("PENDING_REVIEW")} />
             <StatCard label="Approved" value={countFor("APPROVED")} hint="Approved via review queue" />
@@ -126,7 +126,7 @@ export default async function AdminStatsPage() {
             <StatCard
               label="Actually linked"
               value={linkedStudies}
-              hint="2+ papers sharing a Study"
+              hint="2+ items sharing a Study"
             />
             <StatCard
               label="Solo studies"

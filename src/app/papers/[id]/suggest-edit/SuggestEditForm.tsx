@@ -101,7 +101,7 @@ const FIELDS: { key: FieldKey; label: string; type: FieldType; hint?: string; gr
     label: "JMIR badge counterpart DOI",
     type: "text",
     group: "badges",
-    hint: "If the badge links to the paper's Stage 1/2 counterpart, its DOI. Saving this here does not auto-link the papers — use the JMIR badge button on the article page for that.",
+    hint: "If the badge links to the item's Stage 1/2 counterpart, its DOI. Saving this here does not auto-link the items — use the JMIR badge button on the article page for that.",
   },
   { key: "citedByCount", label: "Cited by count", type: "number", group: "metrics" },
   { key: "openalexId", label: "OpenAlex ID", type: "text", group: "metrics" },
@@ -279,7 +279,7 @@ export function SuggestEditForm({
             <span className="label-text font-medium">Role in study</span>
             <span
               className="tooltip tooltip-right"
-              data-tip="Which Stage/materials record this is within its Study. Get this wrong and the paper can show up mislabeled or miss its Stage 1/2 pairing."
+              data-tip="Which part of its Study this item is (Stage 1, Stage 2, materials, …). Get this wrong and the item can show up mislabeled or miss its Stage 1/2 pairing."
             >
               <span className="flex items-center justify-center w-4 h-4 rounded-full border border-info text-[10px] leading-none text-info cursor-help">
                 ?

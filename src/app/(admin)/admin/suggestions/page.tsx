@@ -37,7 +37,7 @@ export default async function SuggestionsQueuePage({
   return (
     <div>
       <h1 className="text-2xl font-semibold mb-1">Article suggestions</h1>
-      <p className="text-base-content/60 mb-6">Papers suggested by users that aren't in the database yet.</p>
+      <p className="text-base-content/60 mb-6">Items suggested by users that aren't in the database yet.</p>
 
       <div className="tabs tabs-boxed w-fit mb-6">
         <a href="/admin/suggestions?tab=new" className={`tab ${tab === "new" ? "tab-active" : ""}`}>

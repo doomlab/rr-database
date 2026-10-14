@@ -29,7 +29,7 @@ export default resolver.pipe(
       where: { id: paperId },
       include: { authors: { include: { author: true }, orderBy: { position: "asc" } } },
     })
-    if (!paper) throw new Error("Paper not found.")
+    if (!paper) throw new Error("Item not found.")
 
     const f = source === "openalex" ? await fetchOpenAlexFields(paper) : await fetchCrossrefFields(paper)
 

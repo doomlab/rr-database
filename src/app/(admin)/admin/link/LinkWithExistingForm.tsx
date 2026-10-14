@@ -58,7 +58,7 @@ export function LinkWithExistingForm({
     setSuccess(null)
     const targetPaperId = target?.id ?? Number(manualId)
     if (!targetPaperId) {
-      setError("Search for a paper, or enter its ID directly.")
+      setError("Search for an item, or enter its ID directly.")
       return
     }
     try {
@@ -74,7 +74,7 @@ export function LinkWithExistingForm({
     <div className="flex flex-col gap-2">
       {suggestion && (
         <p className="text-base text-info">
-          This paper cites #{suggestion.id} ("{suggestion.title}"), already in the database — maybe
+          This item cites #{suggestion.id} ("{suggestion.title}"), already in the database — maybe
           its Stage 1/2 counterpart?
         </p>
       )}
@@ -144,7 +144,7 @@ export function LinkWithExistingForm({
 
       {!target && (
         <div className="flex items-center gap-2">
-          <span className="text-base text-base-content/40">or enter a paper ID directly:</span>
+          <span className="text-base text-base-content/40">or enter an item ID directly:</span>
           <input
             type="number"
             value={manualId}

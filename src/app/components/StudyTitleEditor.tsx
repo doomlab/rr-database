@@ -73,7 +73,7 @@ export function StudyTitleEditor({
         </button>
         {hasCustomTitle && (
           <button className="btn btn-warning btn-sm text-base" disabled={busy} onClick={() => run(null)}>
-            Reset to the paper's title
+            Reset to the default title
           </button>
         )}
         <button className="btn btn-secondary btn-sm text-base" disabled={busy} onClick={() => setEditing(false)}>

@@ -71,7 +71,7 @@ export default async function MetadataQueuePage({
     <div>
       <h1 className="text-2xl font-semibold mb-1">Metadata edit suggestions</h1>
       <p className="text-base-content/60 mb-6">
-        Corrections suggested by users on a paper's own page, waiting on an admin to review and apply.
+        Corrections suggested by users on an item's own page, waiting on an admin to review and apply.
       </p>
 
       <div className="tabs tabs-boxed w-fit mb-6">

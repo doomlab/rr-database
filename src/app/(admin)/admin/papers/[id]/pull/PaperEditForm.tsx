@@ -99,7 +99,7 @@ const FIELDS: { key: FieldKey; label: string; type: FieldType; hint?: string; gr
     label: "JMIR badge counterpart DOI",
     type: "text",
     group: "badges",
-    hint: "If the badge links to the paper's Stage 1/2 counterpart, its DOI. Saving this here does not auto-link the papers — use the JMIR badge button on the article page for that.",
+    hint: "If the badge links to the item's Stage 1/2 counterpart, its DOI. Saving this here does not auto-link the items — use the JMIR badge button on the article page for that.",
   },
   { key: "citedByCount", label: "Cited by count", type: "number", group: "metrics" },
   { key: "openalexId", label: "OpenAlex ID", type: "text", group: "metrics" },

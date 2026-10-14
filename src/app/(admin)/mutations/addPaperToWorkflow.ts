@@ -79,11 +79,11 @@ export default resolver.pipe(
     } else if (input.doi) {
       paperId = (await fetchOrCreatePaperByDoi(normalizeDoi(input.doi), { discoveredVia: "USER_SUGGESTION" })).id
     } else {
-      throw new Error("Pick a paper, or enter a DOI or a title.")
+      throw new Error("Pick an item, or enter a DOI or a title.")
     }
 
     const paper = await db.paper.findUnique({ where: { id: paperId }, select })
-    if (!paper) throw new Error(`No paper with ID #${paperId} exists.`)
+    if (!paper) throw new Error(`No item with ID #${paperId} exists.`)
     return paper
   }
 )

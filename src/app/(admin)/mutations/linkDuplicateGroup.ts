@@ -122,7 +122,7 @@ export default resolver.pipe(
           paperId: a.paperId,
           userId,
           source: "link",
-          summary: `Marked as a duplicate of paper #${a.duplicateOfPaperId}`,
+          summary: `Marked as a duplicate of item #${a.duplicateOfPaperId}`,
         },
       })
     }

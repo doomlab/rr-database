@@ -76,7 +76,7 @@ export function EnrichStep({ papers }: { papers: GroupPaper[] }) {
     <div className="flex flex-col gap-4">
       <p className="text-base text-base-content/60">
         Pull fresh data from OpenAlex or Crossref. It's saved straight away (and logged in each
-        paper's history); check the results in the Metadata step.
+        item's history); check the results in the Metadata step.
       </p>
       <ul className="flex flex-col divide-y divide-base-300">
         {papers.map((paper) => (
@@ -110,7 +110,7 @@ export function EnrichStep({ papers }: { papers: GroupPaper[] }) {
                   key={source}
                   className={`btn btn-sm text-base w-40 whitespace-nowrap ${source === "openalex" ? "btn-primary" : "btn-secondary"}`}
                   disabled={running !== null || (source === "crossref" && !paper.doi)}
-                  title={source === "crossref" && !paper.doi ? "Crossref looks papers up by DOI, and this one has none" : undefined}
+                  title={source === "crossref" && !paper.doi ? "Crossref looks items up by DOI, and this one has none" : undefined}
                   onClick={() => pullOne(paper.id, source)}
                 >
                   {running === key(paper.id, source) ? (
