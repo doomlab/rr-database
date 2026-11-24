@@ -6,7 +6,7 @@ const MARKER_LABELS = { DONE: "Done", LATER: "Later", QUESTION: "Question" } as 
 
 const SetWorkflowMarker = z.object({
   paperIds: z.array(z.number()).min(1),
-  // null clears the marker, returning the group to the queue.
+  // null clears the marker (reopening the group), keeping its note.
   marker: z.enum(["DONE", "LATER", "QUESTION"]).nullable(),
   note: z.string().trim().max(2000).optional(),
 })
@@ -22,7 +22,13 @@ export default resolver.pipe(
       where: { id: { in: paperIds } },
       data: marker
         ? { workflowMarker: marker, workflowNote: note || null, workflowMarkedById: userId, workflowMarkedAt: now }
-        : { workflowMarker: null, workflowNote: null, workflowMarkedById: null, workflowMarkedAt: null },
+        : {
+            workflowMarker: null,
+            workflowMarkedById: null,
+            workflowMarkedAt: null,
+            // The note stays unless the admin edited it in the box.
+            ...(note !== undefined && { workflowNote: note || null }),
+          },
     })
 
     await db.paperEditHistory.createMany({
@@ -32,7 +38,7 @@ export default resolver.pipe(
         source: "workflow",
         summary: marker
           ? `Marked ${MARKER_LABELS[marker]}${note ? `: ${note}` : ""}`
-          : "Workflow marker cleared",
+          : "Group reopened (workflow marker cleared)",
       })),
     })
 

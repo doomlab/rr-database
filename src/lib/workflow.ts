@@ -17,8 +17,12 @@ export const workflowPaperInclude = {
 
 export type WorkflowPaper = Prisma.PaperGetPayload<{ include: typeof workflowPaperInclude }>
 
+// Newly discovered papers awaiting review, plus the original imported ones
+// (IMPORTED, already linked into studies) that haven't been through the
+// workflow yet. An imported paper stays here until its group is marked
+// Done / Later / Question.
 const QUEUE_WHERE = {
-  status: "PENDING_REVIEW",
+  status: { in: ["PENDING_REVIEW", "IMPORTED"] },
   canonicalPaperId: null,
   workflowMarker: null,
 } satisfies Prisma.PaperWhereInput
@@ -117,7 +121,7 @@ export async function listWorkflowGroups(view?: WorkflowView, limit = 200) {
 
 export async function workflowCounts() {
   const [queuePapers, inProgressPapers, markedPapers] = await Promise.all([
-    db.paper.findMany({ where: QUEUE_WHERE, select: { id: true, title: true } }),
+    db.paper.findMany({ where: QUEUE_WHERE, select: { id: true, title: true, studyPaper: { select: { studyId: true } } } }),
     db.paper.findMany({
       where: IN_PROGRESS_WHERE,
       select: { id: true, title: true, studyPaper: { select: { studyId: true } } },
@@ -128,7 +132,7 @@ export async function workflowCounts() {
     }),
   ])
   const markerCount = (m: WorkflowMarker) => countGroups(markedPapers.filter((p) => p.workflowMarker === m))
-  const queue = clusterPapersByTitle(queuePapers, 1).length
+  const queue = countGroups(queuePapers)
   const counts = { queue, IN_PROGRESS: countGroups(inProgressPapers), LATER: markerCount("LATER"), QUESTION: markerCount("QUESTION"), DONE: markerCount("DONE") }
   // Everything that still needs someone's attention: not yet touched, or
   // parked for later / with a question. Only "Done" is finished.

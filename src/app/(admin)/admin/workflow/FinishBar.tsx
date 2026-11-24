@@ -7,6 +7,7 @@ import { useState } from "react"
 import setWorkflowMarker from "../../mutations/setWorkflowMarker"
 import { MARKER_LABELS, type GroupPaper, type Marker, NO_THROW } from "./types"
 import { InternalBadge } from "./Visibility"
+import { ButtonTip } from "../../../components/ButtonTip"
 
 
 export function FinishBar({
@@ -78,9 +79,11 @@ export function FinishBar({
           Question — next group
         </button>
         {marker && (
-          <button className="btn btn-secondary btn-sm text-base" disabled={busy} onClick={() => apply(null)}>
-            Clear marker
-          </button>
+          <ButtonTip tip="Take off the marker and put this group back in the queue (or In progress). Your note is kept.">
+            <button className="btn btn-secondary btn-sm text-base" disabled={busy} onClick={() => apply(null)}>
+              Reopen group
+            </button>
+          </ButtonTip>
         )}
       </div>
       {error && <span className="text-base text-error">{error}</span>}

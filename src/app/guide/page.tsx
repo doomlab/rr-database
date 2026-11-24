@@ -331,7 +331,7 @@ export default async function GuidePage() {
                 <p>The chips at the top switch between views, each with a count of groups:</p>
                 <Bullets>
                   <li>
-                    <Term>Queue</Term> — untouched groups, newest first.
+                    <Term>Queue</Term> — groups nobody has marked yet, newly discovered ones first (newest first), then the original imported studies.
                   </li>
                   <li>
                     <Term>In progress</Term> — groups with approved items that nobody has marked yet (someone started and
@@ -401,7 +401,7 @@ export default async function GuidePage() {
                     <Term>Question — next group</Term> when you need someone else's input; say what the question is.
                   </li>
                   <li>
-                    <Term>Clear marker</Term> removes a marker from a group you reopened.
+                    <Term>Reopen group</Term> takes the marker off and puts the group back in the queue (or In progress). Its note is kept.
                   </li>
                 </Bullets>
                 <Note>
