@@ -86,6 +86,7 @@ export default async function StudyDetailPage({
   const hasStage1 = study.papers.some(({ role }) => role === "STAGE1_ARTICLE")
   const stage2Count = study.papers.filter(({ role }) => role === "STAGE2_ARTICLE").length
   const isProgrammatic = stage2Count > 1
+  const addItemDefaultRole = !hasStage1 ? "STAGE1_ARTICLE" : stage2Count === 0 ? "STAGE2_ARTICLE" : "PREPRINT"
   const hasCustomTitle = !!study.title?.trim()
 
   const page = (
@@ -143,7 +144,14 @@ export default async function StudyDetailPage({
                     paper={paper}
                     roleLabel={STUDY_PAPER_ROLE_LABELS[role] ?? role}
                     showRoleLabel={false}
-                    adminStudyActions={isAdmin ? <EditTitleButton /> : undefined}
+                    adminStudyActions={
+                      isAdmin ? (
+                        <>
+                          <EditTitleButton />
+                          <AddStudyItem studyId={study.id} defaultRole={addItemDefaultRole} />
+                        </>
+                      ) : undefined
+                    }
                     studyActions={
                       <>
                         {study.registrationUrl && study.registrationUrl !== paper.registrationUrl && (
@@ -184,8 +192,6 @@ export default async function StudyDetailPage({
               />
             </span>
           </div>
-
-          {isAdmin && <AddStudyItem studyId={study.id} defaultRole={hasStage1 ? "PREPRINT" : "STAGE1_ARTICLE"} />}
         </div>
       </div>
     </div>
