@@ -1,4 +1,4 @@
-import { notFound } from "next/navigation"
+import { notFound, redirect } from "next/navigation"
 import { Navbar } from "../../components/Navbar"
 import { BackLink } from "../../components/BackLink"
 import { AddStudyItem } from "../../components/AddStudyItem"
@@ -8,6 +8,7 @@ import { userHasOpenAlexApiKey } from "src/lib/apiKeyPool"
 import { getBlitzContext } from "../../blitz-server"
 import { resolveCitations } from "src/lib/resolveCitations"
 import db from "db"
+import { STUDY_PAPER_ROLE_LABELS } from "src/lib/studyPaperRoles"
 
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
@@ -38,6 +39,13 @@ export default async function PaperDetailPage({ params }: { params: Promise<{ id
 
   if (!paper) notFound()
 
+  // One place to look at anything in a study: its study page, opened on this
+  // item's tab. Only for public items — a pending or excluded item inside a
+  // study isn't shown there, so it keeps this page.
+  if (paper.studyPaper && (paper.status === "IMPORTED" || paper.status === "APPROVED")) {
+    redirect(`/studies/${paper.studyPaper.studyId}?paper=${paper.id}`)
+  }
+
   const [citationData, isFavorited, isReported] = await Promise.all([
     resolveCitations(paper),
     userId
@@ -50,6 +58,11 @@ export default async function PaperDetailPage({ params }: { params: Promise<{ id
 
   const keywordBasePath = paper.status === "REJECTED" ? "/excluded" : "/"
   const backHref = keywordBasePath
+
+  // Same look as a study page: a tab strip with this item as its single tab.
+  const tabLabel =
+    (paper.studyPaper && STUDY_PAPER_ROLE_LABELS[paper.studyPaper.role]) ||
+    (paper.stage === "STAGE_1" ? "Stage 1 article" : paper.stage === "STAGE_2" ? "Stage 2 article" : "Item")
 
   return (
     <div className="min-h-screen bg-base-100 flex flex-col">
@@ -70,28 +83,24 @@ export default async function PaperDetailPage({ params }: { params: Promise<{ id
             </div>
           </div>
 
-          {(paper.status === "REJECTED" || paper.studyPaper || isAdmin) && (
-            <div className="flex flex-wrap items-center gap-2 mb-8">
-              <span className="badge badge-neutral">Single item page</span>
-              {paper.status === "REJECTED" && <span className="badge badge-error">Excluded</span>}
-              {paper.studyPaper && (paper.status === "IMPORTED" || paper.status === "APPROVED") && (
-                <a
-                  href={`/studies/${paper.studyPaper.studyId}?paper=${paper.id}`}
-                  className="btn btn-secondary btn-sm text-base"
-                >
-                  This item is part of a study — view the whole study
-                </a>
-              )}
-              {isAdmin && !paper.studyPaper && paper.status !== "REJECTED" && (
-                <span className="badge badge-warning">Not in a study yet</span>
-              )}
-            </div>
-          )}
+          <div className="flex flex-wrap items-center gap-2 mb-6">
+            {paper.status === "REJECTED" ? (
+              <span className="badge badge-error">Excluded</span>
+            ) : paper.status === "IMPORTED" || paper.status === "APPROVED" ? (
+              isAdmin && <span className="badge badge-warning">Not in a study yet</span>
+            ) : (
+              <span className="badge badge-warning">Pending review</span>
+            )}
+          </div>
 
+          <div className="tabs gap-2 [&>.tab]:h-11 [&>.tab]:px-5 [&>.tab]:rounded-lg [&>.tab]:bg-base-300 [&>.tab]:text-base-content [&>.tab]:font-semibold [&>.tab]:shadow-md [&>.tab:checked]:bg-primary [&>.tab:checked]:text-primary-content [&>.tab:checked]:shadow-lg">
+            <input type="radio" name="item-tab" className="tab text-base" aria-label={tabLabel} defaultChecked />
+            <div className="tab-content border-0 border-t-2 border-base-content/30 rounded-none mt-4 p-0">
           <div className="divide-y divide-base-200">
             <PaperRecordSection
               paper={paper}
-              roleLabel="Record"
+              roleLabel={tabLabel}
+              showRoleLabel={false}
               adminStudyActions={
                 isAdmin && paper.status !== "REJECTED" ? (
                   <AddStudyItem
@@ -118,6 +127,8 @@ export default async function PaperDetailPage({ params }: { params: Promise<{ id
                   : `/login?next=/papers/${paper.id}/suggest-edit`
               }
             />
+          </div>
+            </div>
           </div>
 
           {paper.reviewNote && (
