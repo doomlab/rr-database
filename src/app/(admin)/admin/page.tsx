@@ -9,9 +9,6 @@ import {
   wosYearRunHistory,
 } from "src/lib/pipelineRuns"
 import { userHasOpenAlexApiKey, userHasWosApiKey } from "src/lib/apiKeyPool"
-import { countLinkNeedsReviewGroups } from "src/lib/duplicateClusters"
-import { NEEDS_ENRICH_WHERE } from "src/lib/needsEnrich"
-import { workflowCounts } from "src/lib/workflow"
 import { WorkflowCard } from "../components/WorkflowCard"
 import { RunCard } from "../components/RunCard"
 import { RunImportButton } from "../components/RunImportButton"
@@ -21,7 +18,6 @@ import { DiscoverGoogleScholarYearButton } from "../components/DiscoverGoogleSch
 import { DiscoverWebOfScienceYearButton } from "../components/DiscoverWebOfScienceYearButton"
 import { DiscoverLifecycleJournalButton } from "../components/DiscoverLifecycleJournalButton"
 import { DiscoverPcirrYearButton } from "../components/DiscoverPcirrYearButton"
-import { RunAuthorMetaBackfillButton } from "../components/RunAuthorMetaBackfillButton"
 
 // Registered reports as a format only really got going around 2013.
 const EARLIEST_RR_YEAR = 2013
@@ -50,18 +46,10 @@ export default async function AdminHomePage() {
     pcirrYearRun,
     wosYearRun,
     lifecycleRun,
-    authorMetaBackfillRun,
     yearRunHistory,
     scholarYearRunHistory,
     pcirrYearRunHistoryByYear,
     wosYearRunHistoryByYear,
-    reviewCount,
-    linkGroupCount,
-    enrichCount,
-    metadataReviewCount,
-    articleSuggestionCount,
-    metadataEditCount,
-    workflowStats,
   ] = await Promise.all([
     isSuperAdmin ? lastZoteroRun("[production]") : Promise.resolve(null),
     isSuperAdmin ? lastZoteroRun("[stagingCollections]") : Promise.resolve(null),
@@ -71,25 +59,19 @@ export default async function AdminHomePage() {
     lastPipelineRun("QUERY_PCIRR", "[pcirr:year:"),
     lastPipelineRun("QUERY_WOS", "[wos:year:"),
     lastPipelineRun("QUERY_LIFECYCLE", "[lifecycle]"),
-    lastPipelineRun("ENRICH", "[author-meta-backfill]"),
     openAlexYearRunHistory(),
     googleScholarYearRunHistory(),
     pcirrYearRunHistory(),
     wosYearRunHistory(),
-    db.paper.count({ where: { status: "PENDING_REVIEW", canonicalPaperId: null } }),
-    countLinkNeedsReviewGroups(),
-    db.paper.count({ where: NEEDS_ENRICH_WHERE }),
-    db.paper.count({
-      where: { canonicalPaperId: null, status: { in: ["IMPORTED", "APPROVED"] }, metadataVerifiedAt: null },
-    }),
-    db.articleSuggestion.count({ where: { resolved: false } }),
-    db.metadataEditSuggestion.count({ where: { resolved: false } }),
-    workflowCounts(),
   ])
 
   return (
     <div>
-      <h1 className="text-2xl font-semibold mb-8">Admin</h1>
+      <h1 className="text-2xl font-semibold mb-1">Add new items</h1>
+      <p className="text-base text-base-content/60 mb-8">
+        Bring items into the database: sync the confirmed library from Zotero, or search for new candidates. New
+        candidates arrive as Pending review. Work through them from the Admin menu (by group or by step).
+      </p>
 
       <div className="flex flex-col gap-6">
         <WorkflowCard
@@ -208,98 +190,6 @@ export default async function AdminHomePage() {
               </div>
             )}
           </div>
-        </WorkflowCard>
-
-        <WorkflowCard
-          title="One group at a time"
-          badge={workflowStats.notDone}
-          description="The steps below each run across every item. This takes a single group of items (a cluster of similar titles, or a study) through review, linking, enrichment and metadata verification in one place, then moves on to the next. Mark each group Done, Later or Question so the team can see where things stand."
-        >
-          <a href="/admin/workflow" className="btn btn-primary btn-sm text-base w-fit">
-            Open the workflow
-          </a>
-        </WorkflowCard>
-
-        <WorkflowCard
-          title="Review candidates"
-          description="Go through items that have been discovered or imported but not yet confirmed — approve them into the database or reject them. Each one shows its full details and lets you pull fresh data from OpenAlex or Crossref before you decide."
-          badge={reviewCount}
-        >
-          <a href="/admin/review" className="btn btn-primary btn-sm text-base">
-            Go to review queue
-          </a>
-        </WorkflowCard>
-
-        <WorkflowCard
-          title="Link items"
-          description="Items with matching titles get grouped together — usually the same registered report indexed more than once (a preprint, the published article, a registration link). Mark each one as Stage 1, Stage 2, materials, or a duplicate to link them into a single Study. You can also search for an item directly to edit or unlink a study it's already part of."
-          badge={linkGroupCount}
-        >
-          <a href="/admin/link" className="btn btn-primary btn-sm text-base">
-            Go to link items
-          </a>
-        </WorkflowCard>
-
-        <WorkflowCard
-          title="Enrich"
-          description="Confirmed items that still need data pulled from OpenAlex or Crossref. Pull one source at a time, or everything on the page at once; each pull is saved straight away and logged in the item's history."
-          badge={enrichCount}
-        >
-          <a href="/admin/enrich" className="btn btn-primary btn-sm text-base">
-            Go to enrich
-          </a>
-        </WorkflowCard>
-
-        <WorkflowCard
-          title="Metadata review"
-          description="Confirm each confirmed item's metadata is correct — tags, open science links, JMIR badge info, and anything else added or edited. Open science links and JMIR badge info are detected/entered one item at a time from that item's own page (look for the scan/badge buttons there)."
-          badge={metadataReviewCount}
-        >
-          <div className="flex flex-col gap-4">
-            <a href="/admin/metadata-review" className="btn btn-primary btn-sm text-base w-fit">
-              Go to metadata review
-            </a>
-
-            <RunCard
-              title="Backfill author ORCID / OpenAlex IDs"
-              description="For items that already have an OpenAlex ID, re-checks their authors against OpenAlex and fills in ORCID/OpenAlex profile links wherever they're still missing — this is what powers the badges next to author names. Only fills in blanks, safe to re-run any time."
-              run={authorMetaBackfillRun}
-              nested
-            >
-              {hasOpenAlexApiKey ? (
-                <RunAuthorMetaBackfillButton />
-              ) : (
-                <div
-                  className="tooltip"
-                  data-tip="Add an OpenAlex key on your Account page to enable this"
-                >
-                  <button type="button" className="btn btn-accent btn-sm text-base" disabled>
-                    Backfill ORCID/OpenAlex IDs
-                  </button>
-                </div>
-              )}
-            </RunCard>
-          </div>
-        </WorkflowCard>
-
-        <WorkflowCard
-          title="Article suggestions"
-          description="Items users have suggested that aren't in the database yet. Review each one, correct anything before adding, and it flows straight into the review queue — or dismiss it without adding."
-          badge={articleSuggestionCount}
-        >
-          <a href="/admin/suggestions" className="btn btn-primary btn-sm text-base">
-            Go to article suggestions
-          </a>
-        </WorkflowCard>
-
-        <WorkflowCard
-          title="Metadata fixes"
-          description="Corrections users have suggested on an item's own page — wrong journal, garbled author names, missing links, etc. Review the whole record before applying, or dismiss the suggestion."
-          badge={metadataEditCount}
-        >
-          <a href="/admin/metadata" className="btn btn-primary btn-sm text-base">
-            Go to metadata fixes
-          </a>
         </WorkflowCard>
       </div>
     </div>

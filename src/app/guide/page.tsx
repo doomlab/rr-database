@@ -213,9 +213,14 @@ export default async function GuidePage() {
 
                 <H2 id="admin-overview">Admin overview</H2>
                 <p>
-                  Everything admins do lives under the <Term>Admin</Term> menu. The <Link href="/admin" className="link link-primary">Admin home</Link> page
-                  is laid out in the order you normally work in, and the badge numbers on the menu and on each card show how
-                  much is waiting.
+                  Everything admins do lives under the <Term>Admin</Term> menu. The menu runs in the order you work:{" "}
+                  <Link href="/admin" className="link link-primary">Add new items</Link>, then <Term>Work by group</Term> or{" "}
+                  <Term>Work by step</Term> (two ways of doing the same job), then{" "}
+                  <Link href="/admin/fix-issues" className="link link-primary">Fix issues</Link>, and finally{" "}
+                  <Term>Manage</Term> (Stats, Users, API keys and this guide). A badge shows how much is waiting and
+                  disappears when it reaches zero, so no badge means nothing is waiting. The Fix issues badge is the total of
+                  user reports, article suggestions and metadata fixes; each of those also has its own badge on the Fix issues
+                  page.
                 </p>
                 <p className="mt-3">A registered report moves through the database like this:</p>
                 <Steps>
@@ -272,7 +277,7 @@ export default async function GuidePage() {
                       <tr>
                         <td className="font-semibold">Discover</td>
                         <td>Not part of it</td>
-                        <td>Admin home search cards</td>
+                        <td>Admin → Add new items</td>
                         <td>Finds new candidates</td>
                         <td>Pending items stay hidden</td>
                       </tr>
@@ -593,8 +598,8 @@ export default async function GuidePage() {
                         <td>Someone clicks <Term>Mark metadata verified</Term> on the item.</td>
                       </tr>
                       <tr>
-                        <td className="font-semibold">User reports, Article suggestions</td>
-                        <td>Unresolved reports and suggestions</td>
+                        <td className="font-semibold">Fix issues (User reports, Article suggestions, Metadata fixes)</td>
+                        <td>Unresolved reports, suggestions and fixes. The menu badge is their total.</td>
                         <td>An admin resolves or dismisses each one.</td>
                       </tr>
                     </tbody>
@@ -661,6 +666,11 @@ export default async function GuidePage() {
                 <p>Hover over any button for a short explanation.</p>
 
                 <H2 id="admin-requests">Suggestions, fixes and reports</H2>
+                <p>
+                  These all live on <Link href="/admin/fix-issues" className="link link-primary">Fix issues</Link>,
+                  along with the clean-up tools (exclude items removed from Zotero, backfill author ORCID IDs). The badge on
+                  that menu item adds up everything waiting there.
+                </p>
                 <Bullets>
                   <li>
                     <Link href="/admin/suggestions" className="link link-primary">Article suggestions</Link> — items users suggested that aren't in the database.
@@ -679,6 +689,7 @@ export default async function GuidePage() {
                 </Bullets>
 
                 <H2 id="admin-people">Users, roles and stats</H2>
+                <p>These are under <Term>Manage</Term> in the Admin menu.</p>
                 <Bullets>
                   <li>
                     <Link href="/admin/stats" className="link link-primary">Stats</Link> — items by status, how much Stage 1/Stage 2 linking is left, and
