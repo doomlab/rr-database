@@ -5,6 +5,7 @@ import { LogoutButton } from "../(auth)/components/LogoutButton"
 import { ThemeToggle } from "./ThemeToggle"
 import { countLinkNeedsReviewGroups } from "src/lib/duplicateClusters"
 import { workflowCounts } from "src/lib/workflow"
+import { NEEDS_ENRICH_WHERE } from "src/lib/needsEnrich"
 
 export async function Navbar() {
   const ctx = await getBlitzContext()
@@ -12,18 +13,19 @@ export async function Navbar() {
   const role = ctx.session.role
   const isAdmin = role === "ADMIN" || role === "SUPER_ADMIN"
 
-  const [reviewCount, reportsCount, suggestionsCount, linkGroupCount, metadataReviewCount, workflowNotDone] = isAdmin
+  const [reviewCount, reportsCount, suggestionsCount, linkGroupCount, enrichCount, metadataReviewCount, workflowNotDone] = isAdmin
     ? await Promise.all([
         db.paper.count({ where: { status: "PENDING_REVIEW" } }),
         db.paperReport.count({ where: { resolved: false } }),
         db.articleSuggestion.count({ where: { resolved: false } }),
         countLinkNeedsReviewGroups(),
+        db.paper.count({ where: NEEDS_ENRICH_WHERE }),
         db.paper.count({
           where: { canonicalPaperId: null, status: { in: ["IMPORTED", "APPROVED"] }, metadataVerifiedAt: null },
         }),
         workflowCounts().then((c) => c.notDone),
       ])
-    : [0, 0, 0, 0, 0, 0]
+    : [0, 0, 0, 0, 0, 0, 0]
 
   return (
     <div className="navbar bg-base-200 px-6 shadow-sm sticky top-0 z-50">
@@ -80,6 +82,7 @@ export async function Navbar() {
                   <li>
                     <Link href="/admin/stats">Stats</Link>
                   </li>
+                  <li className="menu-title text-base">Work by group</li>
                   <li>
                     <Link href="/admin/workflow" className="flex justify-between">
                       <span>One group at a time</span>
@@ -88,6 +91,7 @@ export async function Navbar() {
                       )}
                     </Link>
                   </li>
+                  <li className="menu-title text-base mt-2">Work by step</li>
                   <li>
                     <Link href="/admin/review" className="flex justify-between">
                       <span>Review queue</span>
@@ -103,6 +107,12 @@ export async function Navbar() {
                     </Link>
                   </li>
                   <li>
+                    <Link href="/admin/enrich" className="flex justify-between">
+                      <span>Enrich</span>
+                      {enrichCount > 0 && <span className="badge badge-warning badge-sm">{enrichCount}</span>}
+                    </Link>
+                  </li>
+                  <li>
                     <Link href="/admin/metadata-review" className="flex justify-between">
                       <span>Metadata review</span>
                       {metadataReviewCount > 0 && (
@@ -110,6 +120,7 @@ export async function Navbar() {
                       )}
                     </Link>
                   </li>
+                  <li className="menu-title text-base mt-2">Other</li>
                   <li>
                     <Link href="/admin/reports" className="flex justify-between">
                       <span>User reports</span>

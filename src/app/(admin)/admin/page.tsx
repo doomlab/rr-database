@@ -10,6 +10,7 @@ import {
 } from "src/lib/pipelineRuns"
 import { userHasOpenAlexApiKey, userHasWosApiKey } from "src/lib/apiKeyPool"
 import { countLinkNeedsReviewGroups } from "src/lib/duplicateClusters"
+import { NEEDS_ENRICH_WHERE } from "src/lib/needsEnrich"
 import { workflowCounts } from "src/lib/workflow"
 import { WorkflowCard } from "../components/WorkflowCard"
 import { RunCard } from "../components/RunCard"
@@ -56,6 +57,7 @@ export default async function AdminHomePage() {
     wosYearRunHistoryByYear,
     reviewCount,
     linkGroupCount,
+    enrichCount,
     metadataReviewCount,
     articleSuggestionCount,
     metadataEditCount,
@@ -76,6 +78,7 @@ export default async function AdminHomePage() {
     wosYearRunHistory(),
     db.paper.count({ where: { status: "PENDING_REVIEW", canonicalPaperId: null } }),
     countLinkNeedsReviewGroups(),
+    db.paper.count({ where: NEEDS_ENRICH_WHERE }),
     db.paper.count({
       where: { canonicalPaperId: null, status: { in: ["IMPORTED", "APPROVED"] }, metadataVerifiedAt: null },
     }),
@@ -234,6 +237,16 @@ export default async function AdminHomePage() {
         >
           <a href="/admin/link" className="btn btn-primary btn-sm text-base">
             Go to link items
+          </a>
+        </WorkflowCard>
+
+        <WorkflowCard
+          title="Enrich"
+          description="Confirmed items that still need data pulled from OpenAlex or Crossref. Pull one source at a time, or everything on the page at once; each pull is saved straight away and logged in the item's history."
+          badge={enrichCount}
+        >
+          <a href="/admin/enrich" className="btn btn-primary btn-sm text-base">
+            Go to enrich
           </a>
         </WorkflowCard>
 

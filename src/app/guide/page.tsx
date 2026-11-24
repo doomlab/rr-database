@@ -244,6 +244,80 @@ export default async function GuidePage() {
                   page for working across everything at once.
                 </p>
 
+                <H3>How the steps line up</H3>
+                <p>
+                  Every step can be done two ways: <Term>by group</Term> (one group at a time, through all the steps) or{" "}
+                  <Term>by step</Term> (one step across everything). Both change the same data, so you can mix them.
+                </p>
+                <div className="overflow-x-auto my-4">
+                  <table className="table table-zebra text-base">
+                    <thead>
+                      <tr className="text-base">
+                        <th>Step</th>
+                        <th>Work by group</th>
+                        <th>Work by step</th>
+                        <th>What it does</th>
+                        <th>What it shows</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <td className="font-semibold">Sync</td>
+                        <td>Not part of it</td>
+                        <td>Admin → Database (super admins)</td>
+                        <td>Pulls the Zotero library in as From Zotero items</td>
+                        <td>Imported items show on the site</td>
+                      </tr>
+                      <tr>
+                        <td className="font-semibold">Discover</td>
+                        <td>Not part of it</td>
+                        <td>Admin home search cards</td>
+                        <td>Finds new candidates</td>
+                        <td>Pending items stay hidden</td>
+                      </tr>
+                      <tr>
+                        <td className="font-semibold">Review</td>
+                        <td>Step 1 — Review</td>
+                        <td>Review queue</td>
+                        <td>Approve or reject each item</td>
+                        <td>Approved items go live; rejected go to Excluded</td>
+                      </tr>
+                      <tr>
+                        <td className="font-semibold">Link</td>
+                        <td>Step 2 — Link</td>
+                        <td>Link items</td>
+                        <td>Sets each item's role and joins them into one study</td>
+                        <td>The study page goes live</td>
+                      </tr>
+                      <tr>
+                        <td className="font-semibold">Enrich</td>
+                        <td>Step 3 — Enrich</td>
+                        <td>Enrich</td>
+                        <td>Pulls fresh data from OpenAlex and Crossref</td>
+                        <td>Saved straight away, live</td>
+                      </tr>
+                      <tr>
+                        <td className="font-semibold">Verify</td>
+                        <td>Step 4 — Metadata</td>
+                        <td>Metadata review</td>
+                        <td>Checks the metadata and marks it verified</td>
+                        <td>Edits and the verified badge are live</td>
+                      </tr>
+                      <tr>
+                        <td className="font-semibold">Finish</td>
+                        <td>Done / Later / Question at the bottom</td>
+                        <td>Not part of it</td>
+                        <td>Marks the group so the team sees where it stands</td>
+                        <td>Admins only</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+                <p>
+                  The numbers in the menu count different things: groups for work by group, papers for work by step. They
+                  won't match. A group finished on a step page stays in the group Queue until someone marks it Done there.
+                </p>
+
                 <H2 id="admin-keys">Before you start: API keys</H2>
                 <p>
                   Discovery and enrichment are rate-limited per key. Add your own keys on your{" "}
@@ -459,6 +533,12 @@ export default async function GuidePage() {
                     supplemental materials or duplicate. Search for any item to edit or unlink a study it is already part of, even if it
                     was not grouped automatically. Groups marked Done in the workflow are hidden, and an item that was
                     unlinked shows up here again once it has been re-approved.
+                  </li>
+                  <li>
+                    <Link href="/admin/enrich" className="link link-primary">Enrich</Link> — confirmed items that still need data
+                    pulled from OpenAlex or Crossref, 25 to a page. Use the per-item Pull buttons, or{" "}
+                    <Term>Pull everything for all papers</Term> to run the whole page. An item leaves the list once both
+                    sources have been tried.
                   </li>
                   <li>
                     <Link href="/admin/metadata-review" className="link link-primary">Metadata review</Link> — confirmed items whose metadata hasn't been
