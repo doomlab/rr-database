@@ -49,7 +49,7 @@ export function FinishBar({
       <hr className="mt-6 border-base-content/30" />
       <div className="rounded-lg bg-base-200 p-4 flex flex-col gap-3">
         <h3 className="font-semibold text-base flex flex-wrap items-center gap-2">
-          Finish this group <InternalBadge>Internal: marker and note</InternalBadge>
+          Mark this group <InternalBadge>Internal: marker and note</InternalBadge>
         </h3>
         {marker && (
           <p className="text-base">

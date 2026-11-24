@@ -33,10 +33,30 @@ export function MetadataStep({ papers, backHref, study }: { papers: GroupPaper[]
 
   return (
     <div className="flex flex-col gap-4">
-      <p className="text-base text-base-content/60 flex flex-wrap items-center gap-2">
-        <LiveBadge /> Check each item's metadata (tags, open science links, authors), then mark it
-        verified. Edits and the verified badge both show on the public site.
-      </p>
+      <div className="text-base text-base-content/60">
+        <p className="flex flex-wrap items-center gap-2">
+          <LiveBadge /> Check each item's metadata (tags, open science links, authors) against the source.
+        </p>
+        <ul className="list-disc pl-6 mt-2 flex flex-col gap-1">
+          <li>
+            <span className="font-semibold">Open</span> shows the publisher's page and{" "}
+            <span className="font-semibold">View item</span> shows our public page for the item.
+          </li>
+          <li>
+            <span className="font-semibold">Edit metadata</span> opens the editor and brings you back here.
+          </li>
+          <li>
+            When it is correct, click <span className="font-semibold">Mark verified</span> (or{" "}
+            <span className="font-semibold">Mark all verified</span>). Verified items get a badge on the public site.
+            Clear takes the badge off again.
+          </li>
+          <li>Edits show on the public site straight away.</li>
+          <li>
+            <span className="font-semibold">Study title</span> at the bottom renames the whole study.
+          </li>
+          <li>This is the last step. Mark the group Done, Later or Question at the very bottom.</li>
+        </ul>
+      </div>
       <ul className="flex flex-col divide-y divide-base-300">
         {papers.map((paper) => (
           <li key={paper.id} className="py-4 flex flex-col md:flex-row md:items-center gap-3">

@@ -10,7 +10,7 @@ export function LiveBadge({ children = "Live on site" }: { children?: string }) 
 
 export function InternalBadge({ children = "Internal" }: { children?: string }) {
   return (
-    <span className="badge badge-neutral whitespace-nowrap" title="Only admins see this; it never appears on the public site">
+    <span className="badge badge-warning whitespace-nowrap" title="Only admins see this; it never appears on the public site">
       {children}
     </span>
   )

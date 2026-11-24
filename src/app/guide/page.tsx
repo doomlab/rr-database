@@ -310,7 +310,7 @@ export default async function GuidePage() {
                         <td>Edits and the verified badge are live</td>
                       </tr>
                       <tr>
-                        <td className="font-semibold">Finish</td>
+                        <td className="font-semibold">Mark</td>
                         <td>Done / Later / Question at the bottom</td>
                         <td>Not part of it</td>
                         <td>Marks the group so the team sees where it stands</td>
@@ -505,20 +505,32 @@ export default async function GuidePage() {
                 </Bullets>
 
                 <H3>Step 4 — Metadata</H3>
-                <p>
-                  Check each item's metadata — tags, open science links, authors. <Term>View item</Term> shows the public
-                  page; <Term>Edit metadata</Term> opens the editor and returns you here. When it is correct, click{" "}
-                  <Term>Mark verified</Term> (or <Term>Mark all verified</Term>). Verified items get a badge on the public
-                  site. Open science links and JMIR badge info are detected one item at a time from the item's own page
-                  using its scan and badge buttons.
-                </p>
-                <p>
-                  At the bottom of this step, <Term>Study title</Term> lets you rename the study (otherwise the title comes
-                  from its Stage 1 article). It shows on the study page, the browse list and exports. It needs a saved study,
-                  so link the items in Step 2 first.
-                </p>
+                <p>Check each item's metadata (tags, open science links, authors) against the source.</p>
+                <Bullets>
+                  <li>
+                    <Term>Open ↗</Term> shows the publisher's page and <Term>View item</Term> shows our public page for the
+                    item.
+                  </li>
+                  <li>
+                    <Term>Edit metadata</Term> opens the editor and returns you here.
+                  </li>
+                  <li>
+                    When it is correct, click <Term>Mark verified</Term> (or <Term>Mark all verified</Term>). Verified
+                    items get a badge on the public site; <Term>Clear</Term> takes it off.
+                  </li>
+                  <li>
+                    Open science links and JMIR badge info are detected one item at a time from the item's own page, using
+                    its scan and badge buttons.
+                  </li>
+                  <li>
+                    <Term>Study title</Term> at the bottom renames the study (otherwise the title comes from its Stage 1
+                    article). It shows on the study page, the browse list and exports, and needs a saved study, so link the
+                    items in Step 2 first.
+                  </li>
+                  <li>This is the last step. Mark the group Done, Later or Question below.</li>
+                </Bullets>
 
-                <H3>Finishing a group</H3>
+                <H3>Marking a group</H3>
                 <p>
                   The bar at the bottom warns if any items are still pending review or unverified. Add a note if useful,
                   then choose:
@@ -539,7 +551,7 @@ export default async function GuidePage() {
                 </Bullets>
                 <Note>
                   A green <Term>Live on site</Term> badge marks changes the public sees right away (approving, linking,
-                  enriching, editing and verifying); a grey <Term>Internal</Term> badge marks things only admins see (the
+                  enriching, editing and verifying); a yellow <Term>Internal</Term> badge marks things only admins see (the
                   Done / Later / Question marker and its note). Every step waits for you to click Next step.
                 </Note>
                 <Note>
