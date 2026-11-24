@@ -331,7 +331,7 @@ export default async function GuidePage() {
                 <p>The chips at the top switch between views, each with a count of groups:</p>
                 <Bullets>
                   <li>
-                    <Term>Queue</Term> — untouched groups, highest relevance score first.
+                    <Term>Queue</Term> — untouched groups, newest first.
                   </li>
                   <li>
                     <Term>In progress</Term> — groups with approved items that nobody has marked yet (someone started and
