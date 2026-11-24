@@ -62,8 +62,8 @@ export function WorkflowSteps({
       </div>
 
       <div>
-        {step === 0 && <ReviewStep papers={papers} onDone={() => setStep(1)} />}
-        {step === 1 && <LinkStep papers={papers} study={study} onSaved={() => setStep(2)} />}
+        {step === 0 && <ReviewStep papers={papers} />}
+        {step === 1 && <LinkStep papers={papers} study={study} />}
         {step === 2 && <EnrichStep papers={kept} />}
         {step === 3 && <MetadataStep papers={kept} backHref={`${backBase}&step=metadata`} />}
       </div>

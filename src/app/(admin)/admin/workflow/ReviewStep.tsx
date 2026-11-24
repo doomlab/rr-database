@@ -4,7 +4,7 @@ import { useMutation } from "@blitzjs/rpc"
 import { useRouter } from "next/navigation"
 import { useState } from "react"
 import reviewPaper from "../../mutations/reviewPaper"
-import { NO_THROW, REJECTED_STATUSES, type GroupPaper } from "./types"
+import { NO_THROW, type GroupPaper } from "./types"
 import { LiveBadge } from "./Visibility"
 
 
@@ -25,9 +25,7 @@ const STATUS_LABEL: Record<string, string> = {
   DUPLICATE: "Duplicate",
 }
 
-// onDone fires once every item has been decided and at least one was kept, so the
-// workflow moves on to Link by itself.
-export function ReviewStep({ papers, onDone }: { papers: GroupPaper[]; onDone?: () => void }) {
+export function ReviewStep({ papers }: { papers: GroupPaper[] }) {
   const [review] = useMutation(reviewPaper, NO_THROW)
   const router = useRouter()
   const [busyId, setBusyId] = useState<number | null>(null)
@@ -39,10 +37,6 @@ export function ReviewStep({ papers, onDone }: { papers: GroupPaper[]; onDone?: 
     try {
       await review({ paperId, decision })
       router.refresh()
-      const others = papers.filter((p) => p.id !== paperId)
-      const stillPending = others.some((p) => p.status === "PENDING_REVIEW")
-      const keptCount = others.filter((p) => !REJECTED_STATUSES.includes(p.status)).length + (decision === "APPROVED" ? 1 : 0)
-      if (!stillPending && keptCount > 0) onDone?.()
     } catch (e: any) {
       setError(e.message ?? "Could not save the decision")
     } finally {
@@ -52,12 +46,28 @@ export function ReviewStep({ papers, onDone }: { papers: GroupPaper[]; onDone?: 
 
   return (
     <div className="flex flex-col gap-4">
-      <p className="text-base text-base-content/60 flex flex-wrap items-center gap-2">
-        <LiveBadge /> Approve the items that are real registered reports and reject the rest.
-        Approving puts an item on the public site straight away; rejecting keeps it off the main
-        list. Rejected items drop out of the later steps, and once every item is decided you move
-        on to Link automatically.
-      </p>
+      <div className="text-base text-base-content/60">
+        <p className="flex flex-wrap items-center gap-2">
+          <LiveBadge /> Decide which items are real registered reports.
+        </p>
+        <ul className="list-disc pl-6 mt-2 flex flex-col gap-1">
+          <li>
+            <span className="font-semibold">Approve</span> the real registered reports. Approving puts an item on the
+            public site straight away.
+          </li>
+          <li>
+            <span className="font-semibold">Reject</span> the rest. Rejecting keeps an item off the public site (it goes
+            to the Excluded list under Database) and drops it out of the later steps.
+          </li>
+          <li>
+            If Approve is greyed out, the item is already approved or came from Zotero.
+          </li>
+          <li>Reject is greyed out once an item has been rejected.</li>
+          <li>
+            When you're done, click Next step to go to Link.
+          </li>
+        </ul>
+      </div>
       <ul className="flex flex-col divide-y divide-base-300">
         {papers.map((paper) => (
           <li key={paper.id} className="py-4 flex flex-col md:flex-row md:items-start gap-3">

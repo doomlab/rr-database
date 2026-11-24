@@ -445,19 +445,45 @@ export default async function GuidePage() {
 
                 <H3>Step 1 — Review</H3>
                 <p>
-                  Click an item's title to open its overview page in a new tab (your place in the workflow is kept). <Term>Approve</Term> items that are genuine
-                  registered reports; <Term>Reject</Term> the rest. Rejected and duplicate items drop out of the later
-                  steps.
+                  Click an item's title to open its overview page in a new tab (your place in the workflow is kept).
                 </p>
+                <Bullets>
+                  <li>
+                    <Term>Approve</Term> the genuine registered reports. Approving puts an item on the public site straight
+                    away.
+                  </li>
+                  <li>
+                    <Term>Reject</Term> the rest. A rejected item goes to the Excluded list under Database and drops out of the
+                    later steps. Duplicates drop out too.
+                  </li>
+                  <li>
+                    If <Term>Approve</Term> is greyed out, the item is already approved or came from Zotero.
+                  </li>
+                  <li>
+                    <Term>Reject</Term> is greyed out once an item has been rejected.
+                  </li>
+                  <li>When you are done, click <Term>Next step</Term> to go to Link.</li>
+                </Bullets>
 
                 <H3>Step 2 — Link</H3>
                 <p>
                   For each item choose what it is: <Term>Stage 1 article</Term>, <Term>Stage 2 article</Term>,{" "}
                   <Term>Preprint</Term>, <Term>Supplemental materials</Term>, <Term>Duplicate of…</Term> another item in
-                  the group, <Term>Unlink (send back to review)</Term>, or <Term>Leave as-is</Term>. Unlinking takes the item out of its study, makes it a study of its own and returns it to pending review, so it leaves the public site until someone approves it again. Saving links everything into one
-                  study. A sensible guess is pre-selected from an existing role, PCI RR's own classification, or the
-                  item's stage. You can also give the study a title (otherwise one is derived from its items).
+                  the group, <Term>Unlink (send back to review)</Term>, or <Term>Leave as-is</Term>. A sensible guess is
+                  pre-selected from an existing role, PCI RR's own classification, or the item's stage. You can also give
+                  the study a title (otherwise one is derived from its items).
                 </p>
+                <Bullets>
+                  <li>
+                    <Term>Save links</Term> puts everything you tagged into one study. Any item that was still pending is
+                    approved.
+                  </li>
+                  <li>
+                    <Term>Unlink</Term> takes an item out of its study, makes it a study of its own and returns it to pending
+                    review, so it leaves the public site until someone approves it again.
+                  </li>
+                  <li>When you are done, click <Term>Next step</Term> to go to Enrich.</li>
+                </Bullets>
 
                 <H3>Step 3 — Enrich</H3>
                 <p>
@@ -500,8 +526,7 @@ export default async function GuidePage() {
                 <Note>
                   A green <Term>Live on site</Term> badge marks changes the public sees right away (approving, linking,
                   enriching, editing and verifying); a grey <Term>Internal</Term> badge marks things only admins see (the
-                  Done / Later / Question marker and its note). Review moves on to Link by itself once every item is
-                  decided, and saving links moves on to Enrich.
+                  Done / Later / Question marker and its note). Every step waits for you to click Next step.
                 </Note>
                 <Note>
                   You can move between steps with the step bar or Back / Next at any time. The current step is kept in the

@@ -34,8 +34,7 @@ function suggestedChoice(p: GroupPaper): Choice {
 
 type SearchHit = { id: number; title: string; year: number | null; doi: string | null }
 
-// onSaved fires after links are saved, moving the workflow on to Enrich.
-export function LinkStep({ papers, study, onSaved }: { papers: GroupPaper[]; study: GroupStudy | null; onSaved?: () => void }) {
+export function LinkStep({ papers, study }: { papers: GroupPaper[]; study: GroupStudy | null }) {
   const [link] = useMutation(linkDuplicateGroup, NO_THROW)
   const [search] = useMutation(searchPapersToLink, NO_THROW)
   const [add] = useMutation(addPaperToWorkflow, NO_THROW)
@@ -157,7 +156,6 @@ export function LinkStep({ papers, study, onSaved }: { papers: GroupPaper[]; stu
       setExtra([])
       setChoices({})
       router.refresh()
-      onSaved?.()
     } catch (e: any) {
       setError(e.message ?? "Save failed")
     } finally {
@@ -169,8 +167,8 @@ export function LinkStep({ papers, study, onSaved }: { papers: GroupPaper[]; stu
     <div className="flex flex-col gap-4">
       <p className="text-base text-base-content/60 flex flex-wrap items-center gap-2">
         <LiveBadge /> Tag each item as Stage 1, Stage 2, materials and so on. Saving puts everything
-        you tag into one study page on the public site (and approves any that were still pending),
-        then moves you on to Enrich. You can also pull in an item that wasn't clustered, by
+        you tag into one study page on the public site (and approves any that were still pending).
+        Click Next step when you are done. You can also pull in an item that wasn't clustered, by
         searching or adding it directly.
       </p>
 
