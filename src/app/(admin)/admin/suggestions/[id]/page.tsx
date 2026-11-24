@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation"
 import db from "db"
+import { findExistingPaper } from "src/lib/findExistingPaper"
 import { SuggestionWorkflow } from "./SuggestionWorkflow"
 
 export const metadata = { title: "Review suggestion – Admin" }
@@ -17,6 +18,8 @@ export default async function SuggestionDetailPage({
   })
   if (!suggestion) notFound()
 
+  const existing = await findExistingPaper(suggestion)
+
   return (
     <div>
       <a href="/admin/suggestions" className="text-base text-base-content/50 hover:text-base-content mb-6 inline-block">
@@ -29,6 +32,16 @@ export default async function SuggestionDetailPage({
         {suggestion.createdAt.toLocaleDateString()}
         {suggestion.resolved && " · already resolved"}
       </p>
+
+      {existing && (
+        <p className="text-base text-warning mb-6">
+          {existing.matchedOn === "title" ? "Something similar" : `An item with the same ${existing.matchedOn === "doi" ? "DOI" : "link"}`}{" "}
+          is already in the database:{" "}
+          <a href={`/admin/review/${existing.id}`} className="link">
+            "{existing.title}"
+          </a>
+        </p>
+      )}
 
       <SuggestionWorkflow suggestion={suggestion} backHref="/admin/suggestions" />
     </div>

@@ -139,7 +139,7 @@ model Paper {
 
   // Bibliographic metadata
   title        String
-  doi          String?
+  doi          String?  @unique // one record per DOI; code normalizes to lowercase
   abstract     String?
   year         Int?
   venue        String?
@@ -257,7 +257,6 @@ model Paper {
   favorites       PaperFavorite[]
 
   @@index([status])
-  @@index([doi])
 }
 
 // Audit trail of admin-triggered metadata pulls (OpenAlex/Crossref/manual
