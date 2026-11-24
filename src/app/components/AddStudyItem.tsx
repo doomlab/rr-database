@@ -16,13 +16,25 @@ const EMPTY_MANUAL = { title: "", authors: "", year: "", venue: "", doi: "", url
 // Admin-only "Add item" button for the study page's admin row. It opens a dialog for adding another item to the study —
 // typically the missing Stage 1 or Stage 2. Search for an item already in the
 // database, paste a DOI, or type the metadata in.
-export function AddStudyItem({ studyId, defaultRole }: { studyId: number; defaultRole: Role }) {
+export function AddStudyItem({
+  studyId,
+  anchor,
+  defaultRole,
+}: {
+  // On a study page: the study to add to.
+  studyId?: number
+  // On the page of an item that isn't in a study: that item and its guessed
+  // role. A study is created to hold it and whatever is added.
+  anchor?: { paperId: number; role: Role }
+  defaultRole: Role
+}) {
   const [add] = useMutation(addPaperToStudy, NO_THROW)
   const [search] = useMutation(searchPapersToLink, NO_THROW)
   const router = useRouter()
 
   const [open, setOpen] = useState(false)
   const [role, setRole] = useState<Role>(defaultRole)
+  const [anchorRole, setAnchorRole] = useState<Role>(anchor?.role ?? "OTHER")
   const [query, setQuery] = useState("")
   const [hits, setHits] = useState<Hit[]>([])
   const [searched, setSearched] = useState(false)
@@ -38,7 +50,11 @@ export function AddStudyItem({ studyId, defaultRole }: { studyId: number; defaul
     setMessage(null)
     setBusy(true)
     try {
-      const result = await add({ studyId, role, ...input })
+      const result = await add({
+        ...(studyId ? { studyId } : { anchorPaperId: anchor?.paperId, anchorRole }),
+        role,
+        ...input,
+      })
       setMessage(`Added "${result.title}".`)
       setOpen(false)
       setHits([])
@@ -47,7 +63,9 @@ export function AddStudyItem({ studyId, defaultRole }: { studyId: number; defaul
       setDoi("")
       setManual(EMPTY_MANUAL)
       setManualOpen(false)
-      router.refresh()
+      // A brand-new study was just created: go to it so both items show.
+      if (!studyId) router.push(`/studies/${result.studyId}`)
+      else router.refresh()
     } catch (e: any) {
       setError(e.message ?? "Could not add that item")
     } finally {
@@ -104,11 +122,28 @@ export function AddStudyItem({ studyId, defaultRole }: { studyId: number; defaul
           <div className="modal-box max-w-3xl flex flex-col gap-3">
             {!manualOpen ? (
               <>
-                <h3 className="font-semibold text-lg">Add item to this study</h3>
+                <h3 className="font-semibold text-lg">{anchor ? "Add an item to this one" : "Add item to this study"}</h3>
                 <p className="text-base text-base-content/60">
                   Pick the item's role, then find it in the database, paste its DOI, or type it in. It
-                  is approved and linked to this study straight away.
+                  is approved and linked straight away{anchor ? ", in a new study with this item" : " to this study"}.
                 </p>
+
+                {anchor && (
+                  <label className="flex items-center gap-2">
+                    <span className="text-base font-medium">This item is the</span>
+                    <select
+                      className="select select-bordered text-base"
+                      value={anchorRole}
+                      onChange={(e) => setAnchorRole(e.target.value as Role)}
+                    >
+                      {STUDY_PAPER_ROLE_OPTIONS.map((o) => (
+                        <option key={o.value} value={o.value}>
+                          {o.label}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                )}
 
                 <label className="flex items-center gap-2">
                   <span className="text-base font-medium">Add as</span>

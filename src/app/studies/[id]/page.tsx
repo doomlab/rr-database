@@ -113,16 +113,17 @@ export default async function StudyDetailPage({
             </div>
           </div>
 
-          {(study.biasLevel || !hasStage1 || isProgrammatic || (isAdmin && hasCustomTitle)) && (
-            <div className="flex flex-wrap items-center gap-2 mb-6">
-              {study.biasLevel && <span className="badge badge-info">{study.biasLevel}</span>}
-              {!hasStage1 && <span className="badge badge-warning">No Stage 1 found</span>}
-              {isProgrammatic && (
-                <span className="badge badge-secondary">Programmatic ({stage2Count} Stage 2 manuscripts)</span>
-              )}
-              {isAdmin && hasCustomTitle && <span className="badge badge-info">custom title</span>}
-            </div>
-          )}
+          <div className="flex flex-wrap items-center gap-2 mb-6">
+            <span className="badge badge-neutral">
+              Study · {study.papers.length} item{study.papers.length === 1 ? "" : "s"}
+            </span>
+            {study.biasLevel && <span className="badge badge-info">{study.biasLevel}</span>}
+            {!hasStage1 && <span className="badge badge-warning">No Stage 1 found</span>}
+            {isProgrammatic && (
+              <span className="badge badge-secondary">Programmatic ({stage2Count} Stage 2 manuscripts)</span>
+            )}
+            {isAdmin && hasCustomTitle && <span className="badge badge-info">custom title</span>}
+          </div>
 
           <div className="tabs gap-2 [&>.tab]:h-11 [&>.tab]:px-5 [&>.tab]:rounded-lg [&>.tab]:bg-base-300 [&>.tab]:text-base-content [&>.tab]:font-semibold [&>.tab]:shadow-md [&>.tab]:hover:bg-base-content/25 [&>.tab:checked]:bg-primary [&>.tab:checked]:text-primary-content [&>.tab:checked]:shadow-lg">
             {study.papers.map(({ paper, role }, idx) => (

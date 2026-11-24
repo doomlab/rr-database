@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation"
 import { Navbar } from "../../components/Navbar"
 import { BackLink } from "../../components/BackLink"
+import { AddStudyItem } from "../../components/AddStudyItem"
 import { PaperFavoriteButton } from "../../components/PaperFavoriteButton"
 import { PaperRecordSection } from "../../components/PaperRecordSection"
 import { userHasOpenAlexApiKey } from "src/lib/apiKeyPool"
@@ -31,6 +32,7 @@ export default async function PaperDetailPage({ params }: { params: Promise<{ id
         orderBy: { createdAt: "desc" },
       },
       metadataVerifiedBy: { select: { name: true, email: true } },
+      studyPaper: { select: { studyId: true, role: true } },
     },
   })
 
@@ -68,9 +70,21 @@ export default async function PaperDetailPage({ params }: { params: Promise<{ id
             </div>
           </div>
 
-          {paper.status === "REJECTED" && (
-            <div className="flex flex-wrap gap-2 mb-8">
-              <span className="badge badge-error">Excluded</span>
+          {(paper.status === "REJECTED" || paper.studyPaper || isAdmin) && (
+            <div className="flex flex-wrap items-center gap-2 mb-8">
+              <span className="badge badge-neutral">Single item page</span>
+              {paper.status === "REJECTED" && <span className="badge badge-error">Excluded</span>}
+              {paper.studyPaper && (paper.status === "IMPORTED" || paper.status === "APPROVED") && (
+                <a
+                  href={`/studies/${paper.studyPaper.studyId}?paper=${paper.id}`}
+                  className="btn btn-secondary btn-sm text-base"
+                >
+                  This item is part of a study — view the whole study
+                </a>
+              )}
+              {isAdmin && !paper.studyPaper && paper.status !== "REJECTED" && (
+                <span className="badge badge-warning">Not in a study yet</span>
+              )}
             </div>
           )}
 
@@ -78,6 +92,20 @@ export default async function PaperDetailPage({ params }: { params: Promise<{ id
             <PaperRecordSection
               paper={paper}
               roleLabel="Record"
+              adminStudyActions={
+                isAdmin && paper.status !== "REJECTED" ? (
+                  <AddStudyItem
+                    studyId={paper.studyPaper?.studyId}
+                    anchor={{
+                      paperId: paper.id,
+                      role:
+                        paper.studyPaper?.role ??
+                        (paper.stage === "STAGE_2" ? "STAGE2_ARTICLE" : paper.stage === "STAGE_1" ? "STAGE1_ARTICLE" : "OTHER"),
+                    }}
+                    defaultRole={paper.stage === "STAGE_1" ? "STAGE2_ARTICLE" : "STAGE1_ARTICLE"}
+                  />
+                ) : undefined
+              }
               citationData={citationData}
               isAdmin={isAdmin}
               hasOpenAlexApiKey={hasOpenAlexApiKey}

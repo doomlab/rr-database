@@ -108,9 +108,9 @@ const FIELDS: { key: FieldKey; label: string; type: FieldType; hint?: string; gr
   { key: "zoteroNotes", label: "Notes (from Zotero)", type: "textarea", group: "notes" },
 ]
 
-const GROUPS: { key: GroupKey; label: string; alwaysOpen?: boolean }[] = [
-  { key: "identifiers", label: "Identifiers & links", alwaysOpen: true },
-  { key: "publication", label: "Publication details", alwaysOpen: true },
+const GROUPS: { key: GroupKey; label: string }[] = [
+  { key: "identifiers", label: "Identifiers & links", },
+  { key: "publication", label: "Publication details", },
   { key: "openScience", label: "Open science & registration" },
   { key: "classification", label: "Tags & keywords" },
   { key: "badges", label: "JMIR / PCI RR badges" },
@@ -266,11 +266,6 @@ export function SuggestEditForm({
     )
   }
 
-  const hasValue = (key: FieldKey) => {
-    const v = initial[key]
-    return v !== null && v !== undefined && v !== ""
-  }
-
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-4 max-w-3xl">
       {isAdmin && initialRole !== undefined && (
@@ -300,7 +295,7 @@ export function SuggestEditForm({
         </div>
       )}
 
-      <details className="group" open>
+      <details className="group">
         <summary className="cursor-pointer select-none text-base font-medium text-base-content/60 hover:text-base-content flex items-center gap-2 w-fit">
           <span className="transition-transform group-open:rotate-90">▸</span>
           Authors
@@ -312,9 +307,8 @@ export function SuggestEditForm({
 
       {GROUPS.map((group) => {
         const groupFields = FIELDS.filter((f) => f.group === group.key)
-        const defaultOpen = group.alwaysOpen || groupFields.some((f) => hasValue(f.key))
         return (
-          <details key={group.key} className="group" open={defaultOpen}>
+          <details key={group.key} className="group">
             <summary className="cursor-pointer select-none text-base font-medium text-base-content/60 hover:text-base-content flex items-center gap-2 w-fit">
               <span className="transition-transform group-open:rotate-90">▸</span>
               {group.label}
