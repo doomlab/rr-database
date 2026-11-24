@@ -6,7 +6,6 @@ import { LinkStep } from "./LinkStep"
 import { EnrichStep } from "./EnrichStep"
 import { MetadataStep } from "./MetadataStep"
 import { FinishBar } from "./FinishBar"
-import { LiveBadge, InternalBadge } from "./Visibility"
 import { REJECTED_STATUSES, STEP_KEYS, type GroupPaper, type GroupStudy, type Marker } from "./types"
 
 const STEPS = ["Review", "Link", "Enrich", "Metadata"] as const
@@ -62,15 +61,34 @@ export function WorkflowSteps({
         </button>
       </div>
 
-      <p className="text-base text-base-content/60 flex flex-wrap items-center gap-2">
-        <LiveBadge /> changes show on the public site right away. <InternalBadge /> changes are only ever seen by admins.
-      </p>
-
       <div>
         {step === 0 && <ReviewStep papers={papers} onDone={() => setStep(1)} />}
         {step === 1 && <LinkStep papers={papers} study={study} onSaved={() => setStep(2)} />}
         {step === 2 && <EnrichStep papers={kept} />}
         {step === 3 && <MetadataStep papers={kept} backHref={`${backBase}&step=metadata`} />}
+      </div>
+
+      <div className="flex items-center justify-between gap-4">
+        <button
+          className="btn btn-secondary btn-sm text-base whitespace-nowrap"
+          disabled={step === 0}
+          onClick={() => {
+            setStep(step - 1)
+            window.scrollTo({ top: 0 })
+          }}
+        >
+          ← Back
+        </button>
+        <button
+          className="btn btn-primary btn-sm text-base whitespace-nowrap"
+          disabled={step === STEPS.length - 1}
+          onClick={() => {
+            setStep(step + 1)
+            window.scrollTo({ top: 0 })
+          }}
+        >
+          Next step →
+        </button>
       </div>
 
       <FinishBar papers={papers} marker={marker} note={note} queueHref={queueHref} />

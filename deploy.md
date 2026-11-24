@@ -211,6 +211,18 @@ To rehearse without changing anything, change the final `COMMIT;` in the file to
 entries to. Afterwards the items appear in the admin workflow queue to be
 approved again (or rejected).
 
+## One-off: clean HTML entities out of stored titles
+
+Some titles came in with entities such as `&nbsp;` or `&amp;`. New imports are
+cleaned automatically; [scripts/clean_title_entities.sql](scripts/clean_title_entities.sql)
+fixes the ones already stored. Run it once after deploying:
+
+```bash
+docker compose --env-file .env.docker exec -T db psql -U rr_database -d rr_database -v ON_ERROR_STOP=1 < scripts/clean_title_entities.sql
+```
+
+It prints the affected titles first, and only touches titles that contain an entity.
+
 ## Redeploying after a code change
 
 ```bash

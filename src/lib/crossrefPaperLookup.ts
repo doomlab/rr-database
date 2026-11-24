@@ -1,5 +1,6 @@
 import db from "db"
 import { upsertAuthors } from "./zoteroImport"
+import { cleanTitle } from "./cleanText"
 
 export function normalizeDoi(raw: string): string {
   return raw.replace(/^https?:\/\/(dx\.)?doi\.org\//i, "").trim().toLowerCase()
@@ -22,7 +23,7 @@ export async function fetchOrCreatePaperByDoi(
   if (!res.ok) throw new Error(`Could not find DOI ${doi} on Crossref (${res.status})`)
   const { message } = await res.json()
 
-  const title: string = message.title?.[0] ?? "Untitled"
+  const title: string = cleanTitle(message.title?.[0] ?? "Untitled")
   const paper = await db.paper.create({
     data: {
       title,

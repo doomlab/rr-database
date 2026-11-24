@@ -11,9 +11,18 @@ import { LiveBadge } from "./Visibility"
 const STATUS_BADGE: Record<string, string> = {
   PENDING_REVIEW: "badge-warning",
   APPROVED: "badge-success",
-  IMPORTED: "badge-success",
+  IMPORTED: "badge-info",
   REJECTED: "badge-error",
   DUPLICATE: "badge-neutral",
+}
+
+// IMPORTED only means the item came in through a Zotero sync, so say that.
+const STATUS_LABEL: Record<string, string> = {
+  PENDING_REVIEW: "Pending",
+  APPROVED: "Approved",
+  IMPORTED: "From Zotero",
+  REJECTED: "Excluded",
+  DUPLICATE: "Duplicate",
 }
 
 // onDone fires once every item has been decided and at least one was kept, so the
@@ -63,7 +72,7 @@ export function ReviewStep({ papers, onDone }: { papers: GroupPaper[]; onDone?: 
               </a>
               <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-base text-base-content/60 mt-1">
                 <span className={`badge ${STATUS_BADGE[paper.status] ?? "badge-ghost"}`}>
-                  {paper.status.replace("_", " ").toLowerCase()}
+                  {STATUS_LABEL[paper.status] ?? paper.status}
                 </span>
                 {paper.authors.length > 0 && <span>{paper.authors.slice(0, 4).join(", ")}{paper.authors.length > 4 ? " et al." : ""}</span>}
                 {paper.year && <span>{paper.year}</span>}

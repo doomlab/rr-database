@@ -1,5 +1,6 @@
 import db, { Prisma } from "db"
 import { findOrCreateAuthor } from "./authors"
+import { cleanTitle } from "./cleanText"
 
 const HEADERS_BASE = { "User-Agent": "mailto:buchananlab@gmail.com" }
 const OPENALEX_ID_RE = /OpenAlex ID:\s*(\S+)/
@@ -161,7 +162,7 @@ async function upsertPaperFromZoteroItem(
   const zoteroKey = item.key
   const zoteroVersion = item.version
   const doi: string | null = data.DOI || null
-  const title: string = data.title || "(untitled)"
+  const title: string = cleanTitle(data.title || "(untitled)")
   const openalexId = extractOpenAlexId(data.extra)
   const relations = data.relations ?? null
   const manualTags = extractManualTags(data.tags)
