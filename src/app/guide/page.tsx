@@ -280,6 +280,12 @@ export default async function GuidePage() {
                     library ("1 – To Check" → pending review, "2 – To Tag" → imported, "4 – Do Not Add" → rejected).
                     Only re-run it if staging needs to be redone.
                   </li>
+                  <li>
+                    <Term>Exclude items removed from Zotero</Term> — the pull never deletes, so items taken out of Zotero
+                    stay on the site. <Term>Preview what was removed</Term> lists the items that came from the library but
+                    are no longer in it; confirm to mark them Excluded (not deleted, and they can be restored). Run it after
+                    cleaning up the Zotero library.
+                  </li>
                 </Bullets>
 
                 <H2 id="admin-discover">2. Add new items</H2>
@@ -324,7 +330,9 @@ export default async function GuidePage() {
                 <p>
                   Open <Link href="/admin/workflow" className="link link-primary">Admin → One group at a time</Link>. A <Term>group</Term> is a cluster of
                   items with similar titles (usually one registered report indexed several times) or, once linked, the
-                  study they share. You take a single group through all four steps, then move to the next.
+                  study they share. The same title matching is used on the Link items page, so both show the same groups.
+                  Each item is compared with the first item in its group, so loosely related papers don't get chained
+                  together. You take a single group through all four steps, then move to the next.
                 </p>
 
                 <H3>The queue</H3>
@@ -342,9 +350,14 @@ export default async function GuidePage() {
                     note explains why.
                   </li>
                   <li>
-                    <Term>Done</Term> — finished groups.
+                    <Term>Done</Term> — finished groups. They also drop out of the Link items list and its count.
                   </li>
                 </Bullets>
+                <p>
+                  The step pages below and this workflow work on the same data, so what you do in one shows in the other.
+                  The one difference is the marker: only this workflow sets Done / Later / Question, so a group you finished
+                  on a step page stays in the Queue or In progress here until you mark it.
+                </p>
                 <p>
                   Click <Term>Start the first group</Term> to open the next one in the current view, or pick a group from
                   the table.
@@ -444,7 +457,8 @@ export default async function GuidePage() {
                   <li>
                     <Link href="/admin/link" className="link link-primary">Link items</Link> — groups of matching titles to link as Stage 1, Stage 2,
                     supplemental materials or duplicate. Search for any item to edit or unlink a study it is already part of, even if it
-                    was not grouped automatically.
+                    was not grouped automatically. Groups marked Done in the workflow are hidden, and an item that was
+                    unlinked shows up here again once it has been re-approved.
                   </li>
                   <li>
                     <Link href="/admin/metadata-review" className="link link-primary">Metadata review</Link> — confirmed items whose metadata hasn't been

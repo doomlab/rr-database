@@ -1,7 +1,7 @@
 import db from "db"
 import { Pagination } from "../../../components/Pagination"
 import { SearchAndKeywordFilter } from "../../../components/SearchAndKeywordFilter"
-import { clusterPapersByTitle, isLinkEligible, LINK_ELIGIBLE_STATUSES } from "src/lib/duplicateClusters"
+import { clusterPapersByTitle, isLinkEligible, LINK_ELIGIBLE_STATUSES, linkTouchedPaperIds, NOT_MARKED_DONE } from "src/lib/duplicateClusters"
 import { DuplicateGroupCard, type LinkablePaper } from "./DuplicateGroupCard"
 
 const GROUPS_PER_PAGE = 20
@@ -98,12 +98,7 @@ async function groupsForPaperIds(paperIds: number[]): Promise<LinkablePaper[][]>
     ...studies.flatMap((s) => s.papers.map((sp) => sp.paper.id)),
     ...soloPapers.map((p) => p.id),
   ]
-  const touched = await db.paperEditHistory.findMany({
-    where: { source: "link", paperId: { in: allPaperIds } },
-    select: { paperId: true },
-    distinct: ["paperId"],
-  })
-  const touchedIds = new Set(touched.map((t) => t.paperId))
+  const touchedIds = await linkTouchedPaperIds(allPaperIds)
 
   return [
     ...studies.map((s) =>
@@ -141,9 +136,9 @@ async function SearchResults({ q }: { q: string }) {
 }
 
 async function AutoDetectedGroups({ page, tab }: { page: number; tab: "needs-review" | "reviewed" }) {
-  const [eligiblePapers, touchedHistory] = await Promise.all([
+  const [eligiblePapers, touchedIds] = await Promise.all([
     db.paper.findMany({
-      where: { status: { in: [...LINK_ELIGIBLE_STATUSES] }, canonicalPaperId: null },
+      where: { status: { in: [...LINK_ELIGIBLE_STATUSES] }, canonicalPaperId: null, ...NOT_MARKED_DONE },
       include: {
         ...paperInclude,
         studyPaper: {
@@ -159,14 +154,9 @@ async function AutoDetectedGroups({ page, tab }: { page: number; tab: "needs-rev
     // paper ever touched here (not just still-eligible ones), since linking
     // a full pair moves both papers into a real multi-paper Study and drops
     // them out of the eligible/unlinked pool entirely.
-    db.paperEditHistory.findMany({
-      where: { source: "link" },
-      select: { paperId: true },
-      distinct: ["paperId"],
-    }),
+    linkTouchedPaperIds(),
   ])
 
-  const touchedIds = new Set(touchedHistory.map((h) => h.paperId))
   const eligible = eligiblePapers.filter(isLinkEligible).filter((p) => !touchedIds.has(p.id))
   // Every paper here was just filtered to exclude anything touched via this
   // page, so none of them have a confirmed role — any "OTHER" they carry is

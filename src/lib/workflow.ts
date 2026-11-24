@@ -1,5 +1,5 @@
 import db, { Prisma, WorkflowMarker } from "db"
-import { clusterPapersByTitle } from "./duplicateClusters"
+import { clusterPapersByTitle, isLinkEligible, LINK_ELIGIBLE_STATUSES } from "./duplicateClusters"
 
 // The one-group-at-a-time workflow. A "group" starts as a title cluster of
 // papers awaiting review and, once those papers are linked, is the Study they
@@ -57,13 +57,19 @@ export async function nextWorkflowSeedId(view?: WorkflowView): Promise<number | 
 // Marker is set on every paper in a group together, so list groups rather
 // than papers: papers sharing a Study are one group, the rest cluster by
 // title. Groups keep the order of their first paper.
-function groupPapers<T extends { id: number; title: string; studyPaper: { studyId: number } | null }>(
-  papers: T[]
-): T[][] {
+function groupPapers<
+  T extends {
+    id: number
+    title: string
+    studyPaper: { studyId: number; study: { _count: { papers: number } } } | null
+  },
+>(papers: T[]): T[][] {
   const byStudy = new Map<number, T[]>()
   const unlinked: T[] = []
   for (const p of papers) {
-    if (p.studyPaper) byStudy.set(p.studyPaper.studyId, [...(byStudy.get(p.studyPaper.studyId) ?? []), p])
+    // Almost every imported paper sits in a leftover solo study. That isn't a
+    // real link, so those cluster by title like papers with no study at all.
+    if (p.studyPaper && p.studyPaper.study._count.papers >= 2) byStudy.set(p.studyPaper.studyId, [...(byStudy.get(p.studyPaper.studyId) ?? []), p])
     else unlinked.push(p)
   }
   const position = new Map(papers.map((p, i) => [p.id, i]))
@@ -97,7 +103,7 @@ export async function listWorkflowGroups(view?: WorkflowView, limit = 200) {
       workflowNote: true,
       workflowMarkedAt: true,
       workflowMarkedBy: { select: { name: true, email: true } },
-      studyPaper: { select: { studyId: true } },
+      studyPaper: { select: { studyId: true, study: { select: { _count: { select: { papers: true } } } } } },
       authors: { select: { author: { select: { name: true } } }, orderBy: { position: "asc" }, take: 3 },
     },
   })
@@ -121,14 +127,14 @@ export async function listWorkflowGroups(view?: WorkflowView, limit = 200) {
 
 export async function workflowCounts() {
   const [queuePapers, inProgressPapers, markedPapers] = await Promise.all([
-    db.paper.findMany({ where: QUEUE_WHERE, select: { id: true, title: true, studyPaper: { select: { studyId: true } } } }),
+    db.paper.findMany({ where: QUEUE_WHERE, select: { id: true, title: true, studyPaper: { select: { studyId: true, study: { select: { _count: { select: { papers: true } } } } } }, } }),
     db.paper.findMany({
       where: IN_PROGRESS_WHERE,
-      select: { id: true, title: true, studyPaper: { select: { studyId: true } } },
+      select: { id: true, title: true, studyPaper: { select: { studyId: true, study: { select: { _count: { select: { papers: true } } } } } }, },
     }),
     db.paper.findMany({
       where: { workflowMarker: { not: null }, canonicalPaperId: null },
-      select: { id: true, title: true, workflowMarker: true, studyPaper: { select: { studyId: true } } },
+      select: { id: true, title: true, workflowMarker: true, studyPaper: { select: { studyId: true, study: { select: { _count: { select: { papers: true } } } } } }, },
     }),
   ])
   const markerCount = (m: WorkflowMarker) => countGroups(markedPapers.filter((p) => p.workflowMarker === m))
@@ -142,15 +148,32 @@ export async function workflowCounts() {
 export async function loadWorkflowGroup(seedId: number): Promise<WorkflowPaper[] | null> {
   const seed = await db.paper.findUnique({
     where: { id: seedId },
-    select: { id: true, title: true, studyPaper: { select: { studyId: true } } },
+    select: { id: true, title: true, workflowMarker: true },
   })
   if (!seed) return null
 
-  const pending = await db.paper.findMany({
-    where: { status: "PENDING_REVIEW", canonicalPaperId: null, id: { not: seed.id } },
-    select: { id: true, title: true },
-  })
-  const clusterIds = clusterPapersByTitle([seed, ...pending], 1)
+  // Everything the Link page would offer to group with it: any link-eligible
+  // paper that isn't already in a real (multi-paper) study, in the same
+  // workflow state as the seed. That includes the imported papers, each of
+  // which sits in its own leftover solo study.
+  const candidates = (
+    await db.paper.findMany({
+      where: {
+        status: { in: [...LINK_ELIGIBLE_STATUSES] },
+        canonicalPaperId: null,
+        workflowMarker: seed.workflowMarker,
+        id: { not: seed.id },
+      },
+      select: {
+        id: true,
+        title: true,
+        status: true,
+        canonicalPaperId: true,
+        studyPaper: { select: { study: { select: { _count: { select: { papers: true } } } } } },
+      },
+    })
+  ).filter(isLinkEligible)
+  const clusterIds = clusterPapersByTitle([seed, ...candidates], 1)
     .find((g) => g.some((p) => p.id === seed.id))!
     .map((p) => p.id)
 
