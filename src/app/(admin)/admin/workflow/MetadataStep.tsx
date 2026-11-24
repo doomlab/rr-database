@@ -4,11 +4,13 @@ import { useMutation } from "@blitzjs/rpc"
 import { useRouter } from "next/navigation"
 import { useState } from "react"
 import verifyPaperMetadata from "../../mutations/verifyPaperMetadata"
-import { NO_THROW, type GroupPaper } from "./types"
+import { NO_THROW, type GroupPaper, type GroupStudy } from "./types"
+import { StudyTitleBox } from "./StudyTitleBox"
 import { LiveBadge } from "./Visibility"
+import { OpenItemButton } from "./OpenItemButton"
 
 
-export function MetadataStep({ papers, backHref }: { papers: GroupPaper[]; backHref: string }) {
+export function MetadataStep({ papers, backHref, study }: { papers: GroupPaper[]; backHref: string; study: GroupStudy | null }) {
   const [verify] = useMutation(verifyPaperMetadata, NO_THROW)
   const router = useRouter()
   const [busy, setBusy] = useState(false)
@@ -47,6 +49,7 @@ export function MetadataStep({ papers, backHref }: { papers: GroupPaper[]; backH
               </span>
             </div>
             <div className="flex items-center gap-2 shrink-0">
+              <OpenItemButton paper={paper} color="btn-primary" />
               <a href={`/papers/${paper.id}`} target="_blank" rel="noreferrer" className="btn btn-info btn-sm text-base whitespace-nowrap">
                 View item
               </a>
@@ -75,6 +78,7 @@ export function MetadataStep({ papers, backHref }: { papers: GroupPaper[]; backH
         </div>
       )}
       {error && <span className="text-base text-error">{error}</span>}
+      <StudyTitleBox study={study} />
     </div>
   )
 }

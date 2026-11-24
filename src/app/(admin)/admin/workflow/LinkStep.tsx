@@ -7,38 +7,43 @@ import linkDuplicateGroup from "../../mutations/linkDuplicateGroup"
 import searchPapersToLink from "../../mutations/searchPapersToLink"
 import addPaperToWorkflow from "../../mutations/addPaperToWorkflow"
 import { STUDY_PAPER_ROLE_OPTIONS } from "src/lib/studyPaperRoles"
-import setStudyTitle from "../../mutations/setStudyTitle"
-import { NO_THROW, type GroupPaper, type GroupStudy } from "./types"
+import { NO_THROW, type GroupPaper } from "./types"
 import { LiveBadge } from "./Visibility"
+import { OpenItemButton } from "./OpenItemButton"
 
 
 type Choice = string // a StudyPaperRole, "skip", "unlink" or "duplicate"
 
 const CHOICES = [
-  { value: "skip", label: "Leave as-is" },
+  { value: "skip", label: "Not tagged yet (leave as-is)" },
   ...STUDY_PAPER_ROLE_OPTIONS,
   { value: "unlink", label: "Unlink (send back to review)" },
   { value: "duplicate", label: "Duplicate of…" },
 ]
 
 // Best guess at a role: one already set, else PCI RR's own classification,
-// else the paper's stage. "OTHER" is the old import fallback, so it isn't
+// else the paper's stage, else what its title says. "OTHER" is the old import fallback, so it isn't
 // treated as a deliberate choice.
 function suggestedChoice(p: GroupPaper): Choice {
   if (p.role && p.role !== "OTHER") return p.role
   if (p.pcirrRole) return p.pcirrRole
   if (p.stage === "STAGE_1") return "STAGE1_ARTICLE"
   if (p.stage === "STAGE_2") return "STAGE2_ARTICLE"
+  // Many titles say what they are ("Stage 1 Registered Report: …"). Only guess when it names exactly one stage.
+  const says1 = /\bstage\s*(1|one)\b/i.test(p.title)
+  const says2 = /\bstage\s*(2|two)\b/i.test(p.title)
+  if (says1 && !says2) return "STAGE1_ARTICLE"
+  if (says2 && !says1) return "STAGE2_ARTICLE"
   return "skip"
 }
 
 type SearchHit = { id: number; title: string; year: number | null; doi: string | null }
 
-export function LinkStep({ papers, study }: { papers: GroupPaper[]; study: GroupStudy | null }) {
+// onNext moves the workflow on to the next step (used by "Save and next step").
+export function LinkStep({ papers, onNext }: { papers: GroupPaper[]; onNext?: () => void }) {
   const [link] = useMutation(linkDuplicateGroup, NO_THROW)
   const [search] = useMutation(searchPapersToLink, NO_THROW)
   const [add] = useMutation(addPaperToWorkflow, NO_THROW)
-  const [saveTitle] = useMutation(setStudyTitle, NO_THROW)
   const router = useRouter()
 
   const [extra, setExtra] = useState<GroupPaper[]>([])
@@ -54,9 +59,6 @@ export function LinkStep({ papers, study }: { papers: GroupPaper[]; study: Group
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [saved, setSaved] = useState(false)
-  const [titleValue, setTitleValue] = useState(study?.title ?? "")
-  const [titleBusy, setTitleBusy] = useState(false)
-  const [titleMessage, setTitleMessage] = useState<string | null>(null)
 
   const shown = [...papers, ...extra.filter((e) => !papers.some((p) => p.id === e.id))].filter(
     (p) => p.status !== "REJECTED" && p.status !== "DUPLICATE"
@@ -130,23 +132,7 @@ export function LinkStep({ papers, study }: { papers: GroupPaper[]; study: Group
     }
   }
 
-  const updateTitle = async (next: string | null) => {
-    if (!study) return
-    setTitleMessage(null)
-    setTitleBusy(true)
-    try {
-      await saveTitle({ studyId: study.id, title: next })
-      if (next === null) setTitleValue("")
-      setTitleMessage(next ? "Title saved." : "Reset to the item's title.")
-      router.refresh()
-    } catch (e: any) {
-      setTitleMessage(e.message ?? "Could not save the title")
-    } finally {
-      setTitleBusy(false)
-    }
-  }
-
-  const save = async () => {
+  const save = async (thenNext = false) => {
     setError(null)
     setSaved(false)
     setSaving(true)
@@ -156,6 +142,7 @@ export function LinkStep({ papers, study }: { papers: GroupPaper[]; study: Group
       setExtra([])
       setChoices({})
       router.refresh()
+      if (thenNext) onNext?.()
     } catch (e: any) {
       setError(e.message ?? "Save failed")
     } finally {
@@ -165,109 +152,26 @@ export function LinkStep({ papers, study }: { papers: GroupPaper[]; study: Group
 
   return (
     <div className="flex flex-col gap-4">
-      <p className="text-base text-base-content/60 flex flex-wrap items-center gap-2">
-        <LiveBadge /> Tag each item as Stage 1, Stage 2, materials and so on. Saving puts everything
-        you tag into one study page on the public site (and approves any that were still pending).
-        Click Next step when you are done. You can also pull in an item that wasn't clustered, by
-        searching or adding it directly.
-      </p>
-
-      <ul className="flex flex-col divide-y divide-base-300">
-        {shown.map((paper) => {
-          const choice = choiceFor(paper)
-          return (
-            <li key={paper.id} className="py-4 flex flex-col md:flex-row md:items-start gap-3">
-              <div className="flex-1 min-w-0">
-                <a href={`/papers/${paper.id}`} target="_blank" rel="noreferrer" className="font-medium text-base leading-snug link link-hover">
-                  #{paper.id} — {paper.title}
-                </a>
-                <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-base text-base-content/60 mt-1">
-                  {paper.authors.length > 0 && <span>{paper.authors.slice(0, 4).join(", ")}{paper.authors.length > 4 ? " et al." : ""}</span>}
-                  {paper.year && <span>{paper.year}</span>}
-                  {paper.venue && <span className="italic">{paper.venue}</span>}
-                  {paper.studyId && <span className="badge badge-ghost">in study #{paper.studyId}</span>}
-                  {extra.some((e) => e.id === paper.id) && <span className="badge badge-info">added</span>}
-                </div>
-              </div>
-              <div className="flex items-center gap-2 shrink-0">
-                <select
-                  className="select select-bordered select-sm text-base"
-                  value={choice}
-                  onChange={(e) => setChoices((prev) => ({ ...prev, [paper.id]: e.target.value }))}
-                >
-                  {CHOICES.filter((o) => o.value !== "duplicate" || shown.length > 1).map((o) => (
-                    <option key={o.value} value={o.value}>
-                      {o.label}
-                    </option>
-                  ))}
-                </select>
-                {choice === "duplicate" && (
-                  <select
-                    className="select select-bordered select-sm text-base"
-                    value={duplicateOf[paper.id] ?? ""}
-                    onChange={(e) => setDuplicateOf((prev) => ({ ...prev, [paper.id]: Number(e.target.value) }))}
-                  >
-                    <option value="" disabled>
-                      which item?
-                    </option>
-                    {shown
-                      .filter((p) => p.id !== paper.id)
-                      .map((p) => (
-                        <option key={p.id} value={p.id}>
-                          #{p.id} ({p.year ?? "?"})
-                        </option>
-                      ))}
-                  </select>
-                )}
-              </div>
-            </li>
-          )
-        })}
-      </ul>
-
-      <div className="flex items-center gap-2">
-        <button className="btn btn-primary btn-sm text-base" disabled={saving || assignments.length === 0} onClick={save}>
-          {saving ? <span className="loading loading-spinner loading-xs" /> : "Save links"}
-        </button>
-        {saved && <span className="text-base text-success">Saved.</span>}
-        {error && <span className="text-base text-error">{error}</span>}
-      </div>
-
-      <div className="rounded-lg bg-base-200 p-4 flex flex-col gap-3">
-        <h3 className="font-semibold text-base">Study title</h3>
-        {study ? (
-          <>
-            <p className="text-base text-base-content/60">
-              Shown on the study page, the browse list and exports. Leave it blank to use the Stage 1
-              article's title.
-            </p>
-            <input
-              className="input input-bordered input-sm text-base w-full max-w-3xl"
-              placeholder={study.defaultTitle}
-              value={titleValue}
-              onChange={(e) => setTitleValue(e.target.value)}
-            />
-            <div className="flex flex-wrap items-center gap-2">
-              <button
-                className="btn btn-primary btn-sm text-base whitespace-nowrap"
-                disabled={titleBusy || !titleValue.trim()}
-                onClick={() => updateTitle(titleValue)}
-              >
-                Save title
-              </button>
-              {study.title && (
-                <button className="btn btn-warning btn-sm text-base whitespace-nowrap" disabled={titleBusy} onClick={() => updateTitle(null)}>
-                  Reset to default
-                </button>
-              )}
-              {titleMessage && <span className="text-base text-base-content/70">{titleMessage}</span>}
-            </div>
-          </>
-        ) : (
-          <p className="text-base text-base-content/60">
-            Save links above first. That creates the study, and then you can set its title here.
-          </p>
-        )}
+      <div className="text-base text-base-content/60">
+        <p className="flex flex-wrap items-center gap-2">
+          <LiveBadge /> Tag each item as Stage 1, Stage 2, preprint, materials and so on.
+        </p>
+        <ul className="list-disc pl-6 mt-2 flex flex-col gap-1">
+          <li>
+            <span className="font-semibold">Save links</span> puts everything you tagged into one study page on the
+            public site, and approves any item that was still pending. <span className="font-semibold">Save and next step</span> does
+            the same and then goes to Enrich.
+          </li>
+          <li>
+            <span className="font-semibold">Unlink</span> takes an item out of the study and sends it back to pending
+            review, so it leaves the public site until someone approves it again.
+          </li>
+          <li>
+            <span className="font-semibold">Duplicate of…</span> marks an item as a copy of another item in the group.
+          </li>
+          <li>Missing an item? Search for it or add it first, under "Add another item to this group".</li>
+          <li>If there is nothing to save, click Next step to go to Enrich.</li>
+        </ul>
       </div>
 
       <div className="rounded-lg bg-base-200 p-4 flex flex-col gap-3">
@@ -321,6 +225,73 @@ export function LinkStep({ papers, study }: { papers: GroupPaper[]; study: Group
             ))}
           </ul>
         )}
+      </div>
+
+      <ul className="flex flex-col divide-y divide-base-300">
+        {shown.map((paper) => {
+          const choice = choiceFor(paper)
+          return (
+            <li key={paper.id} className="py-4 flex flex-col md:flex-row md:items-start gap-3">
+              <div className="flex-1 min-w-0">
+                <a href={`/papers/${paper.id}`} target="_blank" rel="noreferrer" className="font-medium text-base leading-snug link link-hover">
+                  #{paper.id} — {paper.title}
+                </a>
+                <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-base text-base-content/60 mt-1">
+                  {paper.authors.length > 0 && <span>{paper.authors.slice(0, 4).join(", ")}{paper.authors.length > 4 ? " et al." : ""}</span>}
+                  {paper.year && <span>{paper.year}</span>}
+                  {paper.venue && <span className="italic">{paper.venue}</span>}
+                  {paper.studyId && <span className="badge badge-ghost">in study #{paper.studyId}</span>}
+                  {extra.some((e) => e.id === paper.id) && <span className="badge badge-info">added</span>}
+                </div>
+              </div>
+              <div className="flex items-center gap-2 shrink-0">
+                <OpenItemButton paper={paper} />
+                <select
+                  className="select select-bordered select-sm text-base"
+                  value={choice}
+                  onChange={(e) => setChoices((prev) => ({ ...prev, [paper.id]: e.target.value }))}
+                >
+                  {CHOICES.filter((o) => o.value !== "duplicate" || shown.length > 1).map((o) => (
+                    <option key={o.value} value={o.value}>
+                      {o.label}
+                    </option>
+                  ))}
+                </select>
+                {choice === "duplicate" && (
+                  <select
+                    className="select select-bordered select-sm text-base"
+                    value={duplicateOf[paper.id] ?? ""}
+                    onChange={(e) => setDuplicateOf((prev) => ({ ...prev, [paper.id]: Number(e.target.value) }))}
+                  >
+                    <option value="" disabled>
+                      which item?
+                    </option>
+                    {shown
+                      .filter((p) => p.id !== paper.id)
+                      .map((p) => (
+                        <option key={p.id} value={p.id}>
+                          #{p.id} ({p.year ?? "?"})
+                        </option>
+                      ))}
+                  </select>
+                )}
+              </div>
+            </li>
+          )
+        })}
+      </ul>
+
+      <div className="flex items-center justify-between gap-4">
+        <div className="flex items-center gap-2">
+          <button className="btn btn-primary btn-sm text-base" disabled={saving || assignments.length === 0} onClick={() => save()}>
+            {saving ? <span className="loading loading-spinner loading-xs" /> : "Save links"}
+          </button>
+          {saved && <span className="text-base text-success">Saved.</span>}
+          {error && <span className="text-base text-error">{error}</span>}
+        </div>
+        <button className="btn btn-accent btn-sm text-base" disabled={saving || assignments.length === 0} onClick={() => save(true)}>
+          Save and next step →
+        </button>
       </div>
 
       {manualOpen && (

@@ -445,7 +445,9 @@ export default async function GuidePage() {
 
                 <H3>Step 1 — Review</H3>
                 <p>
-                  Click an item's title to open its overview page in a new tab (your place in the workflow is kept).
+                  Click an item's title to open its overview page in a new tab (your place in the workflow is kept). Every item in every step also has an <Term>Open ↗</Term> button that opens it in a new window: the publisher's
+                  page if the item has a DOI, otherwise its own link, otherwise our page for it. Hover over the button to see
+                  which one it will open.
                 </p>
                 <Bullets>
                   <li>
@@ -469,20 +471,19 @@ export default async function GuidePage() {
                 <p>
                   For each item choose what it is: <Term>Stage 1 article</Term>, <Term>Stage 2 article</Term>,{" "}
                   <Term>Preprint</Term>, <Term>Supplemental materials</Term>, <Term>Duplicate of…</Term> another item in
-                  the group, <Term>Unlink (send back to review)</Term>, or <Term>Leave as-is</Term>. A sensible guess is
-                  pre-selected from an existing role, PCI RR's own classification, or the item's stage. You can also give
-                  the study a title (otherwise one is derived from its items).
+                  the group, <Term>Unlink (send back to review)</Term>, or <Term>Not tagged yet (leave as-is)</Term>, which changes nothing. A sensible guess is
+                  pre-selected from an existing role, PCI RR's own classification, the item's stage, or what its title says (for example "Stage 1 Registered Report: …").
                 </p>
                 <Bullets>
                   <li>
                     <Term>Save links</Term> puts everything you tagged into one study. Any item that was still pending is
-                    approved.
+                    approved. <Term>Save and next step</Term> does the same and then goes to Enrich.
                   </li>
                   <li>
                     <Term>Unlink</Term> takes an item out of its study, makes it a study of its own and returns it to pending
                     review, so it leaves the public site until someone approves it again.
                   </li>
-                  <li>When you are done, click <Term>Next step</Term> to go to Enrich.</li>
+                  <li>If there is nothing to save, click <Term>Next step</Term> to go to Enrich.</li>
                 </Bullets>
 
                 <H3>Step 3 — Enrich</H3>
@@ -502,6 +503,11 @@ export default async function GuidePage() {
                   <Term>Mark verified</Term> (or <Term>Mark all verified</Term>). Verified items get a badge on the public
                   site. Open science links and JMIR badge info are detected one item at a time from the item's own page
                   using its scan and badge buttons.
+                </p>
+                <p>
+                  At the bottom of this step, <Term>Study title</Term> lets you rename the study (otherwise the title comes
+                  from its Stage 1 article). It shows on the study page, the browse list and exports. It needs a saved study,
+                  so link the items in Step 2 first.
                 </p>
 
                 <H3>Finishing a group</H3>

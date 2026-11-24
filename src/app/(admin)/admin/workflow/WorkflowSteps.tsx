@@ -63,9 +63,9 @@ export function WorkflowSteps({
 
       <div>
         {step === 0 && <ReviewStep papers={papers} />}
-        {step === 1 && <LinkStep papers={papers} study={study} />}
+        {step === 1 && <LinkStep papers={papers} onNext={() => setStep(2)} />}
         {step === 2 && <EnrichStep papers={kept} />}
-        {step === 3 && <MetadataStep papers={kept} backHref={`${backBase}&step=metadata`} />}
+        {step === 3 && <MetadataStep papers={kept} backHref={`${backBase}&step=metadata`} study={study} />}
       </div>
 
       <div className="flex items-center justify-between gap-4">

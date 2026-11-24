@@ -25,7 +25,7 @@ export type LinkablePaper = {
 }
 
 const ROLE_OPTIONS = [
-  { value: "skip", label: "Leave as-is" },
+  { value: "skip", label: "Not tagged yet (leave as-is)" },
   ...STUDY_PAPER_ROLE_OPTIONS,
   { value: "unlink", label: "Unlink (send back to review)" },
   { value: "duplicate", label: "Duplicate of…" },

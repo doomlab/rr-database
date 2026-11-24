@@ -6,6 +6,7 @@ import { useState } from "react"
 import pullPaperData from "../../mutations/pullPaperData"
 import { NO_THROW, type GroupPaper } from "./types"
 import { LiveBadge } from "./Visibility"
+import { OpenItemButton } from "./OpenItemButton"
 
 
 type Source = "openalex" | "crossref"
@@ -106,6 +107,7 @@ export function EnrichStep({ papers }: { papers: GroupPaper[] }) {
               )}
             </div>
             <div className="flex items-center gap-2 shrink-0">
+              <OpenItemButton paper={paper} color="btn-accent" />
               {(["openalex", "crossref"] as const).map((source) => (
                 <button
                   key={source}

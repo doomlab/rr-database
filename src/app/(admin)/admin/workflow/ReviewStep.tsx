@@ -6,6 +6,7 @@ import { useState } from "react"
 import reviewPaper from "../../mutations/reviewPaper"
 import { NO_THROW, type GroupPaper } from "./types"
 import { LiveBadge } from "./Visibility"
+import { OpenItemButton } from "./OpenItemButton"
 
 
 const STATUS_BADGE: Record<string, string> = {
@@ -95,6 +96,7 @@ export function ReviewStep({ papers }: { papers: GroupPaper[] }) {
               </div>
             </div>
             <div className="flex items-center gap-2 shrink-0">
+              <OpenItemButton paper={paper} />
               <button
                 className="btn btn-success btn-sm text-base"
                 disabled={busyId === paper.id || paper.status === "APPROVED" || paper.status === "IMPORTED"}
