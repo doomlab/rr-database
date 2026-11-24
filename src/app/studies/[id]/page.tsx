@@ -10,6 +10,7 @@ import db from "db"
 import { studyTitle } from "src/lib/studyTitle"
 import { STUDY_PAPER_ROLE_LABELS } from "src/lib/studyPaperRoles"
 import { ButtonTip } from "../../components/ButtonTip"
+import { AddStudyItem } from "../../components/AddStudyItem"
 import { InfoTip } from "../../components/InfoTip"
 import { StudyTitleProvider, StudyTitle, EditTitleButton } from "../../components/StudyTitleEditor"
 
@@ -183,6 +184,8 @@ export default async function StudyDetailPage({
               />
             </span>
           </div>
+
+          {isAdmin && <AddStudyItem studyId={study.id} defaultRole={hasStage1 ? "PREPRINT" : "STAGE1_ARTICLE"} />}
         </div>
       </div>
     </div>
