@@ -719,7 +719,7 @@ export default async function GuidePage() {
                 <H2 id="admin-requests">Suggestions, fixes and reports</H2>
                 <p>
                   These all live on <Link href="/admin/fix-issues" className="link link-primary">Fix issues</Link>,
-                  along with the clean-up tools (exclude items removed from Zotero, backfill author ORCID IDs). The badge on
+                  along with the clean-up tools (clean up HTML in titles, exclude items removed from Zotero, backfill author ORCID IDs). The first two show a preview before anything is changed. The badge on
                   that menu item adds up everything waiting there.
                 </p>
                 <Bullets>

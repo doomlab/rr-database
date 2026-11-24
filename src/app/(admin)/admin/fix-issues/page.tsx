@@ -2,9 +2,10 @@ import db from "db"
 import { getBlitzContext } from "src/app/blitz-server"
 import { lastPipelineRun } from "src/lib/pipelineRuns"
 import { userHasOpenAlexApiKey } from "src/lib/apiKeyPool"
-import { WorkflowCard } from "../../components/WorkflowCard"
+import { LinkCard } from "../../components/LinkCard"
 import { RunCard } from "../../components/RunCard"
 import { RunAuthorMetaBackfillButton } from "../../components/RunAuthorMetaBackfillButton"
+import { CleanTitleEntitiesButton } from "../../components/CleanTitleEntitiesButton"
 import { RejectRemovedFromZoteroButton } from "../../components/RejectRemovedFromZoteroButton"
 
 export const metadata = { title: "Fix issues – Admin" }
@@ -36,66 +37,63 @@ export default async function FixIssuesPage() {
           <p className="text-base text-base-content/60">Reports, suggestions and corrections that people have sent in.</p>
         </div>
 
-        <WorkflowCard
+        <LinkCard
           title="User reports"
           description="Items users have reported as not being registered reports, or as having a problem. Look at each one and resolve or dismiss it."
           badge={reportsCount}
-        >
-          <a href="/admin/reports" className="btn btn-primary btn-sm text-base">
-            Go to user reports
-          </a>
-        </WorkflowCard>
+          href="/admin/reports"
+          label="Go to user reports"
+        />
 
-        <WorkflowCard
+        <LinkCard
           title="Article suggestions"
           description="Items users have suggested that aren't in the database yet. Review each one, correct anything before adding, and it flows straight into the review queue — or dismiss it without adding."
           badge={suggestionsCount}
-        >
-          <a href="/admin/suggestions" className="btn btn-primary btn-sm text-base">
-            Go to article suggestions
-          </a>
-        </WorkflowCard>
+          href="/admin/suggestions"
+          label="Go to article suggestions"
+        />
 
-        <WorkflowCard
+        <LinkCard
           title="Metadata fixes"
           description="Corrections users have suggested on an item's own page — wrong journal, garbled author names, missing links, etc. Review the whole record before applying, or dismiss the suggestion."
           badge={metadataEditCount}
-        >
-          <a href="/admin/metadata" className="btn btn-primary btn-sm text-base">
-            Go to metadata fixes
-          </a>
-        </WorkflowCard>
+          href="/admin/metadata"
+          label="Go to metadata fixes"
+        />
 
         <div className="mt-4">
           <h2 className="text-xl font-semibold">Clean up the data</h2>
           <p className="text-base text-base-content/60">One-off tools for fixing the records themselves.</p>
         </div>
 
+        <CleanTitleEntitiesButton
+          title="Clean up HTML in titles"
+          description={"Some titles came in with HTML codes such as &nbsp; or &amp; showing as text. This finds them and fixes the wording, and new imports are already cleaned. Preview shows what would change before anything is saved."}
+        />
+
         {isSuperAdmin && (
-          <WorkflowCard
+          <RejectRemovedFromZoteroButton
             title="Exclude items removed from Zotero"
             description="The Zotero pull only adds and updates, so items deleted from Zotero stay on the site. This lists the items that came from the library but are no longer in it. Confirming marks them Excluded (not deleted), so any of them can be restored from the Excluded list. Run it after the library has been cleaned up, then pull again."
-          >
-            <RejectRemovedFromZoteroButton />
-          </WorkflowCard>
+          />
         )}
 
-        <WorkflowCard
+        <RunCard
           title="Backfill author ORCID / OpenAlex IDs"
-          description="For items that already have an OpenAlex ID, re-checks their authors against OpenAlex and fills in ORCID/OpenAlex profile links wherever they're still missing — this is what powers the badges next to author names. Only fills in blanks, safe to re-run any time."
+          description="For items that already have an OpenAlex ID, re-checks their authors against OpenAlex and fills in ORCID/OpenAlex profile links wherever they're still missing. This is what powers the badges next to author names. Only fills in blanks, safe to re-run any time."
+          run={authorMetaBackfillRun}
+          buttonOnRight
         >
-          <RunCard title="Backfill author ORCID / OpenAlex IDs" description="Fills in blank author profile links." run={authorMetaBackfillRun} nested>
-            {hasOpenAlexApiKey ? (
-              <RunAuthorMetaBackfillButton />
-            ) : (
-              <div className="tooltip" data-tip="Add an OpenAlex key on your Account page to enable this">
-                <button type="button" className="btn btn-accent btn-sm text-base" disabled>
-                  Backfill ORCID/OpenAlex IDs
-                </button>
-              </div>
-            )}
-          </RunCard>
-        </WorkflowCard>
+          {hasOpenAlexApiKey ? (
+            <RunAuthorMetaBackfillButton />
+          ) : (
+            <div className="tooltip" data-tip="Add an OpenAlex key on your Account page to enable this">
+              <button type="button" className="btn btn-accent btn-sm text-base" disabled>
+                Backfill ORCID/OpenAlex IDs
+              </button>
+            </div>
+          )}
+        </RunCard>
       </div>
     </div>
   )
