@@ -3,6 +3,7 @@ import { getBlitzContext } from "src/app/blitz-server"
 import { lastZoteroRun } from "src/lib/pipelineRuns"
 import { RunImportButton } from "../../components/RunImportButton"
 import { RunCard } from "../../components/RunCard"
+import { RejectRemovedFromZoteroButton } from "../../components/RejectRemovedFromZoteroButton"
 
 export const metadata = { title: "Database – Admin" }
 
@@ -31,6 +32,14 @@ export default async function DatabasePage() {
           run={productionRun}
         >
           <RunImportButton target="production" label="Pull from Zotero" />
+        </RunCard>
+
+        <RunCard
+          title="Exclude items removed from Zotero"
+          description="The pull above only adds and updates, so items deleted from Zotero stay on the site. This checks the production library and lists the items that came from it but are no longer in it. Confirming marks them Excluded (not deleted), so any of them can be restored from the Excluded list. Run it after the library has been cleaned up, then pull again."
+          run={null}
+        >
+          <RejectRemovedFromZoteroButton />
         </RunCard>
 
         <RunCard

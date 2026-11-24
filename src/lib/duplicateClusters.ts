@@ -96,41 +96,36 @@ export function clusterPapersByTitle<T extends ClusterablePaper>(
     }
   }
 
-  // Union-find over papers that share enough significant words.
-  const parent = new Map<number, number>()
-  const find = (id: number): number => {
-    let root = id
-    while (parent.get(root) !== undefined && parent.get(root) !== root) root = parent.get(root)!
-    parent.set(id, root)
-    return root
-  }
-  const union = (a: number, b: number) => {
-    const ra = find(a)
-    const rb = find(b)
-    if (ra !== rb) parent.set(ra, rb)
-  }
-  for (const paper of papers) parent.set(paper.id, paper.id)
-
+  // Each paper joins the cluster whose first paper (its "seed") its title best
+  // matches, or starts a new one. Matching against the seed rather than any
+  // member stops chains: A~B and B~C used to put A and C together even when
+  // they share almost nothing, which snowballed into huge groups of loosely
+  // related papers.
+  const seedOf = new Map<number, number>()
   for (const paper of papers) {
     const paperWords = words.get(paper.id)!
     const candidateIds = new Set<number>()
     for (const word of paperWords) {
       for (const otherId of wordIndex.get(word) ?? []) {
-        if (otherId !== paper.id) candidateIds.add(otherId)
+        if (otherId !== paper.id && seedOf.get(otherId) === otherId) candidateIds.add(otherId)
       }
     }
-    for (const otherId of candidateIds) {
-      const otherWords = words.get(otherId)!
-      const threshold = requiredThreshold(paperWords.size, otherWords.size)
-      if (diceCoefficient(paperWords, otherWords) >= threshold) {
-        union(paper.id, otherId)
+    let bestSeed = paper.id
+    let bestScore = 0
+    for (const seedId of candidateIds) {
+      const seedWords = words.get(seedId)!
+      const score = diceCoefficient(paperWords, seedWords)
+      if (score >= requiredThreshold(paperWords.size, seedWords.size) && score > bestScore) {
+        bestSeed = seedId
+        bestScore = score
       }
     }
+    seedOf.set(paper.id, bestSeed)
   }
 
   const groups = new Map<number, T[]>()
   for (const paper of papers) {
-    const root = find(paper.id)
+    const root = seedOf.get(paper.id)!
     const group = groups.get(root)
     if (group) group.push(paper)
     else groups.set(root, [paper])

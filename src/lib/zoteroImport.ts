@@ -10,7 +10,7 @@ type ZoteroItem = {
   data: Record<string, any>
 }
 
-async function zoteroGetAll(path: string, apiKey: string, params: Record<string, string> = {}) {
+export async function zoteroGetAll(path: string, apiKey: string, params: Record<string, string> = {}) {
   const results: ZoteroItem[] = []
   let start = 0
   for (;;) {
