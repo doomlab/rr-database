@@ -22,7 +22,7 @@ export default async function SuggestionDetailPage({
 
   return (
     <div>
-      <a href="/admin/suggestions" className="text-base text-base-content/50 hover:text-base-content mb-6 inline-block">
+      <a href="/admin/suggestions" className="text-base text-base-content/60 hover:text-base-content mb-6 inline-block">
         ← Back to article suggestions
       </a>
 

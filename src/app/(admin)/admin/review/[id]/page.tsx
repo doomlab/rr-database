@@ -61,7 +61,7 @@ export default async function ReviewDetailPage({
     <div>
       <a
         href="/admin/review"
-        className="text-sm text-base-content/50 hover:text-base-content mb-6 inline-block"
+        className="text-base text-base-content/60 hover:text-base-content mb-6 inline-block"
       >
         ← Back to queue
       </a>

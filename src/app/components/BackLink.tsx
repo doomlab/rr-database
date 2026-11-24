@@ -28,7 +28,7 @@ export function BackLink({ fallbackHref, children }: { fallbackHref: string; chi
     <a
       href={fallbackHref}
       onClick={handleClick}
-      className="text-sm text-base-content/50 hover:text-base-content mb-6 inline-block"
+      className="text-base text-base-content/60 hover:text-base-content mb-6 inline-block"
     >
       {children}
     </a>

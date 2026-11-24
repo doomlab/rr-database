@@ -98,7 +98,7 @@ export default async function MetadataSuggestionDetailPage({
     <div>
       <a
         href="/admin/metadata"
-        className="text-base text-base-content/50 hover:text-base-content mb-6 inline-block"
+        className="text-base text-base-content/60 hover:text-base-content mb-6 inline-block"
       >
         ← Back to metadata edit suggestions
       </a>

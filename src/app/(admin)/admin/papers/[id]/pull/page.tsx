@@ -52,7 +52,7 @@ export default async function PullDataPage({
     if (!hasKey) {
       return (
         <div>
-          <a href={backHref} className="text-sm text-base-content/50 hover:text-base-content mb-6 inline-block">
+          <a href={backHref} className="text-base text-base-content/60 hover:text-base-content mb-6 inline-block">
             ← Back to article
           </a>
           <h1 className="text-2xl font-bold leading-snug mb-1">Add your OpenAlex API key first</h1>
@@ -141,7 +141,7 @@ export default async function PullDataPage({
 
   return (
     <div>
-      <a href={backHref} className="text-sm text-base-content/50 hover:text-base-content mb-6 inline-block">
+      <a href={backHref} className="text-base text-base-content/60 hover:text-base-content mb-6 inline-block">
         ← Back to article
       </a>
 
