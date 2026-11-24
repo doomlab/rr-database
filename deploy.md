@@ -182,6 +182,35 @@ admin directly in the database (via pgAdmin, or `docker compose exec db psql`):
 UPDATE "User" SET role = 'SUPER_ADMIN' WHERE email = 'you@example.org';
 ```
 
+## One-off: re-queue public items that are in no study
+
+Before the Unlink option started sending items back to review, unlinking left
+an item approved but in no study, so it vanished from the public browse list.
+[scripts/requeue_unlinked_items.sql](scripts/requeue_unlinked_items.sql) finds
+those items and puts each back in pending review in a solo study of its own.
+Run it once on the server, after deploying:
+
+```bash
+cd ~/rr-database   # wherever the repo is on the server
+git pull
+
+# Step 1: look at what it would touch (read-only; copy only the SELECT)
+docker compose --env-file .env.docker exec -T db psql -U rr_database -d rr_database <<'SQL'
+SELECT p.id, p.status, p.year, left(p.title, 90) AS title
+FROM "Paper" p
+WHERE p."canonicalPaperId" IS NULL AND p.status IN ('IMPORTED','APPROVED')
+  AND NOT EXISTS (SELECT 1 FROM "StudyPaper" sp WHERE sp."paperId" = p.id);
+SQL
+
+# Step 2: apply it (whole file; the SELECT in it just prints the list again)
+docker compose --env-file .env.docker exec -T db psql -U rr_database -d rr_database -v ON_ERROR_STOP=1 < scripts/requeue_unlinked_items.sql
+```
+
+To rehearse without changing anything, change the final `COMMIT;` in the file to
+`ROLLBACK;` first. The file needs a `SUPER_ADMIN` user to attribute the history
+entries to. Afterwards the items appear in the admin workflow queue to be
+approved again (or rejected).
+
 ## Redeploying after a code change
 
 ```bash

@@ -27,7 +27,7 @@ export type LinkablePaper = {
 const ROLE_OPTIONS = [
   { value: "skip", label: "Leave as-is" },
   ...STUDY_PAPER_ROLE_OPTIONS,
-  { value: "unlink", label: "Unlink from study" },
+  { value: "unlink", label: "Unlink (send back to review)" },
   { value: "duplicate", label: "Duplicate of…" },
 ] as const
 

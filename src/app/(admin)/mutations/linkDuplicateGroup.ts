@@ -104,10 +104,32 @@ export default resolver.pipe(
       })
     }
 
+    // Unlinking sends the item back for another decision: it leaves its study,
+    // goes back to PENDING_REVIEW (so it drops off the public site until
+    // someone approves it again), gets a solo study of its own, and re-enters
+    // the workflow queue (any Done/Later/Question marker is cleared).
     for (const a of unlinked) {
       await detachFromCurrentStudy(a.paperId)
+      const solo = await db.study.create({ data: {} })
+      await db.studyPaper.create({ data: { studyId: solo.id, paperId: a.paperId, role: "OTHER" } })
+      await db.paper.update({
+        where: { id: a.paperId },
+        data: {
+          status: "PENDING_REVIEW",
+          reviewedById: null,
+          reviewedAt: null,
+          workflowMarker: null,
+          workflowMarkedById: null,
+          workflowMarkedAt: null,
+        },
+      })
       await db.paperEditHistory.create({
-        data: { paperId: a.paperId, userId, source: "link", summary: "Unlinked from study" },
+        data: {
+          paperId: a.paperId,
+          userId,
+          source: "link",
+          summary: "Unlinked from study and sent back to pending review",
+        },
       })
     }
 

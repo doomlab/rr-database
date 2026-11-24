@@ -361,7 +361,7 @@ export default async function GuidePage() {
                 <p>
                   For each item choose what it is: <Term>Stage 1 article</Term>, <Term>Stage 2 article</Term>,{" "}
                   <Term>Preprint</Term>, <Term>Supplemental materials</Term>, <Term>Duplicate of…</Term> another item in
-                  the group, <Term>Unlink from study</Term>, or <Term>Leave as-is</Term>. Saving links everything into one
+                  the group, <Term>Unlink (send back to review)</Term>, or <Term>Leave as-is</Term>. Unlinking takes the item out of its study, makes it a study of its own and returns it to pending review, so it leaves the public site until someone approves it again. Saving links everything into one
                   study. A sensible guess is pre-selected from an existing role, PCI RR's own classification, or the
                   item's stage. You can also give the study a title (otherwise one is derived from its items).
                 </p>
