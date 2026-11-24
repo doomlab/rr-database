@@ -1,6 +1,7 @@
 import { Fragment } from "react"
 import { notFound } from "next/navigation"
 import { Navbar } from "../../components/Navbar"
+import { BackLink } from "../../components/BackLink"
 import { FavoriteButton } from "../../components/FavoriteButton"
 import { PaperRecordSection } from "../../components/PaperRecordSection"
 import { userHasOpenAlexApiKey } from "src/lib/apiKeyPool"
@@ -95,9 +96,7 @@ export default async function StudyDetailPage({
 
       <div className="w-full px-10 py-10">
         <div className="w-[90%] mx-auto">
-          <a href="/" className="text-sm text-base-content/50 hover:text-base-content mb-6 inline-block">
-            ← Back to browse
-          </a>
+          <BackLink fallbackHref="/">← Back</BackLink>
 
           <div className="flex items-start justify-between gap-4 mb-3">
             {isAdmin ? (
