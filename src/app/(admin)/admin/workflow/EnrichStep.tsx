@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation"
 import { useState } from "react"
 import pullPaperData from "../../mutations/pullPaperData"
 import { NO_THROW, type GroupPaper } from "./types"
+import { LiveBadge } from "./Visibility"
 
 
 type Source = "openalex" | "crossref"
@@ -74,8 +75,8 @@ export function EnrichStep({ papers }: { papers: GroupPaper[] }) {
 
   return (
     <div className="flex flex-col gap-4">
-      <p className="text-base text-base-content/60">
-        Pull fresh data from OpenAlex or Crossref. It's saved straight away (and logged in each
+      <p className="text-base text-base-content/60 flex flex-wrap items-center gap-2">
+        <LiveBadge /> Pull fresh data from OpenAlex or Crossref. It's saved straight away (and logged in each
         item's history); check the results in the Metadata step.
       </p>
       <ul className="flex flex-col divide-y divide-base-300">

@@ -4,7 +4,8 @@ import { useMutation } from "@blitzjs/rpc"
 import { useRouter } from "next/navigation"
 import { useState } from "react"
 import reviewPaper from "../../mutations/reviewPaper"
-import { NO_THROW, type GroupPaper } from "./types"
+import { NO_THROW, REJECTED_STATUSES, type GroupPaper } from "./types"
+import { LiveBadge } from "./Visibility"
 
 
 const STATUS_BADGE: Record<string, string> = {
@@ -15,7 +16,9 @@ const STATUS_BADGE: Record<string, string> = {
   DUPLICATE: "badge-neutral",
 }
 
-export function ReviewStep({ papers }: { papers: GroupPaper[] }) {
+// onDone fires once every item has been decided and at least one was kept, so the
+// workflow moves on to Link by itself.
+export function ReviewStep({ papers, onDone }: { papers: GroupPaper[]; onDone?: () => void }) {
   const [review] = useMutation(reviewPaper, NO_THROW)
   const router = useRouter()
   const [busyId, setBusyId] = useState<number | null>(null)
@@ -27,6 +30,10 @@ export function ReviewStep({ papers }: { papers: GroupPaper[] }) {
     try {
       await review({ paperId, decision })
       router.refresh()
+      const others = papers.filter((p) => p.id !== paperId)
+      const stillPending = others.some((p) => p.status === "PENDING_REVIEW")
+      const keptCount = others.filter((p) => !REJECTED_STATUSES.includes(p.status)).length + (decision === "APPROVED" ? 1 : 0)
+      if (!stillPending && keptCount > 0) onDone?.()
     } catch (e: any) {
       setError(e.message ?? "Could not save the decision")
     } finally {
@@ -36,9 +43,11 @@ export function ReviewStep({ papers }: { papers: GroupPaper[] }) {
 
   return (
     <div className="flex flex-col gap-4">
-      <p className="text-base text-base-content/60">
-        Approve the items that are real registered reports and reject the rest. Rejected items
-        drop out of the later steps.
+      <p className="text-base text-base-content/60 flex flex-wrap items-center gap-2">
+        <LiveBadge /> Approve the items that are real registered reports and reject the rest.
+        Approving puts an item on the public site straight away; rejecting keeps it off the main
+        list. Rejected items drop out of the later steps, and once every item is decided you move
+        on to Link automatically.
       </p>
       <ul className="flex flex-col divide-y divide-base-300">
         {papers.map((paper) => (

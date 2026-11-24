@@ -405,6 +405,12 @@ export default async function GuidePage() {
                   </li>
                 </Bullets>
                 <Note>
+                  A green <Term>Live on site</Term> badge marks changes the public sees right away (approving, linking,
+                  enriching, editing and verifying); a grey <Term>Internal</Term> badge marks things only admins see (the
+                  Done / Later / Question marker and its note). Review moves on to Link by itself once every item is
+                  decided, and saving links moves on to Enrich.
+                </Note>
+                <Note>
                   You can move between steps with the step bar or Back / Next at any time. The current step is kept in the
                   address, so refreshing the page won't send you back to Review.
                 </Note>

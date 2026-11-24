@@ -9,6 +9,7 @@ import addPaperToWorkflow from "../../mutations/addPaperToWorkflow"
 import { STUDY_PAPER_ROLE_OPTIONS } from "src/lib/studyPaperRoles"
 import setStudyTitle from "../../mutations/setStudyTitle"
 import { NO_THROW, type GroupPaper, type GroupStudy } from "./types"
+import { LiveBadge } from "./Visibility"
 
 
 type Choice = string // a StudyPaperRole, "skip", "unlink" or "duplicate"
@@ -33,7 +34,8 @@ function suggestedChoice(p: GroupPaper): Choice {
 
 type SearchHit = { id: number; title: string; year: number | null; doi: string | null }
 
-export function LinkStep({ papers, study }: { papers: GroupPaper[]; study: GroupStudy | null }) {
+// onSaved fires after links are saved, moving the workflow on to Enrich.
+export function LinkStep({ papers, study, onSaved }: { papers: GroupPaper[]; study: GroupStudy | null; onSaved?: () => void }) {
   const [link] = useMutation(linkDuplicateGroup, NO_THROW)
   const [search] = useMutation(searchPapersToLink, NO_THROW)
   const [add] = useMutation(addPaperToWorkflow, NO_THROW)
@@ -155,6 +157,7 @@ export function LinkStep({ papers, study }: { papers: GroupPaper[]; study: Group
       setExtra([])
       setChoices({})
       router.refresh()
+      onSaved?.()
     } catch (e: any) {
       setError(e.message ?? "Save failed")
     } finally {
@@ -164,10 +167,11 @@ export function LinkStep({ papers, study }: { papers: GroupPaper[]; study: Group
 
   return (
     <div className="flex flex-col gap-4">
-      <p className="text-base text-base-content/60">
-        Tag each item as Stage 1, Stage 2, materials and so on. Saving puts everything you tag into
-        one study (and approves any that were still pending). You can also pull in an item that
-        wasn't clustered, by searching or adding it directly.
+      <p className="text-base text-base-content/60 flex flex-wrap items-center gap-2">
+        <LiveBadge /> Tag each item as Stage 1, Stage 2, materials and so on. Saving puts everything
+        you tag into one study page on the public site (and approves any that were still pending),
+        then moves you on to Enrich. You can also pull in an item that wasn't clustered, by
+        searching or adding it directly.
       </p>
 
       <ul className="flex flex-col divide-y divide-base-300">

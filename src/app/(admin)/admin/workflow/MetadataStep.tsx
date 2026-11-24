@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation"
 import { useState } from "react"
 import verifyPaperMetadata from "../../mutations/verifyPaperMetadata"
 import { NO_THROW, type GroupPaper } from "./types"
+import { LiveBadge } from "./Visibility"
 
 
 export function MetadataStep({ papers, backHref }: { papers: GroupPaper[]; backHref: string }) {
@@ -30,8 +31,9 @@ export function MetadataStep({ papers, backHref }: { papers: GroupPaper[]; backH
 
   return (
     <div className="flex flex-col gap-4">
-      <p className="text-base text-base-content/60">
-        Check each item's metadata (tags, open science links, authors), then mark it verified.
+      <p className="text-base text-base-content/60 flex flex-wrap items-center gap-2">
+        <LiveBadge /> Check each item's metadata (tags, open science links, authors), then mark it
+        verified. Edits and the verified badge both show on the public site.
       </p>
       <ul className="flex flex-col divide-y divide-base-300">
         {papers.map((paper) => (

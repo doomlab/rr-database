@@ -6,6 +6,7 @@ import type { Route } from "next"
 import { useState } from "react"
 import setWorkflowMarker from "../../mutations/setWorkflowMarker"
 import { MARKER_LABELS, type GroupPaper, type Marker, NO_THROW } from "./types"
+import { InternalBadge } from "./Visibility"
 
 
 export function FinishBar({
@@ -45,7 +46,9 @@ export function FinishBar({
 
   return (
     <div className="rounded-lg bg-base-200 p-4 flex flex-col gap-3">
-      <h3 className="font-semibold text-base">Finish this group</h3>
+      <h3 className="font-semibold text-base flex flex-wrap items-center gap-2">
+        Finish this group <InternalBadge>Internal: marker and note</InternalBadge>
+      </h3>
       {marker && (
         <p className="text-base">
           Currently marked <span className="badge badge-info">{MARKER_LABELS[marker]}</span>
