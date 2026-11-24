@@ -53,7 +53,7 @@ export default async function LinkDuplicatesPage({
         Items with matching titles are grouped below automatically — probably the same
         registered report indexed more than once (a preprint, the published article, a
         registration link). Mark each one as Stage 1, Stage 2, preprint, supplemental materials, or a duplicate of
-        another paper in the group to link them into one Study. Search for a specific paper to
+        another item in the group to link them into one Study. Search for a specific item to
         edit or unlink a study it's already part of, even if it wasn't grouped automatically.
       </p>
 

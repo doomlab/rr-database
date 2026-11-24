@@ -82,7 +82,7 @@ export default async function AdminHomePage() {
             <div className="flex flex-col gap-4">
               <RunCard
                 title="Pull production Zotero library"
-                description="Re-syncs every item in the production library as IMPORTED (already-confirmed) papers, including their manually-added tags, stage (from Stage 1/Stage 2 tags), notes, and Related-item links (auto-linked into Studies). Safe to re-run any time — it only fills in fields that are still blank and adds any new tags, so it won't undo enrichment or edits already made in the app. With thousands of items, a full pull can take a while."
+                description="Re-syncs every item in the production library as IMPORTED (already-confirmed) items, including their manually-added tags, stage (from Stage 1/Stage 2 tags), notes, and Related-item links (auto-linked into Studies). Safe to re-run any time — it only fills in fields that are still blank and adds any new tags, so it won't undo enrichment or edits already made in the app. With thousands of items, a full pull can take a while."
                 run={productionRun}
                 nested
               >

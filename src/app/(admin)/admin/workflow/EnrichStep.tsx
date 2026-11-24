@@ -130,7 +130,7 @@ export function EnrichStep({ papers }: { papers: GroupPaper[] }) {
       {papers.length > 1 && (
         <div className="flex items-center gap-2">
           <button className="btn btn-accent btn-sm text-base whitespace-nowrap" disabled={running !== null} onClick={pullAll}>
-            Pull everything for all papers
+            Pull everything for all items
           </button>
         </div>
       )}

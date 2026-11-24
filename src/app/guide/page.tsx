@@ -320,7 +320,7 @@ export default async function GuidePage() {
                   </table>
                 </div>
                 <p>
-                  The numbers in the menu count different things: groups for work by group, papers for work by step. They
+                  The numbers in the menu count different things: groups for work by group, items for work by step. They
                   won't match. A group finished on a step page stays in the group Queue until someone marks it Done there.
                 </p>
 
@@ -411,7 +411,7 @@ export default async function GuidePage() {
                   Open <Link href="/admin/workflow" className="link link-primary">Admin → One group at a time</Link>. A <Term>group</Term> is a cluster of
                   items with similar titles (usually one registered report indexed several times) or, once linked, the
                   study they share. The same title matching is used on the Link items page, so both show the same groups.
-                  Each item is compared with the first item in its group, so loosely related papers don't get chained
+                  Each item is compared with the first item in its group, so loosely related items don't get chained
                   together. You take a single group through all four steps, then move to the next.
                 </p>
 
@@ -462,7 +462,7 @@ export default async function GuidePage() {
                 <H3>Step 3 — Enrich</H3>
                 <p>
                   Each item shows whether OpenAlex and Crossref have been pulled. Use <Term>Pull OpenAlex</Term> and{" "}
-                  <Term>Pull Crossref</Term> per item, or <Term>Pull everything for all papers</Term>. Items with no DOI
+                  <Term>Pull Crossref</Term> per item, or <Term>Pull everything for all items</Term>. Items with no DOI
                   are looked up by title instead, and only a confident match (about 80% or better, with a publication year
                   within one year) is used; the DOI it found is filled in and noted in the item's edit history. If nothing
                   matches confidently, the pull says so and changes nothing. Pulls are saved immediately and logged in each
@@ -543,7 +543,7 @@ export default async function GuidePage() {
                   <li>
                     <Link href="/admin/enrich" className="link link-primary">Enrich</Link> — confirmed items that still need data
                     pulled from OpenAlex or Crossref, 25 to a page. Use the per-item Pull buttons, or{" "}
-                    <Term>Pull everything for all papers</Term> to run the whole page. An item leaves the list once both
+                    <Term>Pull everything for all items</Term> to run the whole page. An item leaves the list once both
                     sources have been tried.
                   </li>
                   <li>
@@ -692,8 +692,9 @@ export default async function GuidePage() {
                 <p>These are under <Term>Manage</Term> in the Admin menu.</p>
                 <Bullets>
                   <li>
-                    <Link href="/admin/stats" className="link link-primary">Stats</Link> — items by status, how much Stage 1/Stage 2 linking is left, and
-                    what is waiting in each admin queue.
+                    <Link href="/admin/stats" className="link link-primary">Stats</Link> — the number of items and studies and how many are pending, public (approved or imported), excluded or duplicate, and how they break down into studies; the groups in each
+                    workflow view (Queue, In progress, Later, Question, Done), what is waiting in each step, and the open
+                    requests under Fix issues. The cards link to the matching pages.
                   </li>
                   <li>
                     <Link href="/admin/users" className="link link-primary">Users</Link> — everyone with an account. Only super admins can change roles.

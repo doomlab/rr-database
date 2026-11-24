@@ -56,7 +56,7 @@ export function ScanPaperPdfButton({
     <>
       {hasPdfUrl ? (
         <div className="dropdown">
-          <ButtonTip tip="Scan the paper's PDF for links to open data, code and materials">
+          <ButtonTip tip="Scan the item's PDF for links to open data, code and materials">
             <button tabIndex={0} type="button" className="btn btn-success btn-md text-base" disabled={isRunning}>
               {isRunning ? <span className="loading loading-spinner loading-xs" /> : "Scan PDF ▾"}
             </button>

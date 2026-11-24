@@ -154,7 +154,7 @@ export default async function PullDataPage({
         <p className="text-base text-warning mb-6">
           This item has no DOI, so it was matched by title to "{fetched.matchedByTitle.title}" (
           {Math.round(fetched.matchedByTitle.score * 100)}% match) and its DOI is filled in below.
-          Check that it's the right paper before saving.
+          Check that it's the right item before saving.
         </p>
       )}
 
