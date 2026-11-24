@@ -22,6 +22,7 @@ const ADMIN_SECTIONS: Section[] = [
   { id: "admin-discover", title: "2. Add new items" },
   { id: "admin-workflow", title: "3. One group at a time" },
   { id: "admin-stages", title: "The separate queue pages" },
+  { id: "admin-counts", title: "When things are marked off" },
   { id: "admin-item", title: "Admin buttons on an item" },
   { id: "admin-requests", title: "Suggestions, fixes and reports" },
   { id: "admin-people", title: "Users, roles and stats" },
@@ -545,6 +546,90 @@ export default async function GuidePage() {
                     verified. It also hosts <Term>Backfill author ORCID / OpenAlex IDs</Term> (needs an OpenAlex key),
                     which fills in blank author profile links for items that have an OpenAlex ID. Only blanks are
                     filled, so it is safe to re-run.
+                  </li>
+                </Bullets>
+
+                <H2 id="admin-counts">When things are marked off</H2>
+                <p>
+                  Each badge counts what is still waiting, and something leaves the count when a specific thing happens to it.
+                  Nothing is marked off just because time has passed.
+                </p>
+                <div className="overflow-x-auto my-4">
+                  <table className="table table-zebra text-base">
+                    <thead>
+                      <tr className="text-base">
+                        <th>Badge</th>
+                        <th>Counts</th>
+                        <th>Marked off when</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <td className="font-semibold">One group at a time</td>
+                        <td>Groups not yet marked Done (Queue, In progress, Later and Question together)</td>
+                        <td>Someone presses <Term>Done</Term> on the group. Nothing else does it, not even finishing every step on a step page.</td>
+                      </tr>
+                      <tr>
+                        <td className="font-semibold">Review queue</td>
+                        <td>Items with Pending review status</td>
+                        <td>The item is approved or rejected, from either the Review step or the Review queue.</td>
+                      </tr>
+                      <tr>
+                        <td className="font-semibold">Link items</td>
+                        <td>Groups of similar titles that nobody has linked yet</td>
+                        <td>
+                          Someone saves a link on it (a role or Duplicate), or the group is marked Done. Items already in
+                          a study with two or more items aren't counted. An unlinked item counts again.
+                        </td>
+                      </tr>
+                      <tr>
+                        <td className="font-semibold">Enrich</td>
+                        <td>Confirmed items with a source still to pull</td>
+                        <td>OpenAlex has been fetched and, if the item has a DOI, Crossref has been tried (even if it found nothing).</td>
+                      </tr>
+                      <tr>
+                        <td className="font-semibold">Metadata review</td>
+                        <td>Confirmed items whose metadata isn't verified</td>
+                        <td>Someone clicks <Term>Mark metadata verified</Term> on the item.</td>
+                      </tr>
+                      <tr>
+                        <td className="font-semibold">User reports, Article suggestions</td>
+                        <td>Unresolved reports and suggestions</td>
+                        <td>An admin resolves or dismisses each one.</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+
+                <H3>Why the badges don't match</H3>
+                <Bullets>
+                  <li>
+                    <Term>Groups versus items.</Term> One group at a time and Link items count groups; Review queue, Enrich
+                    and Metadata review count individual items. A group of five items is 1 in the first two and up to 5 in
+                    the others.
+                  </li>
+                  <li>
+                    <Term>The group workflow has its own marker.</Term> Finishing every step on the step pages doesn't mark
+                    a group Done, so it stays in the group Queue or In progress until someone presses Done there. Marking a
+                    group Done does hide it from Link items, but it doesn't verify metadata or pull data.
+                  </li>
+                  <li>
+                    <Term>Each step watches a different fact.</Term> Review looks at the item's status, Link at whether a
+                    link was saved, Enrich at whether the sources were pulled, and Metadata at the verified flag. An item can be
+                    done in one and still waiting in another, which is normal.
+                  </li>
+                  <li>
+                    <Term>Imported items count too.</Term> Items that came from Zotero are already public, but they still sit
+                    in the group Queue, Link items, Enrich and Metadata review until someone works through them. That's why
+                    those numbers are in the thousands.
+                  </li>
+                  <li>
+                    <Term>Counts can move after a change.</Term> Linking merges groups, unlinking sends an item back to
+                    Pending review and into the Review queue, and rejecting an item removes it from every count.
+                  </li>
+                  <li>
+                    <Term>A stale number.</Term> Badges are worked out each time a page loads, so refresh if one looks out of
+                    date after you've just finished something.
                   </li>
                 </Bullets>
 
