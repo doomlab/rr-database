@@ -12,6 +12,7 @@ import { studyTitle } from "src/lib/studyTitle"
 import { STUDY_PAPER_ROLE_LABELS } from "src/lib/studyPaperRoles"
 import { ButtonTip } from "../../components/ButtonTip"
 import { AddStudyItem } from "../../components/AddStudyItem"
+import { RejectStudyButton } from "../../components/ReviewActions"
 import { InfoTip } from "../../components/InfoTip"
 import { StudyTitleProvider, StudyTitle, EditTitleButton } from "../../components/StudyTitleEditor"
 
@@ -149,6 +150,7 @@ export default async function StudyDetailPage({
                         <>
                           <EditTitleButton />
                           <AddStudyItem studyId={study.id} defaultRole={addItemDefaultRole} />
+                          <RejectStudyButton studyId={study.id} itemCount={study.papers.length} />
                         </>
                       ) : undefined
                     }

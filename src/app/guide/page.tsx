@@ -415,6 +415,23 @@ export default async function GuidePage() {
                   address, so refreshing the page won't send you back to Review.
                 </Note>
 
+                <H3>Rejecting and restoring</H3>
+                <Bullets>
+                  <li>
+                    <Term>Reject one item</Term>: the Review step (or the Review queue). It moves to the Excluded list;
+                    nothing is deleted.
+                  </li>
+                  <li>
+                    <Term>Reject study</Term>: a button in the Admin row on a study page. It rejects every item in the
+                    study at once and removes the study from the public site.
+                  </li>
+                  <li>
+                    <Term>Restore to queue</Term> / <Term>Restore and approve</Term>: buttons in the Admin row on an
+                    excluded item's page. The first puts it back in the review queue; the second approves it straight
+                    away.
+                  </li>
+                </Bullets>
+
                 <H2 id="admin-stages">The separate queue pages</H2>
                 <p>
                   Each step of the workflow also has a page that works across every item, useful for bulk jobs:

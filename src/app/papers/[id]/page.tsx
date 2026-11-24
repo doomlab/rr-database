@@ -2,6 +2,7 @@ import { notFound, redirect } from "next/navigation"
 import { Navbar } from "../../components/Navbar"
 import { BackLink } from "../../components/BackLink"
 import { AddStudyItem } from "../../components/AddStudyItem"
+import { RestorePaperButtons } from "../../components/ReviewActions"
 import { PaperFavoriteButton } from "../../components/PaperFavoriteButton"
 import { PaperRecordSection } from "../../components/PaperRecordSection"
 import { userHasOpenAlexApiKey } from "src/lib/apiKeyPool"
@@ -88,6 +89,8 @@ export default async function PaperDetailPage({ params }: { params: Promise<{ id
               <span className="badge badge-error">Excluded</span>
             ) : paper.status === "IMPORTED" || paper.status === "APPROVED" ? (
               isAdmin && <span className="badge badge-warning">Not in a study yet</span>
+            ) : paper.status === "DUPLICATE" ? (
+              <span className="badge badge-neutral">Duplicate</span>
             ) : (
               <span className="badge badge-warning">Pending review</span>
             )}
@@ -102,7 +105,9 @@ export default async function PaperDetailPage({ params }: { params: Promise<{ id
               roleLabel={tabLabel}
               showRoleLabel={false}
               adminStudyActions={
-                isAdmin && paper.status !== "REJECTED" ? (
+                isAdmin && (paper.status === "REJECTED" || paper.status === "DUPLICATE") ? (
+                  <RestorePaperButtons paperId={paper.id} />
+                ) : isAdmin ? (
                   <AddStudyItem
                     studyId={paper.studyPaper?.studyId}
                     anchor={{
