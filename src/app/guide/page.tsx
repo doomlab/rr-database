@@ -487,14 +487,22 @@ export default async function GuidePage() {
                 </Bullets>
 
                 <H3>Step 3 — Enrich</H3>
-                <p>
-                  Each item shows whether OpenAlex and Crossref have been pulled. Use <Term>Pull OpenAlex</Term> and{" "}
-                  <Term>Pull Crossref</Term> per item, or <Term>Pull everything for all items</Term>. Items with no DOI
-                  are looked up by title instead, and only a confident match (about 80% or better, with a publication year
-                  within one year) is used; the DOI it found is filled in and noted in the item's edit history. If nothing
-                  matches confidently, the pull says so and changes nothing. Pulls are saved immediately and logged in each
-                  item's edit history. "No match" means the source was queried and found nothing.
-                </p>
+                <p>Each item shows whether OpenAlex and Crossref have been pulled.</p>
+                <Bullets>
+                  <li>
+                    <Term>Pull OpenAlex</Term> and <Term>Pull Crossref</Term> work on one item at a time;{" "}
+                    <Term>Pull everything for all items</Term> runs the whole group.
+                  </li>
+                  <li>
+                    Items with no DOI are looked up by title instead. Only a confident match (about 80% or better, with a
+                    publication year within one year) is used; the DOI it found is filled in and noted in the item's edit
+                    history. If nothing matches confidently, the pull says so and changes nothing.
+                  </li>
+                  <li>Pulls are saved immediately and logged in each item's edit history.</li>
+                  <li>"No match" means the source was queried and found nothing.</li>
+                  <li>Crossref needs a DOI, so its button is greyed out for items without one.</li>
+                  <li>When you are done, click <Term>Next step</Term> to go to Metadata.</li>
+                </Bullets>
 
                 <H3>Step 4 — Metadata</H3>
                 <p>

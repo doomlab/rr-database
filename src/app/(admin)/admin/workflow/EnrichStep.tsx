@@ -76,10 +76,23 @@ export function EnrichStep({ papers }: { papers: GroupPaper[] }) {
 
   return (
     <div className="flex flex-col gap-4">
-      <p className="text-base text-base-content/60 flex flex-wrap items-center gap-2">
-        <LiveBadge /> Pull fresh data from OpenAlex or Crossref. It's saved straight away (and logged in each
-        item's history); check the results in the Metadata step.
-      </p>
+      <div className="text-base text-base-content/60">
+        <p className="flex flex-wrap items-center gap-2">
+          <LiveBadge /> Pull fresh details for each item from OpenAlex and Crossref.
+        </p>
+        <ul className="list-disc pl-6 mt-2 flex flex-col gap-1">
+          <li>
+            <span className="font-semibold">Pull OpenAlex</span> and <span className="font-semibold">Pull Crossref</span> work
+            on one item at a time. <span className="font-semibold">Pull everything for all items</span> runs every item in
+            the group.
+          </li>
+          <li>Each pull is saved straight away and logged in the item's history.</li>
+          <li>The badges show what has been pulled. "No match" means the source was asked and found nothing.</li>
+          <li>Crossref needs a DOI, so its button is greyed out for items without one.</li>
+          <li>Check what came back in the Metadata step.</li>
+          <li>When you are done, click Next step to go to Metadata.</li>
+        </ul>
+      </div>
       <ul className="flex flex-col divide-y divide-base-300">
         {papers.map((paper) => (
           <li key={paper.id} className="py-4 flex flex-col md:flex-row md:items-center gap-3">
