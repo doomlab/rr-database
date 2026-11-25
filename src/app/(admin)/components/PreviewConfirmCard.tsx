@@ -3,7 +3,15 @@
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 
-export type PreviewResult = { dryRun: boolean; count: number; message: string; preview: string[] }
+export type PreviewResult = {
+  dryRun: boolean
+  count: number
+  message: string
+  preview: string[]
+  // Items worth a look before confirming (shown first, with the reasons).
+  attentionCount?: number
+  attentionPreview?: string[]
+}
 
 // A clean-up tool in two steps: preview what would change, then confirm. The
 // title and description are on the left, the buttons on the right, and the
@@ -60,6 +68,21 @@ export function PreviewConfirmCard({
       {result && (
         <div className="text-base">
           <p>{result.message}</p>
+          {result.dryRun && (result.attentionPreview?.length ?? 0) > 0 && (
+            <div className="my-3 rounded-box border border-warning p-3">
+              <p className="font-semibold">
+                Check these first: {result.attentionCount} look like real registered reports or have been worked on
+              </p>
+              <ul className="list-disc pl-6 text-base-content/70">
+                {result.attentionPreview!.map((t) => (
+                  <li key={t}>{t}</li>
+                ))}
+                {(result.attentionCount ?? 0) > result.attentionPreview!.length && (
+                  <li>…and {(result.attentionCount ?? 0) - result.attentionPreview!.length} more</li>
+                )}
+              </ul>
+            </div>
+          )}
           {result.dryRun && result.preview.length > 0 && (
             <ul className="list-disc pl-6 text-base-content/70">
               {result.preview.map((t) => (

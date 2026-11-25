@@ -15,7 +15,7 @@ export default resolver.pipe(
   resolver.authorize(["SUPER_ADMIN"]),
   async ({ dryRun }, ctx) => {
     const userId = ctx.session.userId as number
-    const { zoteroCount, rekeyed, removed } = await findPapersRemovedFromZotero()
+    const { zoteroCount, rekeyed, removed, attention } = await findPapersRemovedFromZotero()
     const preview = removed.slice(0, 15).map((p) => `#${p.id} ${p.title}${p.year ? ` (${p.year})` : ""}`)
 
     if (!dryRun && removed.length > 0) {
@@ -42,6 +42,9 @@ export default resolver.pipe(
       })
     }
 
-    return { dryRun, zoteroCount, rekeyed, count: removed.length, preview }
+    const attentionPreview = attention
+      .slice(0, 40)
+      .map((a) => `#${a.paper.id} ${a.paper.title}${a.paper.year ? ` (${a.paper.year})` : ""} [${a.reasons.join(", ")}]`)
+    return { dryRun, zoteroCount, rekeyed, count: removed.length, preview, attentionCount: attention.length, attentionPreview }
   }
 )
