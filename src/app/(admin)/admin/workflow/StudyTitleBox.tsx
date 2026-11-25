@@ -38,7 +38,7 @@ export function StudyTitleBox({ study }: { study: GroupStudy | null }) {
       {study ? (
         <>
           <p className="text-base text-base-content/60">
-            Shown on the study page, the browse list and exports. Leave it blank to use the Stage 1 article's title.
+            Shown on the study page, the browse list and exports. Leave it blank to use the Stage 2 article's title (or the Stage 1 article's, if there is no Stage 2 yet).
           </p>
           <input
             className="input input-bordered input-sm text-base w-full max-w-3xl"

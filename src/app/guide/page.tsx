@@ -523,8 +523,8 @@ export default async function GuidePage() {
                     its scan and badge buttons.
                   </li>
                   <li>
-                    <Term>Study title</Term> at the bottom renames the study (otherwise the title comes from its Stage 1
-                    article). It shows on the study page, the browse list and exports, and needs a saved study, so link the
+                    <Term>Study title</Term> at the bottom renames the study (otherwise the title comes from its Stage 2
+                    article, or its Stage 1 article if there is no Stage 2 yet). It shows on the study page, the browse list and exports, and needs a saved study, so link the
                     items in Step 2 first.
                   </li>
                   <li>This is the last step. Mark the group Done, Later or Question below.</li>
