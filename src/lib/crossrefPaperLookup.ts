@@ -1,5 +1,6 @@
 import db from "db"
 import { upsertAuthors } from "./zoteroImport"
+import { cleanTitle } from "./cleanText"
 
 export function normalizeDoi(raw: string): string {
   return raw.replace(/^https?:\/\/(dx\.)?doi\.org\//i, "").trim().toLowerCase()
@@ -11,7 +12,7 @@ export function normalizeDoi(raw: string): string {
 // approved article suggestions, etc).
 export async function fetchOrCreatePaperByDoi(
   doi: string,
-  opts: { discoveredVia?: "ZOTERO_IMPORT" | "OPENALEX" | "GOOGLE_SCHOLAR" | "PCIRR" | "USER_SUGGESTION" } = {}
+  opts: { discoveredVia?: "ZOTERO_IMPORT" | "OPENALEX" | "GOOGLE_SCHOLAR" | "PCIRR" | "USER_SUGGESTION" | "WEB_OF_SCIENCE" | "LIFECYCLE_JOURNAL" } = {}
 ): Promise<{ id: number; title: string; created: boolean }> {
   const existing = await db.paper.findFirst({ where: { doi }, select: { id: true, title: true } })
   if (existing) return { ...existing, created: false }
@@ -22,7 +23,7 @@ export async function fetchOrCreatePaperByDoi(
   if (!res.ok) throw new Error(`Could not find DOI ${doi} on Crossref (${res.status})`)
   const { message } = await res.json()
 
-  const title: string = message.title?.[0] ?? "Untitled"
+  const title: string = cleanTitle(message.title?.[0] ?? "Untitled")
   const paper = await db.paper.create({
     data: {
       title,

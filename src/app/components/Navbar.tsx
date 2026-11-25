@@ -4,6 +4,8 @@ import { getBlitzContext } from "../blitz-server"
 import { LogoutButton } from "../(auth)/components/LogoutButton"
 import { ThemeToggle } from "./ThemeToggle"
 import { countLinkNeedsReviewGroups } from "src/lib/duplicateClusters"
+import { workflowCounts } from "src/lib/workflow"
+import { NEEDS_ENRICH_WHERE } from "src/lib/needsEnrich"
 
 export async function Navbar() {
   const ctx = await getBlitzContext()
@@ -11,17 +13,22 @@ export async function Navbar() {
   const role = ctx.session.role
   const isAdmin = role === "ADMIN" || role === "SUPER_ADMIN"
 
-  const [reviewCount, reportsCount, suggestionsCount, linkGroupCount, metadataReviewCount] = isAdmin
+  const [reviewCount, fixIssuesCount, linkGroupCount, enrichCount, metadataReviewCount, workflowNotDone] = isAdmin
     ? await Promise.all([
         db.paper.count({ where: { status: "PENDING_REVIEW" } }),
-        db.paperReport.count({ where: { resolved: false } }),
-        db.articleSuggestion.count({ where: { resolved: false } }),
+        Promise.all([
+          db.paperReport.count({ where: { resolved: false } }),
+          db.articleSuggestion.count({ where: { resolved: false } }),
+          db.metadataEditSuggestion.count({ where: { resolved: false } }),
+        ]).then((counts) => counts.reduce((a, b) => a + b, 0)),
         countLinkNeedsReviewGroups(),
+        db.paper.count({ where: NEEDS_ENRICH_WHERE }),
         db.paper.count({
           where: { canonicalPaperId: null, status: { in: ["IMPORTED", "APPROVED"] }, metadataVerifiedAt: null },
         }),
+        workflowCounts().then((c) => c.notDone),
       ])
-    : [0, 0, 0, 0, 0]
+    : [0, 0, 0, 0, 0, 0]
 
   return (
     <div className="navbar bg-base-200 px-6 shadow-sm sticky top-0 z-50">
@@ -56,6 +63,9 @@ export async function Navbar() {
                 <Link href="/searches">My Searches</Link>
               </li>
             )}
+            <li>
+              <Link href="/guide">User guide</Link>
+            </li>
           </ul>
         </div>
         {userId ? (
@@ -70,11 +80,18 @@ export async function Navbar() {
                   className="dropdown-content menu bg-base-100 rounded-box z-50 w-56 p-2 shadow-md border border-base-300 mt-1"
                 >
                   <li>
-                    <Link href="/admin">Home</Link>
+                    <Link href="/admin">Add new items</Link>
                   </li>
+                  <li className="menu-title text-base">Work by group</li>
                   <li>
-                    <Link href="/admin/stats">Stats</Link>
+                    <Link href="/admin/workflow" className="flex justify-between">
+                      <span>One group at a time</span>
+                      {workflowNotDone > 0 && (
+                        <span className="badge badge-warning badge-sm">{workflowNotDone}</span>
+                      )}
+                    </Link>
                   </li>
+                  <li className="menu-title text-base mt-2">Work by step</li>
                   <li>
                     <Link href="/admin/review" className="flex justify-between">
                       <span>Review queue</span>
@@ -83,10 +100,16 @@ export async function Navbar() {
                   </li>
                   <li>
                     <Link href="/admin/link" className="flex justify-between">
-                      <span>Link papers</span>
+                      <span>Link items</span>
                       {linkGroupCount > 0 && (
                         <span className="badge badge-warning badge-sm">{linkGroupCount}</span>
                       )}
+                    </Link>
+                  </li>
+                  <li>
+                    <Link href="/admin/enrich" className="flex justify-between">
+                      <span>Enrich</span>
+                      {enrichCount > 0 && <span className="badge badge-warning badge-sm">{enrichCount}</span>}
                     </Link>
                   </li>
                   <li>
@@ -97,23 +120,24 @@ export async function Navbar() {
                       )}
                     </Link>
                   </li>
-                  <li>
-                    <Link href="/admin/reports" className="flex justify-between">
-                      <span>User reports</span>
-                      {reportsCount > 0 && <span className="badge badge-warning badge-sm">{reportsCount}</span>}
+                  <li className="mt-2">
+                    <Link href="/admin/fix-issues" className="flex justify-between">
+                      <span>Fix issues</span>
+                      {fixIssuesCount > 0 && <span className="badge badge-warning badge-sm">{fixIssuesCount}</span>}
                     </Link>
                   </li>
+                  <li className="menu-title text-base mt-2">Manage</li>
                   <li>
-                    <Link href="/admin/suggestions" className="flex justify-between">
-                      <span>Article suggestions</span>
-                      {suggestionsCount > 0 && <span className="badge badge-warning badge-sm">{suggestionsCount}</span>}
-                    </Link>
+                    <Link href="/admin/stats">Stats</Link>
                   </li>
                   <li>
                     <Link href="/admin/users">Users</Link>
                   </li>
                   <li>
                     <Link href="/admin/api-keys">API keys</Link>
+                  </li>
+                  <li>
+                    <Link href="/guide#admin-overview">Admin guide</Link>
                   </li>
                 </ul>
               </div>

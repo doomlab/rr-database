@@ -5,25 +5,31 @@ import {
   lastPipelineRun,
   openAlexYearRunHistory,
   googleScholarYearRunHistory,
+  pcirrYearRunHistory,
+  wosYearRunHistory,
 } from "src/lib/pipelineRuns"
-import { userHasOpenAlexApiKey } from "src/lib/apiKeyPool"
-import { countLinkNeedsReviewGroups } from "src/lib/duplicateClusters"
+import { userHasOpenAlexApiKey, userHasWosApiKey } from "src/lib/apiKeyPool"
 import { WorkflowCard } from "../components/WorkflowCard"
 import { RunCard } from "../components/RunCard"
 import { RunImportButton } from "../components/RunImportButton"
 import { DiscoverOpenAlexYearButton } from "../components/DiscoverOpenAlexYearButton"
 import { DiscoverOpenAlexRecentButton } from "../components/DiscoverOpenAlexRecentButton"
 import { DiscoverGoogleScholarYearButton } from "../components/DiscoverGoogleScholarYearButton"
-import { RunAuthorMetaBackfillButton } from "../components/RunAuthorMetaBackfillButton"
+import { DiscoverWebOfScienceYearButton } from "../components/DiscoverWebOfScienceYearButton"
+import { DiscoverLifecycleJournalButton } from "../components/DiscoverLifecycleJournalButton"
+import { DiscoverPcirrYearButton } from "../components/DiscoverPcirrYearButton"
 
 // Registered reports as a format only really got going around 2013.
 const EARLIEST_RR_YEAR = 2013
+// PCI Registered Reports launched in 2022.
+const EARLIEST_PCIRR_YEAR = 2022
 
 export default async function AdminHomePage() {
   const ctx = await getBlitzContext()
   const userId = ctx.session.userId as number | undefined
   const isSuperAdmin = ctx.session.role === "SUPER_ADMIN"
   const hasOpenAlexApiKey = userId ? await userHasOpenAlexApiKey(userId) : false
+  const hasWosApiKey = userId ? await userHasWosApiKey(userId) : false
 
   const currentYear = new Date().getFullYear()
   const years = Array.from(
@@ -37,35 +43,35 @@ export default async function AdminHomePage() {
     openAlexYearRun,
     openAlexRecentRun,
     googleScholarYearRun,
-    authorMetaBackfillRun,
+    pcirrYearRun,
+    wosYearRun,
+    lifecycleRun,
     yearRunHistory,
     scholarYearRunHistory,
-    reviewCount,
-    linkGroupCount,
-    metadataReviewCount,
-    articleSuggestionCount,
-    metadataEditCount,
+    pcirrYearRunHistoryByYear,
+    wosYearRunHistoryByYear,
   ] = await Promise.all([
     isSuperAdmin ? lastZoteroRun("[production]") : Promise.resolve(null),
     isSuperAdmin ? lastZoteroRun("[stagingCollections]") : Promise.resolve(null),
     lastPipelineRun("QUERY_OPENALEX", "[openalex:year:"),
     lastPipelineRun("QUERY_OPENALEX", "[openalex:recent]"),
     lastPipelineRun("QUERY_GOOGLE_SCHOLAR", "[scholar:year:"),
-    lastPipelineRun("ENRICH", "[author-meta-backfill]"),
+    lastPipelineRun("QUERY_PCIRR", "[pcirr:year:"),
+    lastPipelineRun("QUERY_WOS", "[wos:year:"),
+    lastPipelineRun("QUERY_LIFECYCLE", "[lifecycle]"),
     openAlexYearRunHistory(),
     googleScholarYearRunHistory(),
-    db.paper.count({ where: { status: "PENDING_REVIEW", canonicalPaperId: null } }),
-    countLinkNeedsReviewGroups(),
-    db.paper.count({
-      where: { canonicalPaperId: null, status: { in: ["IMPORTED", "APPROVED"] }, metadataVerifiedAt: null },
-    }),
-    db.articleSuggestion.count({ where: { resolved: false } }),
-    db.metadataEditSuggestion.count({ where: { resolved: false } }),
+    pcirrYearRunHistory(),
+    wosYearRunHistory(),
   ])
 
   return (
     <div>
-      <h1 className="text-2xl font-semibold mb-8">Admin</h1>
+      <h1 className="text-2xl font-semibold mb-1">Add new items</h1>
+      <p className="text-base text-base-content/60 mb-8">
+        Bring items into the database: sync the confirmed library from Zotero, or search for new candidates. New
+        candidates arrive as Pending review. Work through them from the Admin menu (by group or by step).
+      </p>
 
       <div className="flex flex-col gap-6">
         <WorkflowCard
@@ -76,7 +82,7 @@ export default async function AdminHomePage() {
             <div className="flex flex-col gap-4">
               <RunCard
                 title="Pull production Zotero library"
-                description="Re-syncs every item in the production library as IMPORTED (already-confirmed) papers, including their manually-added tags, stage (from Stage 1/Stage 2 tags), notes, and Related-item links (auto-linked into Studies). Safe to re-run any time — it only fills in fields that are still blank and adds any new tags, so it won't undo enrichment or edits already made in the app. With thousands of items, a full pull can take a while."
+                description="Re-syncs every item in the production library as IMPORTED (already-confirmed) items, including their manually-added tags, stage (from Stage 1/Stage 2 tags), notes, and Related-item links (auto-linked into Studies). Safe to re-run any time — it only fills in fields that are still blank and adds any new tags, so it won't undo enrichment or edits already made in the app. With thousands of items, a full pull can take a while."
                 run={productionRun}
                 nested
               >
@@ -108,7 +114,7 @@ export default async function AdminHomePage() {
         </WorkflowCard>
 
         <WorkflowCard
-          title="Add new papers"
+          title="Add new items"
           description="Search external sources for new registered reports and bring candidates into the database as Pending review. Anything already in the database (matched by DOI or OpenAlex ID) is skipped automatically, so these are always safe to re-run. We're building this out one search at a time."
         >
           <div className="flex flex-col gap-4">
@@ -148,79 +154,42 @@ export default async function AdminHomePage() {
             >
               <DiscoverGoogleScholarYearButton years={years} runHistory={scholarYearRunHistory} />
             </RunCard>
-          </div>
-        </WorkflowCard>
-
-        <WorkflowCard
-          title="Review candidates"
-          description="Go through papers that have been discovered or imported but not yet confirmed — approve them into the database or reject them. Each one shows its full details and lets you pull fresh data from OpenAlex or Crossref before you decide."
-          badge={reviewCount}
-        >
-          <a href="/admin/review" className="btn btn-primary btn-sm text-base">
-            Go to review queue
-          </a>
-        </WorkflowCard>
-
-        <WorkflowCard
-          title="Link papers"
-          description="Papers with matching titles get grouped together — usually the same registered report indexed more than once (a preprint, the published article, a registration link). Mark each one as Stage 1, Stage 2, materials, or a duplicate to link them into a single Study. You can also search for a paper directly to edit or unlink a study it's already part of."
-          badge={linkGroupCount}
-        >
-          <a href="/admin/link" className="btn btn-primary btn-sm text-base">
-            Go to link papers
-          </a>
-        </WorkflowCard>
-
-        <WorkflowCard
-          title="Metadata review"
-          description="Confirm each confirmed paper's metadata is correct — tags, open science links, JMIR badge info, and anything else added or edited. Open science links and JMIR badge info are detected/entered one paper at a time from that paper's own page (look for the scan/badge buttons there)."
-          badge={metadataReviewCount}
-        >
-          <div className="flex flex-col gap-4">
-            <a href="/admin/metadata-review" className="btn btn-primary btn-sm text-base w-fit">
-              Go to metadata review
-            </a>
 
             <RunCard
-              title="Backfill author ORCID / OpenAlex IDs"
-              description="For papers that already have an OpenAlex ID, re-checks their authors against OpenAlex and fills in ORCID/OpenAlex profile links wherever they're still missing — this is what powers the badges next to author names. Only fills in blanks, safe to re-run any time."
-              run={authorMetaBackfillRun}
+              title="Pull a specific year from PCI Registered Reports"
+              description="Reads PCI RR's public feed of recommended studies for the chosen year, then visits each study's page to get its title, authors, Stage 1 or 2, report link and Stage 1 protocol link. Studies already in the database (matched by report DOI or a close title match) aren't duplicated — any blank stage, protocol link, or authors on them are filled in, but nothing already there is overwritten. Pages are fetched one per second, so a busy year takes a minute or two."
+              run={pcirrYearRun}
               nested
             >
-              {hasOpenAlexApiKey ? (
-                <RunAuthorMetaBackfillButton />
-              ) : (
-                <div
-                  className="tooltip"
-                  data-tip="Add an OpenAlex key on your Account page to enable this"
-                >
-                  <button type="button" className="btn btn-accent btn-sm text-base" disabled>
-                    Backfill ORCID/OpenAlex IDs
-                  </button>
-                </div>
-              )}
+              <DiscoverPcirrYearButton years={years.filter((y) => y >= EARLIEST_PCIRR_YEAR)} runHistory={pcirrYearRunHistoryByYear} />
             </RunCard>
+
+            <RunCard
+              title="Pull from Lifecycle Journal"
+              description="Lists every article published in the Center for Open Science's Lifecycle Journal (via its Crossref DOIs — no key needed) and brings new ones in as Pending review. The journal isn't limited to registered reports and doesn't label them, so expect to reject some. Each version of an article is its own DOI and its own item; link them into one study on the Link items page. Safe to re-run — anything already in the database (by DOI) is skipped."
+              run={lifecycleRun}
+              nested
+            >
+              <DiscoverLifecycleJournalButton />
+            </RunCard>
+
+            {hasWosApiKey ? (
+              <RunCard
+                title="Pull a specific year from Web of Science"
+                description={`Searches Web of Science (Starter API) for the same RR phrases in the chosen year. This runs on your own API key, and the free tier allows only 50 requests a day (50 records each), so a run stops early with a message if the limit is hit. Web of Science doesn't return abstracts or citation counts on the free tier — OpenAlex fills those in later. Anything already in the database (by DOI or a close title match) is skipped.`}
+                run={wosYearRun}
+                nested
+              >
+                <DiscoverWebOfScienceYearButton years={years} runHistory={wosYearRunHistoryByYear} />
+              </RunCard>
+            ) : (
+              <div className="tooltip" data-tip="Add a Web of Science key on your Account page to enable searching">
+                <button type="button" className="btn btn-accent btn-sm text-base" disabled>
+                  Search Web of Science
+                </button>
+              </div>
+            )}
           </div>
-        </WorkflowCard>
-
-        <WorkflowCard
-          title="Article suggestions"
-          description="Papers users have suggested that aren't in the database yet. Review each one, correct anything before adding, and it flows straight into the review queue — or dismiss it without adding."
-          badge={articleSuggestionCount}
-        >
-          <a href="/admin/suggestions" className="btn btn-primary btn-sm text-base">
-            Go to article suggestions
-          </a>
-        </WorkflowCard>
-
-        <WorkflowCard
-          title="Metadata fixes"
-          description="Corrections users have suggested on a paper's own page — wrong journal, garbled author names, missing links, etc. Review the whole record before applying, or dismiss the suggestion."
-          badge={metadataEditCount}
-        >
-          <a href="/admin/metadata" className="btn btn-primary btn-sm text-base">
-            Go to metadata fixes
-          </a>
         </WorkflowCard>
       </div>
     </div>

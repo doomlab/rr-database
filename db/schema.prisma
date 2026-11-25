@@ -33,9 +33,14 @@ model User {
   // pipeline calls can round-robin across multiple keys instead of
   // hammering a single shared one.
   openAlexApiKey String?
+  // A personal Web of Science Starter API key. Unlike OpenAlex this isn't
+  // pooled — the free tier is capped at 50 requests/day per key, so each
+  // search runs on the requesting admin's own key.
+  wosApiKey      String?
 
   reviewedPapers  Paper[]         @relation("PaperReviewedBy")
   verifiedMetadataPapers Paper[]  @relation("PaperMetadataVerifiedBy")
+  workflowMarkedPapers   Paper[]  @relation("PaperWorkflowMarkedBy")
   pipelineRuns    PipelineRun[]   @relation("PipelineRunStartedBy")
   favoriteStudies StudyFavorite[]
   favoritePapers  PaperFavorite[]
@@ -98,6 +103,14 @@ enum PaperStatus {
   SYNCED // successfully pushed to a Zotero library
 }
 
+// Where an admin left a group in the workflow. Rejecting is a review
+// decision (status REJECTED), not a marker.
+enum WorkflowMarker {
+  DONE // finished — reviewed, linked, enriched and verified
+  LATER // skipped for now; come back to it
+  QUESTION // needs a second opinion (see the note)
+}
+
 enum Stage {
   STAGE_1
   STAGE_2
@@ -109,6 +122,8 @@ enum DiscoverySource {
   GOOGLE_SCHOLAR
   PCIRR
   USER_SUGGESTION
+  WEB_OF_SCIENCE
+  LIFECYCLE_JOURNAL
 }
 
 enum ZoteroSyncStatus {
@@ -124,7 +139,7 @@ model Paper {
 
   // Bibliographic metadata
   title        String
-  doi          String?
+  doi          String?  @unique // one record per DOI; code normalizes to lowercase
   abstract     String?
   year         Int?
   venue        String?
@@ -188,6 +203,14 @@ model Paper {
   metadataVerifiedBy   User?     @relation("PaperMetadataVerifiedBy", fields: [metadataVerifiedById], references: [id])
   metadataVerifiedAt   DateTime?
 
+  // Admin-only progress marker for the one-group-at-a-time workflow. Set on
+  // every paper in a group together; null means untouched.
+  workflowMarker     WorkflowMarker?
+  workflowNote       String?
+  workflowMarkedById Int?
+  workflowMarkedBy   User?           @relation("PaperWorkflowMarkedBy", fields: [workflowMarkedById], references: [id])
+  workflowMarkedAt   DateTime?
+
   // Source-tracking / provenance
   openalexId              String? @unique
   zoteroKeyProduction     String? @unique
@@ -234,7 +257,6 @@ model Paper {
   favorites       PaperFavorite[]
 
   @@index([status])
-  @@index([doi])
 }
 
 // Audit trail of admin-triggered metadata pulls (OpenAlex/Crossref/manual
@@ -266,6 +288,10 @@ model Study {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  // Optional admin-set headline. When null, the title of the Stage 1 article
+  // (else Stage 2, else any paper) is used — see src/lib/studyTitle.ts.
+  title String?
+
   registrationUrl      String?
   registrationPlatform String?
   biasLevel            String?
@@ -281,9 +307,9 @@ model Study {
 // most one Study.
 enum StudyPaperRole {
   STAGE1_ARTICLE
-  STAGE1_MATERIALS
   STAGE2_ARTICLE
-  STAGE2_MATERIALS
+  PREPRINT
+  SUPPLEMENTAL // code, data, materials or a project page hosted in a repository (OSF, Zenodo, etc.)
   PCIRR_PAGE // the recommendation text itself — DOI has no .rev/.ar/.d suffix
   PCIRR_REVIEW // DOI ends .rev<n>
   PCIRR_AUTHOR_RESPONSE // DOI ends .ar<n>
@@ -387,6 +413,8 @@ enum PipelineStep {
   QUERY_OPENALEX
   QUERY_GOOGLE_SCHOLAR
   QUERY_PCIRR
+  QUERY_WOS
+  QUERY_LIFECYCLE
   MERGE
   DEDUP
   ENRICH

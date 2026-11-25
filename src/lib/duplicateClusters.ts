@@ -3,7 +3,7 @@
 // as separate records) so an admin can link them into one Study, or mark the
 // extras as duplicates of a chosen canonical paper.
 
-import db from "db"
+import db, { Prisma, Stage } from "db"
 
 const STOPWORDS = new Set([
   "the", "and", "for", "with", "from", "into", "onto", "over", "under",
@@ -28,6 +28,13 @@ function diceCoefficient(a: Set<string>, b: Set<string>): number {
   let intersection = 0
   for (const w of a) if (b.has(w)) intersection++
   return (2 * intersection) / (a.size + b.size)
+}
+
+// Dice similarity between two titles' significant words, 0-1. Exposed for
+// callers that need a score rather than a yes/no match (e.g. ranking search
+// results from an external source against a title we already have).
+export function titleSimilarity(a: string, b: string): number {
+  return diceCoefficient(significantWords(normalizeTitle(a)), significantWords(normalizeTitle(b)))
 }
 
 const SIMILARITY_THRESHOLD = 0.6
@@ -89,41 +96,36 @@ export function clusterPapersByTitle<T extends ClusterablePaper>(
     }
   }
 
-  // Union-find over papers that share enough significant words.
-  const parent = new Map<number, number>()
-  const find = (id: number): number => {
-    let root = id
-    while (parent.get(root) !== undefined && parent.get(root) !== root) root = parent.get(root)!
-    parent.set(id, root)
-    return root
-  }
-  const union = (a: number, b: number) => {
-    const ra = find(a)
-    const rb = find(b)
-    if (ra !== rb) parent.set(ra, rb)
-  }
-  for (const paper of papers) parent.set(paper.id, paper.id)
-
+  // Each paper joins the cluster whose first paper (its "seed") its title best
+  // matches, or starts a new one. Matching against the seed rather than any
+  // member stops chains: A~B and B~C used to put A and C together even when
+  // they share almost nothing, which snowballed into huge groups of loosely
+  // related papers.
+  const seedOf = new Map<number, number>()
   for (const paper of papers) {
     const paperWords = words.get(paper.id)!
     const candidateIds = new Set<number>()
     for (const word of paperWords) {
       for (const otherId of wordIndex.get(word) ?? []) {
-        if (otherId !== paper.id) candidateIds.add(otherId)
+        if (otherId !== paper.id && seedOf.get(otherId) === otherId) candidateIds.add(otherId)
       }
     }
-    for (const otherId of candidateIds) {
-      const otherWords = words.get(otherId)!
-      const threshold = requiredThreshold(paperWords.size, otherWords.size)
-      if (diceCoefficient(paperWords, otherWords) >= threshold) {
-        union(paper.id, otherId)
+    let bestSeed = paper.id
+    let bestScore = 0
+    for (const seedId of candidateIds) {
+      const seedWords = words.get(seedId)!
+      const score = diceCoefficient(paperWords, seedWords)
+      if (score >= requiredThreshold(paperWords.size, seedWords.size) && score > bestScore) {
+        bestSeed = seedId
+        bestScore = score
       }
     }
+    seedOf.set(paper.id, bestSeed)
   }
 
   const groups = new Map<number, T[]>()
   for (const paper of papers) {
-    const root = find(paper.id)
+    const root = seedOf.get(paper.id)!
     const group = groups.get(root)
     if (group) group.push(paper)
     else groups.set(root, [paper])
@@ -164,7 +166,7 @@ export function bestTitleMatch<T extends ClusterablePaper>(title: string, candid
 // own commentary documents).
 export async function findMatchingPaper(
   title: string
-): Promise<{ id: number; title: string; studyPaper: { studyId: number } | null } | null> {
+): Promise<{ id: number; title: string; stage: Stage | null; studyPaper: { studyId: number } | null } | null> {
   const words = Array.from(significantWords(normalizeTitle(title)))
     .sort((a, b) => b.length - a.length)
     .slice(0, 3)
@@ -175,11 +177,31 @@ export async function findMatchingPaper(
       OR: words.map((w) => ({ title: { contains: w, mode: "insensitive" as const } })),
       status: { notIn: ["REJECTED", "DUPLICATE"] },
     },
-    select: { id: true, title: true, studyPaper: { select: { studyId: true } } },
+    select: { id: true, title: true, stage: true, studyPaper: { select: { studyId: true } } },
     take: 50,
   })
 
   return bestTitleMatch(title, candidates)
+}
+
+// Papers someone has acted on through the Link page. An unlink doesn't count:
+// it sends the item back for review, so its latest "link" history entry being
+// an unlink means it still needs linking when it comes round again.
+export async function linkTouchedPaperIds(paperIds?: number[]): Promise<Set<number>> {
+  const entries = await db.paperEditHistory.findMany({
+    where: { source: "link", ...(paperIds && { paperId: { in: paperIds } }) },
+    select: { paperId: true, summary: true },
+    orderBy: { createdAt: "desc" },
+  })
+  const latest = new Map<number, string>()
+  for (const e of entries) if (!latest.has(e.paperId)) latest.set(e.paperId, e.summary ?? "")
+  return new Set([...latest].filter(([, summary]) => !summary.startsWith("Unlinked")).map(([id]) => id))
+}
+
+// A group marked Done in the one-group-at-a-time workflow is finished, so the
+// step queues leave it out. (Prisma's `not` skips NULLs, hence the explicit OR.)
+export const NOT_MARKED_DONE: Prisma.PaperWhereInput = {
+  OR: [{ workflowMarker: null }, { workflowMarker: { not: "DONE" } }],
 }
 
 // Single source of truth for "how many things need attention on the Link
@@ -188,9 +210,9 @@ export async function findMatchingPaper(
 // under its "Needs review" tab (every eligible, not-yet-touched paper,
 // including singletons with no title match).
 export async function countLinkNeedsReviewGroups(): Promise<number> {
-  const [papers, touched] = await Promise.all([
+  const [papers, touchedIds] = await Promise.all([
     db.paper.findMany({
-      where: { status: { in: [...LINK_ELIGIBLE_STATUSES] }, canonicalPaperId: null },
+      where: { status: { in: [...LINK_ELIGIBLE_STATUSES] }, canonicalPaperId: null, ...NOT_MARKED_DONE },
       select: {
         id: true,
         title: true,
@@ -199,14 +221,9 @@ export async function countLinkNeedsReviewGroups(): Promise<number> {
         studyPaper: { select: { study: { select: { _count: { select: { papers: true } } } } } },
       },
     }),
-    db.paperEditHistory.findMany({
-      where: { source: "link" },
-      select: { paperId: true },
-      distinct: ["paperId"],
-    }),
+    linkTouchedPaperIds(),
   ])
 
-  const touchedIds = new Set(touched.map((t) => t.paperId))
   const eligible = papers.filter(isLinkEligible).filter((p) => !touchedIds.has(p.id))
   return clusterPapersByTitle(eligible, 1).length
 }

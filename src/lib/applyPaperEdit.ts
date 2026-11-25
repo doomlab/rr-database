@@ -1,0 +1,93 @@
+import { z } from "zod"
+import db from "db"
+import { fetchAndStoreCitations } from "./fetchAndStoreCitations"
+import { findOrCreateAuthor } from "./authors"
+
+export const AuthorInput = z.object({
+  id: z.number().nullable(),
+  name: z.string(),
+  orcid: z.string().nullable(),
+  openalexAuthorId: z.string().nullable(),
+})
+
+export const SavePaperEdit = z.object({
+  paperId: z.number(),
+  source: z.enum(["openalex", "crossref", "manual"]),
+  title: z.string().min(1),
+  authors: z.array(AuthorInput),
+  doi: z.string().nullable(),
+  abstract: z.string().nullable(),
+  year: z.number().nullable(),
+  venue: z.string().nullable(),
+  volume: z.string().nullable(),
+  issue: z.string().nullable(),
+  pages: z.string().nullable(),
+  issn: z.string().nullable(),
+  publisher: z.string().nullable(),
+  language: z.string().nullable(),
+  itemType: z.string().nullable(),
+  url: z.string().nullable(),
+  pdfUrl: z.string().nullable(),
+  openAccess: z.boolean().nullable(),
+  openAccessStatus: z.string().nullable(),
+  citedByCount: z.number().nullable(),
+  openalexId: z.string().nullable(),
+  registrationUrl: z.string().nullable(),
+  registrationPlatform: z.string().nullable(),
+  biasLevel: z.string().nullable(),
+  openDataUrl: z.string().nullable(),
+  openCodeUrl: z.string().nullable(),
+  openMaterialsUrl: z.string().nullable(),
+  zoteroNotes: z.string().nullable(),
+  jmirBadgeType: z.string().nullable(),
+  jmirBadgeCounterpartDoi: z.string().nullable(),
+  tags: z.array(z.string()),
+  keywords: z.array(z.string().toLowerCase().trim()),
+})
+
+export type SavePaperEditInput = z.infer<typeof SavePaperEdit>
+
+// Shared by the manual edit form and the workflow's inline pull, so both write
+// the paper, its authors and its edit history the same way.
+export async function applyPaperEdit(
+  { paperId, source, authors, ...data }: SavePaperEditInput,
+  userId: number,
+  opts: { summary?: string } = {}
+) {
+  const updated = await db.$transaction(async (tx) => {
+    const paper = await tx.paper.update({
+      where: { id: paperId },
+      data: {
+        ...data,
+        ...(data.jmirBadgeType ? { jmirBadgeCheckedAt: new Date() } : {}),
+        ...(source === "openalex" ? { openAlexFetchedAt: new Date() } : {}),
+        ...(source === "crossref" ? { crossrefQueried: true, crossrefFound: true } : {}),
+      },
+    })
+    await tx.paperEditHistory.create({
+      data: { paperId, userId, source, ...(opts.summary ? { summary: opts.summary } : {}) },
+    })
+
+    await tx.paperAuthor.deleteMany({ where: { paperId } })
+    let position = 0
+    const seenAuthorIds = new Set<number>()
+    for (const a of authors) {
+      if (!a.name.trim()) continue
+      const author = await findOrCreateAuthor(tx, a)
+      // Two entries can resolve to the same person (same OpenAlex ID, or the
+      // same name); a paper lists each author once.
+      if (seenAuthorIds.has(author.id)) continue
+      seenAuthorIds.add(author.id)
+      await tx.paperAuthor.create({ data: { paperId, authorId: author.id, position } })
+      position++
+    }
+
+    return paper
+  })
+
+  if (source === "openalex" && updated.openalexId) {
+    await fetchAndStoreCitations(paperId, updated.openalexId, updated.doi)
+  }
+
+  return updated
+}

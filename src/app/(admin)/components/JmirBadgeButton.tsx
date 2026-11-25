@@ -1,10 +1,12 @@
 "use client"
 
+import { ButtonTip } from "../../components/ButtonTip"
 import { useMutation } from "@blitzjs/rpc"
 import { useRouter } from "next/navigation"
 import { useState } from "react"
 import saveJmirBadge from "../mutations/saveJmirBadge"
 import { JMIR_BADGE_OPTIONS as BADGE_OPTIONS, type JmirBadgeType as BadgeType } from "src/lib/jmirBadgeOptions"
+import { NO_THROW } from "src/lib/mutationOptions"
 
 export function JmirBadgeButton({
   paperId,
@@ -16,16 +18,18 @@ export function JmirBadgeButton({
   const [open, setOpen] = useState(false)
   const [badgeType, setBadgeType] = useState<BadgeType>("REGISTERED")
   const [doi, setDoi] = useState("")
-  const [save, { isPending }] = useMutation(saveJmirBadge)
+  const [save, { isPending }] = useMutation(saveJmirBadge, NO_THROW)
   const router = useRouter()
   const [error, setError] = useState<string | null>(null)
   const [result, setResult] = useState<string | null>(null)
 
   if (!open) {
     return (
-      <button type="button" className="btn btn-secondary btn-md text-base" onClick={() => setOpen(true)}>
-        {alreadyChecked ? "Edit JMIR badge info" : "Get JMIR info"}
-      </button>
+      <ButtonTip tip="Record the Registered / Results Available badge shown on this item's JMIR page (it can't be read automatically)">
+        <button type="button" className="btn btn-secondary btn-md text-base" onClick={() => setOpen(true)}>
+          JMIR badge
+        </button>
+      </ButtonTip>
     )
   }
 
@@ -37,8 +41,8 @@ export function JmirBadgeButton({
       if (res.linked) {
         setResult(
           res.created
-            ? `Linked with newly-added paper "${res.counterpartTitle}".`
-            : `Linked with existing paper "${res.counterpartTitle}".`
+            ? `Linked with newly-added item "${res.counterpartTitle}".`
+            : `Linked with existing item "${res.counterpartTitle}".`
         )
       } else {
         setResult("Saved.")
@@ -76,7 +80,7 @@ export function JmirBadgeButton({
         />
       </div>
       <p className="text-base text-base-content/50">
-        If the badge links to a DOI, paste it here — we'll link that paper (adding it first if it's
+        If the badge links to a DOI, paste it here — we'll link that item (adding it first if it's
         not already in the database).
       </p>
       <div className="flex items-center gap-3">

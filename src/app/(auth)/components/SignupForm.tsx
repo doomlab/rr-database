@@ -7,13 +7,14 @@ import { Signup } from "../validations"
 import { useMutation } from "@blitzjs/rpc"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
+import { NO_THROW } from "src/lib/mutationOptions"
 
 type SignupFormProps = {
   onSuccess?: () => void
 }
 
 export const SignupForm = (props: SignupFormProps) => {
-  const [signupMutation] = useMutation(signup)
+  const [signupMutation] = useMutation(signup, NO_THROW)
   const router = useRouter()
 
   return (

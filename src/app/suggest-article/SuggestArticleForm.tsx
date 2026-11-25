@@ -4,6 +4,7 @@ import { useMutation } from "@blitzjs/rpc"
 import { useRouter } from "next/navigation"
 import { useState } from "react"
 import submitArticleSuggestion from "../(dashboard)/mutations/submitArticleSuggestion"
+import { NO_THROW } from "src/lib/mutationOptions"
 
 export function SuggestArticleForm() {
   const router = useRouter()
@@ -15,12 +16,14 @@ export function SuggestArticleForm() {
   const [note, setNote] = useState("")
   const [error, setError] = useState<string | null>(null)
   const [done, setDone] = useState(false)
-  const [submit, submitState] = useMutation(submitArticleSuggestion)
+  const [duplicate, setDuplicate] = useState<{ title: string; exact: boolean; href: string | null } | null>(null)
+  const [submit, submitState] = useMutation(submitArticleSuggestion, NO_THROW)
   const isSubmitting = (submitState as any).isLoading
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent, force = false) => {
     e.preventDefault()
     setError(null)
+    setDuplicate(null)
 
     if (!title.trim() && !doi.trim() && !url.trim()) {
       setError("Please provide at least a title, DOI, or URL")
@@ -28,14 +31,19 @@ export function SuggestArticleForm() {
     }
 
     try {
-      await submit({
+      const res = await submit({
         title: title.trim() || null,
         authors: authors.trim() || null,
         year: year.trim() ? Number(year) : null,
         doi: doi.trim() || null,
         url: url.trim() || null,
         note: note.trim() || null,
+        force,
       })
+      if (!res.ok) {
+        setDuplicate(res.duplicate)
+        return
+      }
       setDone(true)
     } catch (e: any) {
       setError(e.message ?? "Submit failed")
@@ -141,6 +149,34 @@ export function SuggestArticleForm() {
       </div>
 
       {error && <p className="text-base text-error">{error}</p>}
+
+      {duplicate && (
+        <div className="rounded-lg bg-base-200 p-4 flex flex-col gap-2">
+          <p className="text-base">
+            {duplicate.exact ? "This one is already in the database: " : "Something very similar is already in the database: "}
+            {duplicate.href ? (
+              <a href={duplicate.href} className="link font-medium">
+                {duplicate.title}
+              </a>
+            ) : (
+              <span className="font-medium">{duplicate.title}</span>
+            )}
+            {!duplicate.href && " (it's in our review queue or was excluded)"}
+          </p>
+          {!duplicate.exact && (
+            <div>
+              <button
+                type="button"
+                className="btn btn-warning btn-md text-base"
+                disabled={isSubmitting}
+                onClick={(e) => handleSubmit(e, true)}
+              >
+                It's a different article, submit anyway
+              </button>
+            </div>
+          )}
+        </div>
+      )}
 
       <div className="flex gap-2 pt-2">
         <button type="submit" className="btn btn-primary btn-md text-base" disabled={isSubmitting}>

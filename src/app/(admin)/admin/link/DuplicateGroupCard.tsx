@@ -6,6 +6,7 @@ import { useMemo, useState } from "react"
 import linkDuplicateGroup from "../../mutations/linkDuplicateGroup"
 import { LinkWithExistingForm } from "./LinkWithExistingForm"
 import { STUDY_PAPER_ROLE_OPTIONS, STUDY_PAPER_ROLE_VALUES } from "src/lib/studyPaperRoles"
+import { NO_THROW } from "src/lib/mutationOptions"
 
 export type LinkablePaper = {
   id: number
@@ -24,9 +25,9 @@ export type LinkablePaper = {
 }
 
 const ROLE_OPTIONS = [
-  { value: "skip", label: "Leave as-is" },
+  { value: "skip", label: "Not tagged yet (leave as-is)" },
   ...STUDY_PAPER_ROLE_OPTIONS,
-  { value: "unlink", label: "Unlink from study" },
+  { value: "unlink", label: "Unlink (send back to review)" },
   { value: "duplicate", label: "Duplicate of…" },
 ] as const
 
@@ -58,7 +59,7 @@ export function DuplicateGroupCard({
   )
   const [choices, setChoices] = useState<Record<number, Choice>>({})
   const [duplicateOf, setDuplicateOf] = useState<Record<number, number>>({})
-  const [link] = useMutation(linkDuplicateGroup)
+  const [link] = useMutation(linkDuplicateGroup, NO_THROW)
   const router = useRouter()
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -91,7 +92,7 @@ export function DuplicateGroupCard({
   const handleSave = async () => {
     setError(null)
     if (assignments.length === 0) {
-      setError("Change at least one paper before saving.")
+      setError("Change at least one item before saving.")
       return
     }
     setSaving(true)
@@ -126,7 +127,7 @@ export function DuplicateGroupCard({
           <div>
             <h3 className="text-xl font-semibold leading-snug">{papers[0]!.title}</h3>
             <p className="text-base text-base-content/60 mt-1">
-              {papers.length} paper{papers.length === 1 ? "" : "s"} in this group
+              {papers.length} item{papers.length === 1 ? "" : "s"} in this group
             </p>
           </div>
         </button>
@@ -195,7 +196,7 @@ export function DuplicateGroupCard({
                       }
                     >
                       <option value="" disabled>
-                        which paper?
+                        which item?
                       </option>
                       {papers
                         .filter((p) => p.id !== paper.id)

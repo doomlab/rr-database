@@ -8,6 +8,7 @@ import resolveMetadataEdit from "../../../mutations/resolveMetadataEdit"
 import { OpenAccessStatusField } from "src/app/components/OpenAccessStatusField"
 import { AuthorsEditField, type AuthorRow } from "src/app/components/AuthorsEditField"
 import { JMIR_BADGE_OPTIONS } from "src/lib/jmirBadgeOptions"
+import { NO_THROW } from "src/lib/mutationOptions"
 
 type FieldKey =
   | "title"
@@ -104,8 +105,8 @@ export function ApplySuggestionForm({
   const [values, setValues] = useState<FormValues>(initial)
   const [authors, setAuthors] = useState<AuthorRow[]>(initialAuthors)
   const [error, setError] = useState<string | null>(null)
-  const [apply, applyState] = useMutation(applyMetadataEditSuggestion)
-  const [dismiss, dismissState] = useMutation(resolveMetadataEdit)
+  const [apply, applyState] = useMutation(applyMetadataEditSuggestion, NO_THROW)
+  const [dismiss, dismissState] = useMutation(resolveMetadataEdit, NO_THROW)
   const isApplying = (applyState as any).isLoading
   const isDismissing = (dismissState as any).isLoading
 

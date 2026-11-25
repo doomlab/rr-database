@@ -4,12 +4,14 @@ import { useMutation } from "@blitzjs/rpc"
 import { useState } from "react"
 import updateProfile from "../(dashboard)/mutations/updateProfile"
 import { PasswordInput } from "../components/PasswordInput"
+import { NO_THROW } from "src/lib/mutationOptions"
 
 type AccountFormProps = {
   initialFirstName: string
   initialLastName: string
   initialEmail: string
   hasOpenAlexApiKey: boolean
+  hasWosApiKey: boolean
 }
 
 export function AccountForm({
@@ -17,6 +19,7 @@ export function AccountForm({
   initialLastName,
   initialEmail,
   hasOpenAlexApiKey,
+  hasWosApiKey,
 }: AccountFormProps) {
   const [firstName, setFirstName] = useState(initialFirstName)
   const [lastName, setLastName] = useState(initialLastName)
@@ -24,9 +27,12 @@ export function AccountForm({
   const [openAlexApiKey, setOpenAlexApiKey] = useState("")
   const [removeOpenAlex, setRemoveOpenAlex] = useState(false)
   const [hasOpenAlex, setHasOpenAlex] = useState(hasOpenAlexApiKey)
+  const [wosApiKey, setWosApiKey] = useState("")
+  const [removeWos, setRemoveWos] = useState(false)
+  const [hasWos, setHasWos] = useState(hasWosApiKey)
   const [error, setError] = useState<string | null>(null)
   const [saved, setSaved] = useState(false)
-  const [submit, submitState] = useMutation(updateProfile)
+  const [submit, submitState] = useMutation(updateProfile, NO_THROW)
   const isSubmitting = (submitState as any).isLoading
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -39,11 +45,15 @@ export function AccountForm({
         name: [firstName.trim(), lastName.trim()].filter(Boolean).join(" "),
         email,
         openAlexApiKey: removeOpenAlex ? "" : openAlexApiKey || undefined,
+        wosApiKey: removeWos ? "" : wosApiKey || undefined,
       })
       setEmail(result.email)
       setHasOpenAlex(result.hasOpenAlexApiKey)
       setOpenAlexApiKey("")
       setRemoveOpenAlex(false)
+      setHasWos(result.hasWosApiKey)
+      setWosApiKey("")
+      setRemoveWos(false)
       setSaved(true)
     } catch (e: any) {
       setError(e.message ?? "Update failed")
@@ -122,6 +132,42 @@ export function AccountForm({
               onChange={(e) => {
                 setRemoveOpenAlex(e.target.checked)
                 if (e.target.checked) setOpenAlexApiKey("")
+              }}
+            />
+            <span className="label-text text-base">Remove saved key</span>
+          </label>
+        )}
+      </div>
+
+      <p className="text-base text-base-content/60 m-2">
+        Optional — add your own Web of Science (Starter API) key to search Web of Science for new
+        items. Unlike OpenAlex, this key isn't shared: the free tier allows only 50 requests a day
+        per key, so searches always run on yours.
+      </p>
+
+      <div className="m-2">
+        <label className="label mb-2">
+          <span className="label-text font-medium text-lg">Web of Science API key</span>
+        </label>
+        <PasswordInput
+          autoComplete="off"
+          placeholder={hasWos ? "•••••••••• (saved — leave blank to keep)" : ""}
+          value={wosApiKey}
+          onChange={(e) => {
+            setWosApiKey(e.target.value)
+            if (e.target.value) setRemoveWos(false)
+          }}
+          maxLength={200}
+        />
+        {hasWos && (
+          <label className="label mt-2 cursor-pointer justify-start gap-2">
+            <input
+              type="checkbox"
+              className="checkbox checkbox-sm"
+              checked={removeWos}
+              onChange={(e) => {
+                setRemoveWos(e.target.checked)
+                if (e.target.checked) setWosApiKey("")
               }}
             />
             <span className="label-text text-base">Remove saved key</span>

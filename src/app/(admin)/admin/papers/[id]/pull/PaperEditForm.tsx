@@ -8,6 +8,7 @@ import savePaperEdit from "../../../../mutations/savePaperEdit"
 import { OpenAccessStatusField } from "../../../../../components/OpenAccessStatusField"
 import { AuthorsEditField, type AuthorRow } from "../../../../../components/AuthorsEditField"
 import { JMIR_BADGE_OPTIONS } from "src/lib/jmirBadgeOptions"
+import { NO_THROW } from "src/lib/mutationOptions"
 
 export type FieldKey =
   | "title"
@@ -98,16 +99,16 @@ const FIELDS: { key: FieldKey; label: string; type: FieldType; hint?: string; gr
     label: "JMIR badge counterpart DOI",
     type: "text",
     group: "badges",
-    hint: "If the badge links to the paper's Stage 1/2 counterpart, its DOI. Saving this here does not auto-link the papers — use the JMIR badge button on the article page for that.",
+    hint: "If the badge links to the item's Stage 1/2 counterpart, its DOI. Saving this here does not auto-link the items — use the JMIR badge button on the article page for that.",
   },
   { key: "citedByCount", label: "Cited by count", type: "number", group: "metrics" },
   { key: "openalexId", label: "OpenAlex ID", type: "text", group: "metrics" },
   { key: "zoteroNotes", label: "Notes (from Zotero)", type: "textarea", group: "notes" },
 ]
 
-const GROUPS: { key: GroupKey; label: string; alwaysOpen?: boolean }[] = [
-  { key: "identifiers", label: "Identifiers & links", alwaysOpen: true },
-  { key: "publication", label: "Publication details", alwaysOpen: true },
+const GROUPS: { key: GroupKey; label: string }[] = [
+  { key: "identifiers", label: "Identifiers & links", },
+  { key: "publication", label: "Publication details", },
   { key: "openScience", label: "Open science & registration" },
   { key: "classification", label: "Tags & keywords" },
   { key: "badges", label: "JMIR / PCI RR badges" },
@@ -134,7 +135,7 @@ export function PaperEditForm({
   const [values, setValues] = useState<FormValues>(initial)
   const [authors, setAuthors] = useState<AuthorRow[]>(initialAuthors)
   const [error, setError] = useState<string | null>(null)
-  const [save, saveState] = useMutation(savePaperEdit)
+  const [save, saveState] = useMutation(savePaperEdit, NO_THROW)
   const isSaving = (saveState as any).isLoading
 
   const setField = (key: FieldKey, value: string | boolean | null) => {
@@ -253,18 +254,13 @@ export function PaperEditForm({
     )
   }
 
-  const hasValue = (key: FieldKey) => {
-    const v = initial[key]
-    return v !== null && v !== undefined && v !== ""
-  }
-
   return (
     <form onSubmit={handleSave} className="flex flex-col gap-4">
       <p className="text-base text-base-content/60 -mt-2">
         Check the pulled values below and correct anything that's wrong before saving.
       </p>
 
-      <details className="group" open>
+      <details className="group">
         <summary className="cursor-pointer select-none text-base font-medium text-base-content/60 hover:text-base-content flex items-center gap-2 w-fit">
           <span className="transition-transform group-open:rotate-90">▸</span>
           Authors
@@ -276,9 +272,8 @@ export function PaperEditForm({
 
       {GROUPS.map((group) => {
         const groupFields = FIELDS.filter((f) => f.group === group.key)
-        const defaultOpen = group.alwaysOpen || groupFields.some((f) => hasValue(f.key))
         return (
-          <details key={group.key} className="group" open={defaultOpen}>
+          <details key={group.key} className="group">
             <summary className="cursor-pointer select-none text-base font-medium text-base-content/60 hover:text-base-content flex items-center gap-2 w-fit">
               <span className="transition-transform group-open:rotate-90">▸</span>
               {group.label}

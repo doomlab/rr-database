@@ -5,20 +5,26 @@ export function RunCard({
   description,
   run,
   nested = false,
+  buttonOnRight = false,
   children,
 }: {
   title: string
   description: React.ReactNode
   run: Awaited<ReturnType<typeof lastPipelineRun>>
   nested?: boolean
+  // Put the button(s) beside the title instead of under the last-run line.
+  buttonOnRight?: boolean
   children: React.ReactNode
 }) {
   return (
     <div className={`card shadow-sm ${nested ? "bg-base-100" : "bg-base-200"}`}>
       <div className="card-body gap-3">
-        <div>
-          <h3 className="text-xl font-semibold">{title}</h3>
-          <p className="text-base text-base-content/60">{description}</p>
+        <div className={buttonOnRight ? "flex items-center justify-between gap-6" : ""}>
+          <div className="min-w-0">
+            <h3 className="text-xl font-semibold">{title}</h3>
+            <p className="text-base text-base-content/60">{description}</p>
+          </div>
+          {buttonOnRight && <div className="shrink-0">{children}</div>}
         </div>
 
         {run ? (
@@ -42,7 +48,7 @@ export function RunCard({
           <p className="text-base text-base-content/40">Never run.</p>
         )}
 
-        {children}
+        {!buttonOnRight && children}
       </div>
     </div>
   )

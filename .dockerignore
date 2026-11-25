@@ -10,3 +10,5 @@ data
 doc
 .github
 tsconfig.tsbuildinfo
+*.pem
+.env.docker

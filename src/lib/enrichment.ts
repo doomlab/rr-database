@@ -1,4 +1,5 @@
 import { withOpenAlexApiKey } from "./openAlexApiKey"
+import { lookupDoiByTitle, type TitleHint } from "./titleLookup"
 
 const HEADERS = { "User-Agent": "mailto:buchananlab@gmail.com" }
 
@@ -6,6 +7,10 @@ export type FetchedAuthor = { name: string; orcid: string | null; openalexAuthor
 
 export type EnrichmentFields = {
   title?: string | null
+  // Only set when the paper had no DOI and one was found by title match.
+  doi?: string | null
+  // How that DOI was found, for the edit-history note.
+  matchedByTitle?: { title: string; score: number } | null
   year?: number | null
   venue?: string | null
   volume?: string | null
@@ -39,11 +44,22 @@ function extractShortOpenAlexId(openalexId: string): string | null {
   return match ? match[0] : null
 }
 
-export async function fetchOpenAlexFields(paper: {
-  doi: string | null
-  openalexId: string | null
-}): Promise<EnrichmentFields> {
+// Builds the hint used to find a DOI by title for a paper that has none.
+export function titleHint(paper: {
+  title: string
+  year: number | null
+  authors?: { author: { name: string } }[]
+}): TitleHint {
+  return { title: paper.title, year: paper.year, firstAuthor: paper.authors?.[0]?.author.name ?? null }
+}
+
+export async function fetchOpenAlexFields(
+  paper: { doi: string | null; openalexId: string | null },
+  hint?: TitleHint
+): Promise<EnrichmentFields> {
   let lookupPath: string | null = null
+  let matchedByTitle: EnrichmentFields["matchedByTitle"] = null
+  let foundDoi: string | null = null
   if (paper.doi) {
     lookupPath = `doi:${encodeURIComponent(paper.doi)}`
   } else if (paper.openalexId) {
@@ -51,8 +67,21 @@ export async function fetchOpenAlexFields(paper: {
     if (shortId) lookupPath = shortId
   }
 
+  if (!lookupPath && hint) {
+    const match = await lookupDoiByTitle(hint, { useOpenAlex: true })
+    if (match) {
+      foundDoi = match.doi
+      matchedByTitle = { title: match.title, score: match.score }
+      lookupPath = `doi:${encodeURIComponent(match.doi)}`
+    }
+  }
+
   if (!lookupPath) {
-    throw new Error("Paper has no DOI or OpenAlex ID to look it up by")
+    throw new Error(
+      hint
+        ? "Paper has no DOI or OpenAlex ID, and no confident title match was found on OpenAlex or Crossref"
+        : "Paper has no DOI or OpenAlex ID to look it up by"
+    )
   }
 
   const res = await fetch(
@@ -70,6 +99,7 @@ export async function fetchOpenAlexFields(paper: {
   const data = await res.json()
 
   return {
+    ...(foundDoi ? { doi: foundDoi, matchedByTitle } : {}),
     title: data.title ?? null,
     year: data.publication_year ?? null,
     pdfUrl: data.best_oa_location?.pdf_url ?? data.open_access?.oa_url ?? null,
@@ -102,12 +132,30 @@ export async function fetchOpenAlexFields(paper: {
   }
 }
 
-export async function fetchCrossrefFields(paper: { doi: string | null }): Promise<EnrichmentFields> {
-  if (!paper.doi) {
-    throw new Error("Paper has no DOI to look it up by")
+export async function fetchCrossrefFields(
+  paper: { doi: string | null },
+  hint?: TitleHint
+): Promise<EnrichmentFields> {
+  let doi = paper.doi
+  let matchedByTitle: EnrichmentFields["matchedByTitle"] = null
+  let foundDoi: string | null = null
+  if (!doi && hint) {
+    // Crossref-only: this pull shouldn't depend on the user having an OpenAlex key.
+    const match = await lookupDoiByTitle(hint, { useOpenAlex: false })
+    if (match) {
+      doi = foundDoi = match.doi
+      matchedByTitle = { title: match.title, score: match.score }
+    }
+  }
+  if (!doi) {
+    throw new Error(
+      hint
+        ? "Paper has no DOI, and no confident title match was found on Crossref"
+        : "Paper has no DOI to look it up by"
+    )
   }
 
-  const res = await fetch(`https://api.crossref.org/works/${encodeURIComponent(paper.doi)}`, {
+  const res = await fetch(`https://api.crossref.org/works/${encodeURIComponent(doi)}`, {
     headers: HEADERS,
   })
 
@@ -118,6 +166,7 @@ export async function fetchCrossrefFields(paper: { doi: string | null }): Promis
   const { message } = await res.json()
 
   return {
+    ...(foundDoi ? { doi: foundDoi, matchedByTitle } : {}),
     title: Array.isArray(message.title) ? message.title[0] ?? null : null,
     year:
       message.published?.["date-parts"]?.[0]?.[0] ??

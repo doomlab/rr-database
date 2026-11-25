@@ -4,6 +4,7 @@ import { useMutation } from "@blitzjs/rpc"
 import { useRouter } from "next/navigation"
 import { useState } from "react"
 import toggleFavorite from "../(dashboard)/mutations/toggleFavorite"
+import { NO_THROW } from "src/lib/mutationOptions"
 
 export function FavoriteButton({
   studyId,
@@ -15,7 +16,7 @@ export function FavoriteButton({
   isLoggedIn?: boolean
 }) {
   const [favorited, setFavorited] = useState(initialFavorited)
-  const [toggle] = useMutation(toggleFavorite)
+  const [toggle] = useMutation(toggleFavorite, NO_THROW)
   const router = useRouter()
 
   const handleClick = async (e: React.MouseEvent) => {

@@ -2,9 +2,9 @@
 // Link papers page and the per-paper role editor on the paper's own page.
 export const STUDY_PAPER_ROLE_OPTIONS = [
   { value: "STAGE1_ARTICLE", label: "Stage 1 article" },
-  { value: "STAGE1_MATERIALS", label: "Stage 1 materials" },
   { value: "STAGE2_ARTICLE", label: "Stage 2 article" },
-  { value: "STAGE2_MATERIALS", label: "Stage 2 materials" },
+  { value: "PREPRINT", label: "Preprint" },
+  { value: "SUPPLEMENTAL", label: "Supplemental materials" },
   { value: "PCIRR_PAGE", label: "PCI RR recommendation" },
   { value: "PCIRR_REVIEW", label: "PCI RR review" },
   { value: "PCIRR_AUTHOR_RESPONSE", label: "PCI RR author response" },

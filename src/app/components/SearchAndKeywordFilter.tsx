@@ -142,7 +142,7 @@ export function SearchAndKeywordFilter({
                 href={hrefFor({ materials: materials ? undefined : "yes" })}
                 className={`badge ${materials ? "badge-neutral" : "badge-outline"}`}
               >
-                Has materials
+                Has supplemental materials
               </a>
             </div>
 
@@ -267,7 +267,7 @@ export function SearchAndKeywordFilter({
           )}
           {materials && (
             <span className="badge badge-lg gap-1">
-              Has materials
+              Has supplemental materials
               <a href={hrefFor({ materials: undefined })} aria-label="Clear materials filter">✕</a>
             </span>
           )}

@@ -66,7 +66,7 @@ export default async function ReviewQueuePage({
       <h1 className="text-2xl font-semibold mb-1">Review queue</h1>
       <p className="text-base text-base-content/60 mb-6">
         Candidates awaiting a decision — discovered or imported but not yet confirmed. Click into
-        a paper to see full details, or pull fresh data from OpenAlex/Crossref, before deciding.
+        an item to see full details, or pull fresh data from OpenAlex/Crossref, before deciding.
       </p>
 
       <SearchAndKeywordFilter action="/admin/review" q={q} keyword={keyword} />
@@ -120,7 +120,7 @@ export default async function ReviewQueuePage({
                     {group.length > 1 && (
                       <div className="flex items-center justify-between gap-4 mb-3 px-3 py-2 rounded-lg bg-warning/10">
                         <p className="text-base text-base-content/70">
-                          {group.length} papers with very similar titles — probably the same noise
+                          {group.length} items with very similar titles — probably the same noise
                           hit or duplicate.
                         </p>
                         <BulkRejectButton paperIds={group.map((p) => p.id)} />

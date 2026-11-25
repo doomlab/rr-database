@@ -3,6 +3,7 @@
 import { useState } from "react"
 import { useMutation } from "@blitzjs/rpc"
 import searchAuthors from "../(dashboard)/mutations/searchAuthors"
+import { NO_THROW } from "src/lib/mutationOptions"
 
 export type AuthorRow = {
   id: number | null
@@ -163,7 +164,7 @@ export function AuthorsEditField({
 
 function AuthorSearch({ onPick }: { onPick: (author: AuthorRow) => void }) {
   const [q, setQ] = useState("")
-  const [search, { isPending }] = useMutation(searchAuthors)
+  const [search, { isPending }] = useMutation(searchAuthors, NO_THROW)
   const [results, setResults] = useState<AuthorRow[]>([])
   const [error, setError] = useState<string | null>(null)
 

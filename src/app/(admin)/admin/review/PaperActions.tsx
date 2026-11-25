@@ -23,7 +23,7 @@ export function PaperActions({ paperId, nextHref }: { paperId: number; nextHref:
       <button className="btn btn-error btn-wide" onClick={() => decide("REJECTED")}>
         Reject
       </button>
-      <a href={nextHref} className="btn btn-ghost btn-outline">
+      <a href={nextHref} className="btn btn-info">
         Skip →
       </a>
     </div>

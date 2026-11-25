@@ -161,7 +161,9 @@ export async function discoverOpenAlexCandidates(
       if (match) {
         const studyId = match.studyPaper?.studyId ?? (await db.study.create({ data: {} })).id
         if (!match.studyPaper) {
-          await db.studyPaper.create({ data: { studyId, paperId: match.id, role: "OTHER" } })
+          const matchRole =
+            match.stage === "STAGE_1" ? "STAGE1_ARTICLE" : match.stage === "STAGE_2" ? "STAGE2_ARTICLE" : "OTHER"
+          await db.studyPaper.create({ data: { studyId, paperId: match.id, role: matchRole } })
         }
         await db.studyPaper.create({ data: { studyId, paperId: paper.id, role: pcirrDoc.role } })
         await db.paperEditHistory.create({

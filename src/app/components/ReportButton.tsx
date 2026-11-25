@@ -4,6 +4,7 @@ import { useMutation } from "@blitzjs/rpc"
 import { useRouter } from "next/navigation"
 import { useRef, useState } from "react"
 import reportPaper from "../(dashboard)/mutations/reportPaper"
+import { NO_THROW } from "src/lib/mutationOptions"
 
 const REASONS = [
   { value: "WRONG_CLASSIFICATION", label: "Incorrectly classified" },
@@ -26,7 +27,7 @@ export function ReportButton({
   const [reason, setReason] = useState("WRONG_CLASSIFICATION")
   const [note, setNote] = useState("")
   const [submitting, setSubmitting] = useState(false)
-  const [report] = useMutation(reportPaper)
+  const [report] = useMutation(reportPaper, NO_THROW)
 
   const handleOpen = (e: React.MouseEvent) => {
     e.preventDefault()
@@ -68,16 +69,16 @@ export function ReportButton({
       <button
         onClick={handleOpen}
         className="btn btn-ghost btn-md px-3"
-        title={reported ? "You reported this paper — click to update" : "Report a problem with this paper"}
+        title={reported ? "You reported this item — click to update" : "Report a problem with this item"}
       >
         <span className={`text-2xl ${reported ? "text-error" : "text-base-content/50"}`}>⚑</span>
       </button>
 
       <dialog ref={dialogRef} className="modal">
         <div className="modal-box">
-          <h3 className="font-bold text-lg mb-1">Report paper</h3>
+          <h3 className="font-bold text-lg mb-1">Report item</h3>
           <p className="text-base text-base-content/60 mb-4">
-            Let us know what's wrong with this paper's entry.
+            Let us know what's wrong with this item's entry.
           </p>
           <form onSubmit={handleSubmit} className="flex flex-col gap-4">
             <div>

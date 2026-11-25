@@ -9,13 +9,14 @@ import { Login } from "../validations"
 import { useMutation } from "@blitzjs/rpc"
 import { useSearchParams, useRouter } from "next/navigation"
 import type { Route } from "next"
+import { NO_THROW } from "src/lib/mutationOptions"
 
 type LoginFormProps = {
   onSuccess?: (user: PromiseReturnType<typeof login>) => void
 }
 
 export const LoginForm = (props: LoginFormProps) => {
-  const [loginMutation] = useMutation(login)
+  const [loginMutation] = useMutation(login, NO_THROW)
   const router = useRouter()
   const next = useSearchParams()?.get("next")
 

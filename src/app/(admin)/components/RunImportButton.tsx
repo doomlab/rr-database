@@ -4,6 +4,7 @@ import { useMutation } from "@blitzjs/rpc"
 import { useRouter } from "next/navigation"
 import { useState } from "react"
 import runZoteroImport from "../mutations/runZoteroImport"
+import { NO_THROW } from "src/lib/mutationOptions"
 
 export function RunImportButton({
   target,
@@ -12,7 +13,7 @@ export function RunImportButton({
   target: "production" | "stagingCollections"
   label: string
 }) {
-  const [run, { isPending }] = useMutation(runZoteroImport)
+  const [run, { isPending }] = useMutation(runZoteroImport, NO_THROW)
   const router = useRouter()
   const [error, setError] = useState<string | null>(null)
 

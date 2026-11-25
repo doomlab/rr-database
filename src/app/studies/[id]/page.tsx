@@ -1,41 +1,41 @@
 import { Fragment } from "react"
 import { notFound } from "next/navigation"
 import { Navbar } from "../../components/Navbar"
+import { BackLink } from "../../components/BackLink"
 import { FavoriteButton } from "../../components/FavoriteButton"
 import { PaperRecordSection } from "../../components/PaperRecordSection"
 import { userHasOpenAlexApiKey } from "src/lib/apiKeyPool"
 import { getBlitzContext } from "../../blitz-server"
 import { resolveCitations } from "src/lib/resolveCitations"
 import db from "db"
+import { studyTitle } from "src/lib/studyTitle"
+import { STUDY_PAPER_ROLE_LABELS } from "src/lib/studyPaperRoles"
+import { ButtonTip } from "../../components/ButtonTip"
+import { AddStudyItem } from "../../components/AddStudyItem"
+import { RejectStudyButton } from "../../components/ReviewActions"
+import { InfoTip } from "../../components/InfoTip"
+import { StudyTitleProvider, StudyTitle, EditTitleButton } from "../../components/StudyTitleEditor"
 
-const ROLE_LABELS: Record<string, string> = {
-  STAGE1_ARTICLE: "Stage 1 article",
-  STAGE1_MATERIALS: "Stage 1 materials",
-  STAGE2_ARTICLE: "Stage 2 article",
-  STAGE2_MATERIALS: "Stage 2 materials",
-  PCIRR_PAGE: "PCI RR recommendation",
-  PCIRR_REVIEW: "PCI RR review",
-  PCIRR_AUTHOR_RESPONSE: "PCI RR author response",
-  PCIRR_DECISION: "PCI RR decision",
-  OTHER: "Other",
-}
 
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
   const study = await db.study.findUnique({
     where: { id: Number(id) },
-    include: { papers: { include: { paper: { select: { title: true } } } } },
+    include: { papers: { include: { paper: { select: { title: true } } }, orderBy: { role: "asc" } } },
   })
-  const title = study?.papers[0]?.paper.title
+  const title = study ? studyTitle(study) : null
   return { title: title ? `${title} – RR Database` : "Registered Report – RR Database" }
 }
 
 export default async function StudyDetailPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string }>
+  searchParams: Promise<{ paper?: string }>
 }) {
   const { id } = await params
+  const { paper: activePaper } = await searchParams
   const ctx = await getBlitzContext()
   const userId = ctx.session.userId as number | undefined
   const isAdmin = ctx.session.role === "ADMIN" || ctx.session.role === "SUPER_ADMIN"
@@ -85,25 +85,26 @@ export default async function StudyDetailPage({
       : Promise.resolve(new Set<number>()),
   ])
 
-  const headlinePaper = study.papers[0]?.paper
-  const hasStage1 = study.papers.some(
-    ({ role }) => role === "STAGE1_ARTICLE" || role === "STAGE1_MATERIALS"
-  )
+  const hasStage1 = study.papers.some(({ role }) => role === "STAGE1_ARTICLE")
   const stage2Count = study.papers.filter(({ role }) => role === "STAGE2_ARTICLE").length
   const isProgrammatic = stage2Count > 1
+  const addItemDefaultRole = !hasStage1 ? "STAGE1_ARTICLE" : stage2Count === 0 ? "STAGE2_ARTICLE" : "PREPRINT"
+  const hasCustomTitle = !!study.title?.trim()
 
-  return (
+  const page = (
     <div className="min-h-screen bg-base-100 flex flex-col">
       <Navbar />
 
       <div className="w-full px-10 py-10">
         <div className="w-[90%] mx-auto">
-          <a href="/" className="text-sm text-base-content/50 hover:text-base-content mb-6 inline-block">
-            ← Back to browse
-          </a>
+          <BackLink fallbackHref="/">← Back</BackLink>
 
-          <div className="flex items-start justify-between gap-4 mb-8">
-            <h1 className="text-3xl font-bold leading-snug">{headlinePaper?.title}</h1>
+          <div className="flex items-start justify-between gap-4 mb-3">
+            {isAdmin ? (
+              <StudyTitle />
+            ) : (
+              <h1 className="text-3xl font-bold leading-snug">{studyTitle(study)}</h1>
+            )}
             <div className="flex items-center gap-2 shrink-0 pt-1">
               <FavoriteButton
                 studyId={study.id}
@@ -113,81 +114,101 @@ export default async function StudyDetailPage({
             </div>
           </div>
 
-          {(study.registrationUrl || study.biasLevel || !hasStage1 || isProgrammatic) && (
-            <div className="flex flex-wrap gap-2 mb-8">
-              {study.registrationUrl && (
-                <a
-                  href={study.registrationUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="btn btn-outline btn-sm"
-                >
-                  View registration{study.registrationPlatform ? ` (${study.registrationPlatform})` : ""}
-                </a>
-              )}
-              {study.biasLevel && <span className="badge badge-info">{study.biasLevel}</span>}
-              {!hasStage1 && <span className="badge badge-warning">No Stage 1 found</span>}
-              {isProgrammatic && (
-                <span className="badge badge-secondary">Programmatic ({stage2Count} Stage 2 manuscripts)</span>
-              )}
-            </div>
-          )}
+          <div className="flex flex-wrap items-center gap-2 mb-6">
+            <span className="badge badge-neutral">
+              Study · {study.papers.length} item{study.papers.length === 1 ? "" : "s"}
+            </span>
+            {study.biasLevel && <span className="badge badge-info">{study.biasLevel}</span>}
+            {!hasStage1 && <span className="badge badge-warning">No Stage 1 found</span>}
+            {isProgrammatic && (
+              <span className="badge badge-secondary">Programmatic ({stage2Count} Stage 2 manuscripts)</span>
+            )}
+            {isAdmin && hasCustomTitle && <span className="badge badge-info">custom title</span>}
+          </div>
 
-          {study.papers.length > 1 ? (
-            <div className="tabs">
-              {study.papers.map(({ paper, role }, idx) => (
-                <Fragment key={paper.id}>
-                  <input
-                    type="radio"
-                    name={`study-${study.id}-tabs`}
-                    className="tab text-base font-medium"
-                    aria-label={ROLE_LABELS[role] ?? role}
-                    defaultChecked={idx === 0}
-                  />
-                  <div className="tab-content">
-                    <PaperRecordSection
-                      paper={paper}
-                      roleLabel={ROLE_LABELS[role] ?? role}
-                      citationData={citationDataByPaperId.get(paper.id)!}
-                      isAdmin={isAdmin}
-                      hasOpenAlexApiKey={hasOpenAlexApiKey}
-                      userId={userId}
-                      isReported={reportedIds.has(paper.id)}
-                      keywordBasePath="/"
-                      suggestEditHref={
-                        userId
-                          ? `/papers/${paper.id}/suggest-edit`
-                          : `/login?next=/papers/${paper.id}/suggest-edit`
-                      }
-                    />
-                  </div>
-                </Fragment>
-              ))}
-            </div>
-          ) : (
-            <div className="divide-y divide-base-200">
-              {study.papers.map(({ paper, role }) => (
-                <PaperRecordSection
-                  key={paper.id}
-                  paper={paper}
-                  roleLabel={ROLE_LABELS[role] ?? role}
-                  citationData={citationDataByPaperId.get(paper.id)!}
-                  isAdmin={isAdmin}
-                  hasOpenAlexApiKey={hasOpenAlexApiKey}
-                  userId={userId}
-                  isReported={reportedIds.has(paper.id)}
-                  keywordBasePath="/"
-                  suggestEditHref={
-                    userId
-                      ? `/papers/${paper.id}/suggest-edit`
-                      : `/login?next=/papers/${paper.id}/suggest-edit`
+          <div className="tabs gap-2 [&>.tab]:h-11 [&>.tab]:px-5 [&>.tab]:rounded-lg [&>.tab]:bg-base-300 [&>.tab]:text-base-content [&>.tab]:font-semibold [&>.tab]:shadow-md [&>.tab]:hover:bg-base-content/25 [&>.tab:checked]:bg-primary [&>.tab:checked]:text-primary-content [&>.tab:checked]:shadow-lg">
+            {study.papers.map(({ paper, role }, idx) => (
+              <Fragment key={paper.id}>
+                <input
+                  type="radio"
+                  name={`study-${study.id}-tabs`}
+                  className="tab text-base"
+                  aria-label={STUDY_PAPER_ROLE_LABELS[role] ?? role}
+                  defaultChecked={
+                    study.papers.some((sp) => sp.paper.id === Number(activePaper))
+                      ? paper.id === Number(activePaper)
+                      : idx === 0
                   }
                 />
-              ))}
-            </div>
-          )}
+                <div className="tab-content border-0 border-t-2 border-base-content/30 rounded-none mt-4 p-0">
+                  <PaperRecordSection
+                    paper={paper}
+                    roleLabel={STUDY_PAPER_ROLE_LABELS[role] ?? role}
+                    showRoleLabel={false}
+                    linkInAdminActions
+                    adminStudyActions={
+                      isAdmin ? (
+                        <>
+                          <EditTitleButton />
+                          <AddStudyItem
+                            studyId={study.id}
+                            defaultRole={addItemDefaultRole}
+                            linkHref={`/admin/link?q=${encodeURIComponent(paper.title)}`}
+                          />
+                          <RejectStudyButton studyId={study.id} itemCount={study.papers.length} />
+                        </>
+                      ) : undefined
+                    }
+                    studyActions={
+                      <>
+                        {study.registrationUrl && study.registrationUrl !== paper.registrationUrl && (
+                          <ButtonTip tip="Open the preregistration for the whole study">
+                            <a
+                              href={study.registrationUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="btn btn-secondary btn-md text-base"
+                            >
+                              Study registration
+                              {study.registrationPlatform ? ` (${study.registrationPlatform})` : ""}
+                            </a>
+                          </ButtonTip>
+                        )}
+                      </>
+                    }
+                    citationData={citationDataByPaperId.get(paper.id)!}
+                    isAdmin={isAdmin}
+                    hasOpenAlexApiKey={hasOpenAlexApiKey}
+                    userId={userId}
+                    isReported={reportedIds.has(paper.id)}
+                    keywordBasePath="/"
+                    suggestEditHref={
+                      userId
+                        ? `/papers/${paper.id}/suggest-edit`
+                        : `/login?next=/papers/${paper.id}/suggest-edit`
+                    }
+                  />
+                </div>
+              </Fragment>
+            ))}
+            <span className="self-center pl-3">
+              <InfoTip
+                small
+                label="What are these tabs?"
+                text="Each tab is one item that makes up this study: the Stage 1 and Stage 2 articles, any preprints, supplemental materials (code, data or materials in a repository such as an OSF project), and any Peer Community In Registered Reports recommendation, reviews, author responses and decisions. Click a tab to see that item's details."
+              />
+            </span>
+          </div>
         </div>
       </div>
     </div>
+  )
+
+  return isAdmin ? (
+    <StudyTitleProvider studyId={study.id} title={studyTitle(study)} hasCustomTitle={hasCustomTitle}>
+      {page}
+    </StudyTitleProvider>
+  ) : (
+    page
   )
 }

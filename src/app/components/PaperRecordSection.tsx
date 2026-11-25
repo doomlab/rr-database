@@ -1,4 +1,6 @@
+import type { ReactNode } from "react"
 import { ReportButton } from "./ReportButton"
+import { ButtonTip } from "./ButtonTip"
 import { PaperHistoryCard } from "./PaperHistoryCard"
 import { CollapsibleSection } from "./CollapsibleSection"
 import { CitationCard, type CitationEntry } from "./CitationCard"
@@ -11,6 +13,7 @@ import { JMIR_BADGE_OPTIONS } from "src/lib/jmirBadgeOptions"
 
 type RecordPaper = {
   id: number
+  title: string
   doi: string | null
   url: string | null
   pdfUrl: string | null
@@ -74,6 +77,10 @@ export function PaperRecordSection({
   suggestEditHref,
   citationsDefaultOpen = false,
   reviewNext,
+  showRoleLabel = true,
+  studyActions,
+  adminStudyActions,
+  linkInAdminActions = false,
 }: {
   paper: RecordPaper
   roleLabel: string
@@ -87,6 +94,14 @@ export function PaperRecordSection({
   suggestEditHref: string
   citationsDefaultOpen?: boolean
   reviewNext?: string
+  // The study page shows the role as the tab label, so it hides this heading.
+  showRoleLabel?: boolean
+  // Study-level buttons everyone sees (e.g. study registration), first in the public row.
+  studyActions?: ReactNode
+  // Study-level admin buttons (e.g. edit title), first in the admin row. Only rendered for admins.
+  adminStudyActions?: ReactNode
+  // True when adminStudyActions already offers "Go to linking", so the separate Link button is left out.
+  linkInAdminActions?: boolean
 }) {
   const { references, referencesInDbCount, citedBy, citedByInDbCount, citedByTotal } = citationData
 
@@ -96,101 +111,144 @@ export function PaperRecordSection({
 
   return (
     <div className="py-6">
-      <h2 className="text-sm font-semibold uppercase tracking-wider text-base-content/40 mb-3">
-        {roleLabel}
-      </h2>
+      {showRoleLabel && (
+        <h2 className="text-sm font-semibold uppercase tracking-wider text-base-content/40 mb-3">
+          {roleLabel}
+        </h2>
+      )}
 
       <div className="flex flex-wrap items-start justify-between gap-2 mb-3">
         <div className="flex flex-wrap items-start gap-2">
+          {studyActions}
           {paper.doi && (
-            <a
-              href={`https://doi.org/${paper.doi}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="btn btn-primary btn-md text-base"
-            >
-              View article (DOI)
-            </a>
+            <ButtonTip tip="Open the article on the publisher's site through its DOI">
+              <a
+                href={`https://doi.org/${paper.doi}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="btn btn-primary btn-md text-base"
+              >
+                Article
+              </a>
+            </ButtonTip>
           )}
           {paper.pdfUrl && (
-            <a
-              href={paper.pdfUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="btn btn-secondary btn-md text-base"
+            <ButtonTip
+              tip={paper.openAccess ? "Free, open-access full text (PDF)" : "Full text as a PDF — may need a subscription"}
             >
-              {paper.openAccess ? "Open access PDF" : "View PDF"}
-            </a>
+              <a
+                href={paper.pdfUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="btn btn-secondary btn-md text-base"
+              >
+                PDF
+              </a>
+            </ButtonTip>
           )}
-          {paper.url && (
-            <a
-              href={paper.url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="btn btn-info btn-md text-base"
-            >
-              Go to page
-            </a>
+          {paper.url && paper.url.toLowerCase() !== `https://doi.org/${paper.doi}`.toLowerCase() && (
+            <ButtonTip tip="Open this item's own page on the publisher or repository website, where we found it">
+              <a
+                href={paper.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="btn btn-info btn-md text-base"
+              >
+                Source page
+              </a>
+            </ButtonTip>
           )}
           {paper.registrationUrl && (
-            <a
-              href={paper.registrationUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="btn btn-secondary btn-md text-base"
-            >
-              View registration{paper.registrationPlatform ? ` (${paper.registrationPlatform})` : ""}
-            </a>
+            <ButtonTip tip="Open the preregistration for this item">
+              <a
+                href={paper.registrationUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="btn btn-secondary btn-md text-base"
+              >
+                Registration{paper.registrationPlatform ? ` (${paper.registrationPlatform})` : ""}
+              </a>
+            </ButtonTip>
           )}
           {paper.openDataUrl && (
-            <a
-              href={paper.openDataUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="btn btn-success btn-md text-base"
-            >
-              Open data
-            </a>
+            <ButtonTip tip="Open the shared data, hosted in a repository">
+              <a
+                href={paper.openDataUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="btn btn-success btn-md text-base"
+              >
+                Data
+              </a>
+            </ButtonTip>
           )}
           {paper.openCodeUrl && (
-            <a
-              href={paper.openCodeUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="btn btn-accent btn-md text-base"
-            >
-              Open code
-            </a>
+            <ButtonTip tip="Open the shared analysis code, hosted in a repository">
+              <a
+                href={paper.openCodeUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="btn btn-accent btn-md text-base"
+              >
+                Code
+              </a>
+            </ButtonTip>
           )}
           {paper.openMaterialsUrl && (
-            <a
-              href={paper.openMaterialsUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="btn btn-success btn-md text-base"
-            >
-              Open materials
-            </a>
+            <ButtonTip tip="Open the shared study materials, hosted in a repository">
+              <a
+                href={paper.openMaterialsUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="btn btn-success btn-md text-base"
+              >
+                Materials
+              </a>
+            </ButtonTip>
           )}
-          {isAdmin && paper.doi?.startsWith("10.2196/") && (
-            <JmirBadgeButton paperId={paper.id} alreadyChecked={!!paper.jmirBadgeCheckedAt} />
+          {!isAdmin && (
+            <ButtonTip tip="Suggest a correction to this item's details — an admin will review it">
+              <a href={suggestEditHref} className="btn btn-warning btn-md text-base">
+                Suggest edit
+              </a>
+            </ButtonTip>
           )}
-          {isAdmin && !paper.openSciencePracticesScannedAt && (
-            <ScanPaperPdfButton paperId={paper.id} hasPdfUrl={!!paper.pdfUrl} />
-          )}
-          {isAdmin && (
-            <AdminEnrichPanel
-              paperId={paper.id}
-              hasOpenAlexApiKey={hasOpenAlexApiKey}
-              reviewNext={reviewNext}
-            />
-          )}
-          <a href={suggestEditHref} className="btn btn-warning btn-md text-base">
-            {isAdmin ? "Edit metadata" : "Suggest edit"}
-          </a>
         </div>
         <ReportButton paperId={paper.id} initialReported={isReported} isLoggedIn={!!userId} />
       </div>
+
+      {isAdmin && (
+        <div className="flex flex-wrap items-center gap-2 rounded-box bg-base-200 p-3 mb-3">
+          <span className="text-base font-semibold uppercase tracking-wider text-base-content/60 mr-2">
+            Admin
+          </span>
+          {/* Same order as the admin workflow: title, link, enrich, metadata. */}
+          {adminStudyActions}
+          {!linkInAdminActions && (
+            <ButtonTip tip="Link this item with others (Stage 1/2, preprint, supplemental materials) into one study, or unlink it">
+              <a href={`/admin/link?q=${encodeURIComponent(paper.title)}`} className="btn btn-secondary btn-md text-base">
+                Go to linking
+              </a>
+            </ButtonTip>
+          )}
+          <AdminEnrichPanel
+            paperId={paper.id}
+            hasOpenAlexApiKey={hasOpenAlexApiKey}
+            reviewNext={reviewNext}
+          />
+          {paper.doi?.startsWith("10.2196/") && (
+            <JmirBadgeButton paperId={paper.id} alreadyChecked={!!paper.jmirBadgeCheckedAt} />
+          )}
+          {!paper.openSciencePracticesScannedAt && (
+            <ScanPaperPdfButton paperId={paper.id} hasPdfUrl={!!paper.pdfUrl} />
+          )}
+          <ButtonTip tip="Edit this item's details directly">
+            <a href={suggestEditHref} className="btn btn-warning btn-md text-base">
+              Edit metadata
+            </a>
+          </ButtonTip>
+        </div>
+      )}
 
       {isAdmin && paper.metadataVerifiedAt && (
         <p className="text-base text-success mb-3">

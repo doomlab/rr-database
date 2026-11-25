@@ -15,12 +15,13 @@ const UpdateProfile = z.object({
   name,
   email,
   openAlexApiKey: apiKey.optional(),
+  wosApiKey: apiKey.optional(),
 })
 
 export default resolver.pipe(
   resolver.zod(UpdateProfile),
   resolver.authorize(),
-  async ({ name, email, openAlexApiKey }, ctx) => {
+  async ({ name, email, openAlexApiKey, wosApiKey }, ctx) => {
     const userId = ctx.session.userId as number
 
     const existing = await db.user.findFirst({ where: { email, NOT: { id: userId } } })
@@ -36,12 +37,16 @@ export default resolver.pipe(
         ...(openAlexApiKey !== undefined && {
           openAlexApiKey: openAlexApiKey ? encryptApiKey(openAlexApiKey) : null,
         }),
+        ...(wosApiKey !== undefined && {
+          wosApiKey: wosApiKey ? encryptApiKey(wosApiKey) : null,
+        }),
       },
       select: {
         id: true,
         name: true,
         email: true,
         openAlexApiKey: true,
+        wosApiKey: true,
       },
     })
     return {
@@ -49,6 +54,7 @@ export default resolver.pipe(
       name: user.name,
       email: user.email,
       hasOpenAlexApiKey: !!user.openAlexApiKey,
+      hasWosApiKey: !!user.wosApiKey,
     }
   }
 )

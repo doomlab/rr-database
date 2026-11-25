@@ -61,7 +61,7 @@ export default async function ReviewDetailPage({
     <div>
       <a
         href="/admin/review"
-        className="text-sm text-base-content/50 hover:text-base-content mb-6 inline-block"
+        className="text-base text-base-content/60 hover:text-base-content mb-6 inline-block"
       >
         ← Back to queue
       </a>
@@ -90,7 +90,7 @@ export default async function ReviewDetailPage({
       </div>
 
       <div className="border-t border-base-200 mt-6 pt-8 text-center">
-        <p className="text-base text-base-content/60 mb-3">Include this paper?</p>
+        <p className="text-base text-base-content/60 mb-3">Include this item?</p>
         <PaperActions paperId={paper.id} nextHref={nextHref} />
       </div>
     </div>

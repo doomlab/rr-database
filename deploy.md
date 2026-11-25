@@ -91,6 +91,42 @@ With Docker installed, swap set up, and DNS/firewall pointed at the box,
 continue with the steps below exactly as written — they're the same
 regardless of host.
 
+## Connecting to the server (day to day)
+
+The server is the Lightsail instance from section 0. To log in from a
+terminal you need its address and the private key file (`.pem`) that was
+downloaded when the instance was created.
+
+- **Address:** `52.57.129.51` — the instance's static IP (Lightsail console →
+  the instance → *Networking* tab). The `APP_DOMAIN` name points at the same IP
+  and works in its place.
+- **Key:** `wordnorms_update.pem`. A copy sits in the root of this repo folder
+  on Erin's machine; it's covered by `*.pem` in `.gitignore` (and
+  `.dockerignore`), so it can't be committed or baked into the image. **Never
+  commit it, paste it into chat or tickets, or email it** — anyone who has the
+  file can log in as `ubuntu`. Share it only through a password manager, and
+  ask Erin if you need access.
+
+SSH refuses a key that other users on your machine can read, so lock the file
+down once (on macOS/Linux):
+
+```bash
+chmod 400 wordnorms_update.pem
+```
+
+Then, from the folder that holds the key:
+
+```bash
+ssh -i wordnorms_update.pem ubuntu@52.57.129.51
+```
+
+The default user on the Ubuntu blueprint is `ubuntu`. The app lives in the
+folder you cloned it into during step 1; `cd` there before running any
+`docker compose` command. `Permission denied (publickey)` means the wrong key,
+wrong user, or a key file that isn't `chmod 400`. If the key is lost, the
+Lightsail console's "Connect using SSH" button still works for anyone with
+access to the AWS account.
+
 ## 1. Clone and configure
 
 ```bash
@@ -109,7 +145,7 @@ cp .env.docker.example .env.docker
 - `.env` — Zotero API credentials (see `README.md` for how to get a key).
 - `.env.local` — `SESSION_SECRET_KEY` and `API_KEY_ENCRYPTION_KEY` (each
   generated with `openssl rand -base64 32`). `API_KEY_ENCRYPTION_KEY`
-  encrypts user-contributed OpenAlex keys at rest — losing or rotating it
+  encrypts user-contributed OpenAlex and Web of Science keys at rest — losing or rotating it
   makes previously saved keys undecryptable, so back it up somewhere safe.
   Leave `DATABASE_URL` as-is; docker-compose overrides it with the Postgres
   container's connection string.
@@ -145,6 +181,47 @@ admin directly in the database (via pgAdmin, or `docker compose exec db psql`):
 ```sql
 UPDATE "User" SET role = 'SUPER_ADMIN' WHERE email = 'you@example.org';
 ```
+
+## One-off: re-queue public items that are in no study
+
+Before the Unlink option started sending items back to review, unlinking left
+an item approved but in no study, so it vanished from the public browse list.
+[scripts/requeue_unlinked_items.sql](scripts/requeue_unlinked_items.sql) finds
+those items and puts each back in pending review in a solo study of its own.
+Run it once on the server, after deploying:
+
+```bash
+cd ~/rr-database   # wherever the repo is on the server
+git pull
+
+# Step 1: look at what it would touch (read-only; copy only the SELECT)
+docker compose --env-file .env.docker exec -T db psql -U rr_database -d rr_database <<'SQL'
+SELECT p.id, p.status, p.year, left(p.title, 90) AS title
+FROM "Paper" p
+WHERE p."canonicalPaperId" IS NULL AND p.status IN ('IMPORTED','APPROVED')
+  AND NOT EXISTS (SELECT 1 FROM "StudyPaper" sp WHERE sp."paperId" = p.id);
+SQL
+
+# Step 2: apply it (whole file; the SELECT in it just prints the list again)
+docker compose --env-file .env.docker exec -T db psql -U rr_database -d rr_database -v ON_ERROR_STOP=1 < scripts/requeue_unlinked_items.sql
+```
+
+To rehearse without changing anything, change the final `COMMIT;` in the file to
+`ROLLBACK;` first. The file needs a `SUPER_ADMIN` user to attribute the history
+entries to. Afterwards the items appear in the admin workflow queue to be
+approved again (or rejected).
+
+## One-off: clean HTML entities out of stored titles
+
+Some titles came in with entities such as `&nbsp;` or `&amp;`. New imports are
+cleaned automatically; [scripts/clean_title_entities.sql](scripts/clean_title_entities.sql)
+fixes the ones already stored. Run it once after deploying:
+
+```bash
+docker compose --env-file .env.docker exec -T db psql -U rr_database -d rr_database -v ON_ERROR_STOP=1 < scripts/clean_title_entities.sql
+```
+
+It prints the affected titles first, and only touches titles that contain an entity.
 
 ## Redeploying after a code change
 

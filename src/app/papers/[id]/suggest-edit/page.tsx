@@ -42,7 +42,7 @@ export default async function SuggestEditPage({
     back && isAdmin && back.startsWith("/")
       ? back
       : paper.studyPaper && isConfirmed
-        ? `/studies/${paper.studyPaper.studyId}`
+        ? `/studies/${paper.studyPaper.studyId}?paper=${paper.id}`
         : `/papers/${paper.id}`
 
   const initial = {
@@ -90,7 +90,7 @@ export default async function SuggestEditPage({
 
       <div className="w-full px-10 py-10">
         <div className="w-[90%] mx-auto">
-          <a href={backHref} className="text-sm text-base-content/50 hover:text-base-content mb-6 inline-block">
+          <a href={backHref} className="text-base text-base-content/60 hover:text-base-content mb-6 inline-block">
             ← Back to article
           </a>
 

@@ -4,9 +4,10 @@ import { useMutation } from "@blitzjs/rpc"
 import { useRouter } from "next/navigation"
 import { useState } from "react"
 import discoverOpenAlex from "../mutations/discoverOpenAlex"
+import { NO_THROW } from "src/lib/mutationOptions"
 
 export function DiscoverOpenAlexRecentButton() {
-  const [run] = useMutation(discoverOpenAlex)
+  const [run] = useMutation(discoverOpenAlex, NO_THROW)
   const router = useRouter()
   const [error, setError] = useState<string | null>(null)
   const [isRunning, setIsRunning] = useState(false)

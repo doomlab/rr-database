@@ -1,7 +1,7 @@
 import db from "db"
 import { Pagination } from "../../../components/Pagination"
 import { SearchAndKeywordFilter } from "../../../components/SearchAndKeywordFilter"
-import { clusterPapersByTitle, isLinkEligible, LINK_ELIGIBLE_STATUSES } from "src/lib/duplicateClusters"
+import { clusterPapersByTitle, isLinkEligible, LINK_ELIGIBLE_STATUSES, linkTouchedPaperIds, NOT_MARKED_DONE } from "src/lib/duplicateClusters"
 import { DuplicateGroupCard, type LinkablePaper } from "./DuplicateGroupCard"
 
 const GROUPS_PER_PAGE = 20
@@ -48,12 +48,12 @@ export default async function LinkDuplicatesPage({
 
   return (
     <div>
-      <h1 className="text-2xl font-semibold mb-1">Link papers</h1>
+      <h1 className="text-2xl font-semibold mb-1">Link items</h1>
       <p className="text-base text-base-content/60 mb-8">
-        Papers with matching titles are grouped below automatically — probably the same
+        Items with matching titles are grouped below automatically — probably the same
         registered report indexed more than once (a preprint, the published article, a
-        registration link). Mark each one as Stage 1, Stage 2, materials, or a duplicate of
-        another paper in the group to link them into one Study. Search for a specific paper to
+        registration link). Mark each one as Stage 1, Stage 2, preprint, supplemental materials, or a duplicate of
+        another item in the group to link them into one Study. Search for a specific item to
         edit or unlink a study it's already part of, even if it wasn't grouped automatically.
       </p>
 
@@ -98,12 +98,7 @@ async function groupsForPaperIds(paperIds: number[]): Promise<LinkablePaper[][]>
     ...studies.flatMap((s) => s.papers.map((sp) => sp.paper.id)),
     ...soloPapers.map((p) => p.id),
   ]
-  const touched = await db.paperEditHistory.findMany({
-    where: { source: "link", paperId: { in: allPaperIds } },
-    select: { paperId: true },
-    distinct: ["paperId"],
-  })
-  const touchedIds = new Set(touched.map((t) => t.paperId))
+  const touchedIds = await linkTouchedPaperIds(allPaperIds)
 
   return [
     ...studies.map((s) =>
@@ -126,7 +121,7 @@ async function SearchResults({ q }: { q: string }) {
   })
 
   if (matches.length === 0) {
-    return <p className="text-base-content/40">No papers match "{q}".</p>
+    return <p className="text-base-content/40">No items match "{q}".</p>
   }
 
   const groups = await groupsForPaperIds(matches.map((p) => p.id))
@@ -141,9 +136,9 @@ async function SearchResults({ q }: { q: string }) {
 }
 
 async function AutoDetectedGroups({ page, tab }: { page: number; tab: "needs-review" | "reviewed" }) {
-  const [eligiblePapers, touchedHistory] = await Promise.all([
+  const [eligiblePapers, touchedIds] = await Promise.all([
     db.paper.findMany({
-      where: { status: { in: [...LINK_ELIGIBLE_STATUSES] }, canonicalPaperId: null },
+      where: { status: { in: [...LINK_ELIGIBLE_STATUSES] }, canonicalPaperId: null, ...NOT_MARKED_DONE },
       include: {
         ...paperInclude,
         studyPaper: {
@@ -159,14 +154,9 @@ async function AutoDetectedGroups({ page, tab }: { page: number; tab: "needs-rev
     // paper ever touched here (not just still-eligible ones), since linking
     // a full pair moves both papers into a real multi-paper Study and drops
     // them out of the eligible/unlinked pool entirely.
-    db.paperEditHistory.findMany({
-      where: { source: "link" },
-      select: { paperId: true },
-      distinct: ["paperId"],
-    }),
+    linkTouchedPaperIds(),
   ])
 
-  const touchedIds = new Set(touchedHistory.map((h) => h.paperId))
   const eligible = eligiblePapers.filter(isLinkEligible).filter((p) => !touchedIds.has(p.id))
   // Every paper here was just filtered to exclude anything touched via this
   // page, so none of them have a confirmed role — any "OTHER" they carry is

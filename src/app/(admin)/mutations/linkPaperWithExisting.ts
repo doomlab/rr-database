@@ -1,34 +1,11 @@
 import { resolver } from "@blitzjs/rpc"
 import { z } from "zod"
 import db from "db"
-
-const ROLE_VALUES = [
-  "STAGE1_ARTICLE",
-  "STAGE1_MATERIALS",
-  "STAGE2_ARTICLE",
-  "STAGE2_MATERIALS",
-  "PCIRR_PAGE",
-  "PCIRR_REVIEW",
-  "PCIRR_AUTHOR_RESPONSE",
-  "PCIRR_DECISION",
-  "OTHER",
-] as const
-
-const ROLE_LABELS: Record<(typeof ROLE_VALUES)[number], string> = {
-  STAGE1_ARTICLE: "Stage 1 article",
-  STAGE1_MATERIALS: "Stage 1 materials",
-  STAGE2_ARTICLE: "Stage 2 article",
-  STAGE2_MATERIALS: "Stage 2 materials",
-  PCIRR_PAGE: "PCI RR recommendation",
-  PCIRR_REVIEW: "PCI RR review",
-  PCIRR_AUTHOR_RESPONSE: "PCI RR author response",
-  PCIRR_DECISION: "PCI RR decision",
-  OTHER: "Other",
-}
+import { STUDY_PAPER_ROLE_LABELS, STUDY_PAPER_ROLE_VALUES } from "src/lib/studyPaperRoles"
 
 const LinkPaperWithExisting = z.object({
   paperId: z.number(),
-  role: z.enum(ROLE_VALUES),
+  role: z.enum(STUDY_PAPER_ROLE_VALUES),
   targetPaperId: z.number(),
 })
 
@@ -40,19 +17,19 @@ export default resolver.pipe(
   resolver.authorize(["ADMIN", "SUPER_ADMIN"]),
   async ({ paperId, role, targetPaperId }, ctx) => {
     const userId = ctx.session.userId as number
-    if (paperId === targetPaperId) throw new Error("Pick a different paper to link with.")
+    if (paperId === targetPaperId) throw new Error("Pick a different item to link with.")
 
     const target = await db.paper.findUnique({
       where: { id: targetPaperId },
       select: { id: true, title: true, studyPaper: { select: { studyId: true } } },
     })
-    if (!target) throw new Error(`No paper with ID #${targetPaperId} exists.`)
+    if (!target) throw new Error(`No item with ID #${targetPaperId} exists.`)
 
     const paper = await db.paper.findUnique({
       where: { id: paperId },
       select: { id: true, status: true, studyPaper: { select: { studyId: true } } },
     })
-    if (!paper) throw new Error("Paper not found.")
+    if (!paper) throw new Error("Item not found.")
 
     const studyId = target.studyPaper?.studyId ?? (await db.study.create({ data: {} })).id
     if (!target.studyPaper) {
@@ -83,7 +60,7 @@ export default resolver.pipe(
         paperId,
         userId,
         source: "link",
-        summary: `Linked as ${ROLE_LABELS[role]} with paper #${targetPaperId}`,
+        summary: `Linked as ${STUDY_PAPER_ROLE_LABELS[role]} with item #${targetPaperId}`,
       },
     })
 
