@@ -22,7 +22,8 @@ export function RejectRemovedFromZoteroButton({ title, description }: { title?: 
           count: r.count,
           preview: r.preview,
           message: r.dryRun
-            ? `Zotero has ${r.zoteroCount} items. ${r.count} items on the site are no longer in it.`
+            ? `Zotero has ${r.zoteroCount} items. ${r.count} items on the site are no longer in it.` +
+              (r.rekeyed > 0 ? ` (${r.rekeyed} more have a new Zotero key but are still in the library, so they are left alone.)` : "")
             : `Excluded ${r.count} items that are no longer in Zotero.`,
         }
       }}
