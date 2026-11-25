@@ -151,7 +151,7 @@ async function upsertPaperFromZoteroItem(
   item: ZoteroItem,
   keyColumn: KeyColumn,
   versionColumn: "zoteroVersionProduction" | "zoteroVersionStaging",
-  resolveStatus: (existingId: number | null) => string | undefined,
+  resolveStatus: (existingId: number | null, existingStatus?: string) => string | undefined,
   notes: string[] = []
 ): Promise<number | null> {
   const data = item.data ?? {}
@@ -179,7 +179,18 @@ async function upsertPaperFromZoteroItem(
   }
   const existingId = existing?.id ?? null
 
-  const status = resolveStatus(existingId)
+  // A DOI belongs to one item. If Zotero holds the same article twice, don't
+  // hand the second copy a DOI the first already has (it would break the
+  // unique DOI rule, and undo marking the copy as a duplicate).
+  const doiTakenByAnother =
+    doi && !existing?.doi
+      ? await db.paper.findFirst({
+          where: { doi, ...(existingId ? { id: { not: existingId } } : {}) },
+          select: { id: true },
+        })
+      : null
+
+  const status = resolveStatus(existingId, existing?.status)
 
   // Bibliographic content fields only fill in when the existing record is
   // still blank there — this pull shouldn't overwrite an admin's later
@@ -187,7 +198,7 @@ async function upsertPaperFromZoteroItem(
   // copy of that field happens to be empty or stale.
   const fields: Record<string, any> = {
     title: existing?.title ?? title,
-    doi: existing?.doi ?? doi,
+    doi: existing?.doi ?? (doiTakenByAnother ? null : doi),
     abstract: existing?.abstract ?? (data.abstractNote || null),
     year: existing?.year ?? extractYear(data.date),
     venue: existing?.venue ?? (data.publicationTitle || null),
@@ -353,7 +364,9 @@ export async function importProductionLibrary(): Promise<{
       item,
       "zoteroKeyProduction",
       "zoteroVersionProduction",
-      () => "IMPORTED",
+      // A decision made here (excluded, or marked a duplicate) isn't undone by
+      // the next pull while the item is still in Zotero.
+      (_id, existingStatus) => (existingStatus === "REJECTED" || existingStatus === "DUPLICATE" ? undefined : "IMPORTED"),
       notesByParent.get(item.key) ?? []
     )
     if (paperId === null) {
