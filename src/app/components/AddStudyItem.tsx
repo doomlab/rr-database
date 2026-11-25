@@ -20,6 +20,7 @@ export function AddStudyItem({
   studyId,
   anchor,
   defaultRole,
+  linkHref,
 }: {
   // On a study page: the study to add to.
   studyId?: number
@@ -27,6 +28,8 @@ export function AddStudyItem({
   // role. A study is created to hold it and whatever is added.
   anchor?: { paperId: number; role: Role }
   defaultRole: Role
+  // When given, the button becomes a dropdown with "Add item" and "Go to linking".
+  linkHref?: string
 }) {
   const [add] = useMutation(addPaperToStudy, NO_THROW)
   const [search] = useMutation(searchPapersToLink, NO_THROW)
@@ -104,18 +107,52 @@ export function AddStudyItem({
 
   return (
     <>
-      <ButtonTip tip="Add another item to this study, such as the missing Stage 1 or Stage 2">
-        <button
-          type="button"
-          className="btn btn-accent btn-md text-base"
-          onClick={() => {
-            setMessage(null)
-            setOpen(true)
-          }}
-        >
-          Add item
-        </button>
-      </ButtonTip>
+      {linkHref ? (
+        <div className="dropdown">
+          <div tabIndex={0} role="button" className="btn btn-accent btn-md text-base">
+            Add / link ▾
+          </div>
+          <ul
+            tabIndex={0}
+            className="dropdown-content menu bg-base-100 rounded-box z-50 w-64 p-2 shadow-md border border-base-300 mt-1"
+          >
+            <li>
+              <button
+                type="button"
+                title="Add another item to this study, such as the missing Stage 1 or Stage 2"
+                onClick={() => {
+                  ;(document.activeElement as HTMLElement | null)?.blur()
+                  setMessage(null)
+                  setOpen(true)
+                }}
+              >
+                Add item
+              </button>
+            </li>
+            <li>
+              <a
+                href={linkHref}
+                title="Link this item with others (Stage 1/2, preprint, supplemental materials) into one study, or unlink it"
+              >
+                Go to linking
+              </a>
+            </li>
+          </ul>
+        </div>
+      ) : (
+        <ButtonTip tip="Add another item to this study, such as the missing Stage 1 or Stage 2">
+          <button
+            type="button"
+            className="btn btn-accent btn-md text-base"
+            onClick={() => {
+              setMessage(null)
+              setOpen(true)
+            }}
+          >
+            Add item
+          </button>
+        </ButtonTip>
+      )}
 
       {open && (
         <dialog className="modal modal-open">

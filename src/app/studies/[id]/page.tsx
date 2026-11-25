@@ -145,11 +145,16 @@ export default async function StudyDetailPage({
                     paper={paper}
                     roleLabel={STUDY_PAPER_ROLE_LABELS[role] ?? role}
                     showRoleLabel={false}
+                    linkInAdminActions
                     adminStudyActions={
                       isAdmin ? (
                         <>
                           <EditTitleButton />
-                          <AddStudyItem studyId={study.id} defaultRole={addItemDefaultRole} />
+                          <AddStudyItem
+                            studyId={study.id}
+                            defaultRole={addItemDefaultRole}
+                            linkHref={`/admin/link?q=${encodeURIComponent(paper.title)}`}
+                          />
                           <RejectStudyButton studyId={study.id} itemCount={study.papers.length} />
                         </>
                       ) : undefined

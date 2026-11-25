@@ -699,16 +699,21 @@ export default async function GuidePage() {
                     <Term>Edit title</Term> — rename the study (applies to all of its items).
                   </li>
                   <li>
-                    <Term>Link</Term> — opens Link items with this item's title already searched, to link it with other
-                    items or unlink it.
+                    <Term>Add / link</Term> — a dropdown with two choices. <Term>Add item</Term> adds another item to the
+                    study (for example the missing Stage 1 or Stage 2). <Term>Go to linking</Term> opens Link items with this
+                    item's title already searched, to link it with other items or unlink it.
                   </li>
                   <li>
-                    <Term>Pull OpenAlex</Term> / <Term>Pull Crossref</Term> — fetch fresh details and review them before
-                    saving.
+                    <Term>Reject study</Term> — rejects every item in the study at once (see Rejecting and restoring).
+                  </li>
+                  <li>
+                    <Term>Pull data</Term> — a dropdown with <Term>Pull OpenAlex</Term> and <Term>Pull Crossref</Term>.
+                    Each fetches fresh details and lets you review them before saving. Pull OpenAlex needs an OpenAlex key.
                   </li>
                   <li>
                     <Term>JMIR badge</Term> (JMIR items only) and <Term>Scan PDF</Term> — record a JMIR badge, or scan the
-                    PDF for links to open data, code and materials.
+                    item's PDF for links to open data, code and materials. <Term>Scan the open PDF</Term> uses the open-access
+                    PDF link the item already has; if it has none, upload a PDF or Word doc instead.
                   </li>
                   <li>
                     <Term>Edit metadata</Term> — edit the item's details directly.

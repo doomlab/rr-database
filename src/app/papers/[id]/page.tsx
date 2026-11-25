@@ -104,6 +104,7 @@ export default async function PaperDetailPage({ params }: { params: Promise<{ id
               paper={paper}
               roleLabel={tabLabel}
               showRoleLabel={false}
+              linkInAdminActions={paper.status !== "REJECTED" && paper.status !== "DUPLICATE"}
               adminStudyActions={
                 isAdmin && (paper.status === "REJECTED" || paper.status === "DUPLICATE") ? (
                   <RestorePaperButtons paperId={paper.id} />
@@ -117,6 +118,7 @@ export default async function PaperDetailPage({ params }: { params: Promise<{ id
                         (paper.stage === "STAGE_2" ? "STAGE2_ARTICLE" : paper.stage === "STAGE_1" ? "STAGE1_ARTICLE" : "OTHER"),
                     }}
                     defaultRole={paper.stage === "STAGE_1" ? "STAGE2_ARTICLE" : "STAGE1_ARTICLE"}
+                    linkHref={`/admin/link?q=${encodeURIComponent(paper.title)}`}
                   />
                 ) : undefined
               }

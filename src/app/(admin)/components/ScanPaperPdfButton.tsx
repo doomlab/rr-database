@@ -56,7 +56,7 @@ export function ScanPaperPdfButton({
     <>
       {hasPdfUrl ? (
         <div className="dropdown">
-          <ButtonTip tip="Scan the item's PDF for links to open data, code and materials">
+          <ButtonTip tip="Scan the item's open-access PDF for links to open data, code and materials">
             <button tabIndex={0} type="button" className="btn btn-success btn-md text-base" disabled={isRunning}>
               {isRunning ? <span className="loading loading-spinner loading-xs" /> : "Scan PDF ▾"}
             </button>
@@ -67,7 +67,7 @@ export function ScanPaperPdfButton({
           >
             <li>
               <button type="button" className="text-base" onClick={() => runScan()}>
-                Scan stored PDF
+                Scan the open PDF
               </button>
             </li>
             <li>
@@ -78,7 +78,7 @@ export function ScanPaperPdfButton({
           </ul>
         </div>
       ) : (
-        <ButtonTip tip="No PDF is stored for this item — upload a PDF or Word doc to scan for open data, code and materials links">
+        <ButtonTip tip="No open PDF link for this item — upload a PDF or Word doc to scan for open data, code and materials links">
           <button
             type="button"
             className="btn btn-warning btn-md text-base"

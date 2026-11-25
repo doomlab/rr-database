@@ -80,6 +80,7 @@ export function PaperRecordSection({
   showRoleLabel = true,
   studyActions,
   adminStudyActions,
+  linkInAdminActions = false,
 }: {
   paper: RecordPaper
   roleLabel: string
@@ -99,6 +100,8 @@ export function PaperRecordSection({
   studyActions?: ReactNode
   // Study-level admin buttons (e.g. edit title), first in the admin row. Only rendered for admins.
   adminStudyActions?: ReactNode
+  // True when adminStudyActions already offers "Go to linking", so the separate Link button is left out.
+  linkInAdminActions?: boolean
 }) {
   const { references, referencesInDbCount, citedBy, citedByInDbCount, citedByTotal } = citationData
 
@@ -221,11 +224,13 @@ export function PaperRecordSection({
           </span>
           {/* Same order as the admin workflow: title, link, enrich, metadata. */}
           {adminStudyActions}
-          <ButtonTip tip="Link this item with others (Stage 1/2, preprint, supplemental materials) into one study, or unlink it">
-            <a href={`/admin/link?q=${encodeURIComponent(paper.title)}`} className="btn btn-secondary btn-md text-base">
-              Link
-            </a>
-          </ButtonTip>
+          {!linkInAdminActions && (
+            <ButtonTip tip="Link this item with others (Stage 1/2, preprint, supplemental materials) into one study, or unlink it">
+              <a href={`/admin/link?q=${encodeURIComponent(paper.title)}`} className="btn btn-secondary btn-md text-base">
+                Go to linking
+              </a>
+            </ButtonTip>
+          )}
           <AdminEnrichPanel
             paperId={paper.id}
             hasOpenAlexApiKey={hasOpenAlexApiKey}
