@@ -97,9 +97,14 @@ export function EnrichStep({ papers }: { papers: GroupPaper[] }) {
         {papers.map((paper) => (
           <li key={paper.id} className="py-4 flex flex-col md:flex-row md:items-center gap-3">
             <div className="flex-1 min-w-0">
-              <p className="font-medium text-base leading-snug">
+              <a
+                href={`/papers/${paper.id}`}
+                target="_blank"
+                rel="noreferrer"
+                className="font-medium text-base leading-snug link link-hover"
+              >
                 #{paper.id} — {paper.title}
-              </p>
+              </a>
               <div className="flex flex-wrap items-center gap-2 mt-1">
                 <SourceBadge label="OpenAlex" pulledAt={paper.openAlexFetchedAt} />
                 <SourceBadge
